@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { HomeIcon, FolderIcon, SearchIcon, UserIcon } from 'lucide-react-native';
+import { PhoneIncoming as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon } from 'lucide-react-native';
 import { Text, StyleSheet, Platform, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useColorScheme } from 'react-native';
