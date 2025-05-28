@@ -6,26 +6,42 @@ import { Redirect } from 'expo-router';
 export default function AppLayout() {
   const { isAuthenticated, isLoading } = useAuth();
   
-  // Show loading screen while checking authentication
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0C2340" />
+        <ActivityIndicator size="large" color="#1A5F7A" />
         <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
   
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Redirect href="/(auth)" />;
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack 
+      screenOptions={{ 
+        headerShown: false,
+        animation: 'slide_from_right',
+        contentStyle: styles.contentStyle,
+      }}
+    >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="document/[id]" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="folder/[id]" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen 
+        name="document/[id]" 
+        options={{ 
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+        }} 
+      />
+      <Stack.Screen 
+        name="folder/[id]" 
+        options={{ 
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }} 
+      />
     </Stack>
   );
 }
@@ -35,11 +51,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F7',
+    backgroundColor: '#F8F9FB',
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#0C2340',
+    color: '#1A5F7A',
+    fontWeight: '500',
+  },
+  contentStyle: {
+    backgroundColor: '#F8F9FB',
   },
 });

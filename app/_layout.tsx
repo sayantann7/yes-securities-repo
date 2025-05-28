@@ -14,7 +14,7 @@ export default function RootLayout() {
     <Provider store={store}>
       <AuthProvider>
         <View style={styles.container}>
-          <StatusBar style="auto" />
+          <StatusBar style="dark" />
           <Stack 
             screenOptions={{ 
               headerShown: false,
@@ -35,9 +35,9 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
+    backgroundColor: '#F8F9FB',
   },
   contentStyle: {
-    backgroundColor: '#F5F5F7',
+    backgroundColor: '#F8F9FB',
   },
 });

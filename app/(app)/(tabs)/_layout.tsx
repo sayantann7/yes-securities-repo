@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { HomeIcon, FolderIcon, SearchIcon, UserIcon } from 'lucide-react-native';
-import { Text, StyleSheet, Platform } from 'react-native';
+import { Text, StyleSheet, Platform, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useColorScheme } from 'react-native';
 
@@ -12,8 +12,8 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: '#0C2340', // Dark navy blue
-        tabBarInactiveTintColor: '#7A869A',
+        tabBarActiveTintColor: '#1A5F7A',
+        tabBarInactiveTintColor: '#94A3B8',
         tabBarLabelStyle: styles.tabBarLabel,
         headerShown: false,
         tabBarBackground: () => (
@@ -22,7 +22,8 @@ export default function TabLayout() {
               tint={isDark ? 'dark' : 'light'} 
               intensity={80} 
               style={StyleSheet.absoluteFill} 
-            /> : null
+            /> : 
+            <View style={styles.tabBarBackground} />
         ),
       }}
     >
@@ -68,18 +69,34 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.1)',
-    height: 60,
-    paddingBottom: Platform.OS === 'ios' ? 25 : 5,
-    paddingTop: 5,
-    ...(Platform.OS === 'android' ? { 
-      backgroundColor: '#FFFFFF',
-      elevation: 8, 
-    } : {}),
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 24 : 16,
+    left: 16,
+    right: 16,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: Platform.OS === 'android' ? 1 : 0,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+    paddingTop: 8,
+  },
+  tabBarBackground: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
   },
   tabBarLabel: {
     fontSize: 12,
     fontWeight: '500',
+    marginTop: 2,
   },
 });
