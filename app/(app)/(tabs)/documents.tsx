@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Platform } from 'react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { ChevronRight, ChevronDown, FolderOpen, File, FilePlus, Grid, List } from 'lucide-react-native';
+import { ChevronRight, ChevronDown, FolderOpen, File, FilePlus, Grid2x2 as Grid, List } from 'lucide-react-native';
 import { useFetchFolders } from '@/hooks/useFetchFolders';
 import FolderItem from '@/components/document/FolderItem';
 import DocumentItem from '@/components/document/DocumentItem';
