@@ -29,13 +29,17 @@ export default function DocumentItem({ document, viewMode = 'list', onPress }: D
       case 'audio':
         return <FileAudio size={24} color="#FBBC05" />;
       default:
-        return <File size={24} color="#7A869A" />;
+        return <File size={24} color="#94A3B8" />;
     }
   };
   
   if (viewMode === 'grid') {
     return (
-      <TouchableOpacity style={styles.gridItem} onPress={handlePress}>
+      <TouchableOpacity 
+        style={styles.gridItem} 
+        onPress={handlePress}
+        activeOpacity={0.7}
+      >
         <View style={styles.gridIconContainer}>
           {document.type === 'image' && document.thumbnailUrl ? (
             <Image source={{ uri: document.thumbnailUrl }} style={styles.thumbnail} />
@@ -53,7 +57,11 @@ export default function DocumentItem({ document, viewMode = 'list', onPress }: D
   }
   
   return (
-    <TouchableOpacity style={styles.listItem} onPress={handlePress}>
+    <TouchableOpacity 
+      style={styles.listItem} 
+      onPress={handlePress}
+      activeOpacity={0.7}
+    >
       <View style={styles.listIconContainer}>
         {document.type === 'image' && document.thumbnailUrl ? (
           <Image source={{ uri: document.thumbnailUrl }} style={styles.thumbnail} />
@@ -74,66 +82,79 @@ export default function DocumentItem({ document, viewMode = 'list', onPress }: D
 
 const styles = StyleSheet.create({
   gridItem: {
-    width: 160,
+    width: 180,
     marginRight: 16,
     marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   gridIconContainer: {
-    width: 160,
-    height: 120,
-    backgroundColor: '#F0F4F8',
+    width: '100%',
+    height: 140,
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
-    marginBottom: 8,
+    marginBottom: 12,
+    overflow: 'hidden',
   },
   gridName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333333',
-    marginBottom: 4,
+    color: '#334155',
+    marginBottom: 8,
+    lineHeight: 20,
   },
   gridInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   gridDate: {
     fontSize: 12,
-    color: '#7A869A',
+    color: '#94A3B8',
   },
   gridSize: {
     fontSize: 12,
-    color: '#7A869A',
+    color: '#94A3B8',
+    fontWeight: '500',
   },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   listIconContainer: {
     width: 48,
     height: 48,
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
     marginRight: 12,
+    overflow: 'hidden',
   },
   listInfo: {
     flex: 1,
   },
   listName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
-    color: '#333333',
+    color: '#334155',
     marginBottom: 4,
   },
   listSubInfo: {
@@ -142,12 +163,13 @@ const styles = StyleSheet.create({
   },
   listDate: {
     fontSize: 12,
-    color: '#7A869A',
+    color: '#94A3B8',
     marginRight: 12,
   },
   listSize: {
     fontSize: 12,
-    color: '#7A869A',
+    color: '#94A3B8',
+    fontWeight: '500',
   },
   thumbnail: {
     width: '100%',

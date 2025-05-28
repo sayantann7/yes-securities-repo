@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Platform } from 'react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { ChevronRight, ChevronDown, FolderOpen, File, FilePlus, Grid, List } from 'lucide-react-native';
@@ -74,8 +74,8 @@ export default function DocumentsScreen() {
                 style={styles.expandButton}
               >
                 {isExpanded ? 
-                  <ChevronDown size={16} color="#7A869A" /> : 
-                  <ChevronRight size={16} color="#7A869A" />
+                  <ChevronDown size={16} color="#94A3B8" /> : 
+                  <ChevronRight size={16} color="#94A3B8" />
                 }
               </TouchableOpacity>
             )}
@@ -101,7 +101,7 @@ export default function DocumentsScreen() {
             ]} 
             onPress={() => setViewMode('grid')}
           >
-            <Grid size={20} color={viewMode === 'grid' ? '#0C2340' : '#7A869A'} />
+            <Grid size={20} color={viewMode === 'grid' ? '#1A5F7A' : '#94A3B8'} />
           </TouchableOpacity>
           <TouchableOpacity 
             style={[
@@ -110,7 +110,7 @@ export default function DocumentsScreen() {
             ]} 
             onPress={() => setViewMode('list')}
           >
-            <List size={20} color={viewMode === 'list' ? '#0C2340' : '#7A869A'} />
+            <List size={20} color={viewMode === 'list' ? '#1A5F7A' : '#94A3B8'} />
           </TouchableOpacity>
         </View>
       </View>
@@ -201,32 +201,33 @@ export default function DocumentsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
+    backgroundColor: '#F8F9FB',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E1E1E1',
+    borderBottomColor: '#E2E8F0',
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#0C2340',
+    color: '#1A5F7A',
   },
   viewToggle: {
     flexDirection: 'row',
-    backgroundColor: '#F1F1F1',
+    backgroundColor: '#F1F5F9',
     borderRadius: 8,
+    padding: 2,
   },
   viewToggleButton: {
     padding: 8,
-    borderRadius: 8,
+    borderRadius: 6,
   },
   viewToggleButtonActive: {
     backgroundColor: '#FFFFFF',
@@ -241,16 +242,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   sidebar: {
-    width: 220,
+    width: 240,
     backgroundColor: '#FFFFFF',
     borderRightWidth: 1,
-    borderRightColor: '#E1E1E1',
+    borderRightColor: '#E2E8F0',
     padding: 12,
   },
   sidebarTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0C2340',
+    color: '#1A5F7A',
     marginBottom: 12,
     paddingHorizontal: 4,
   },
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
   },
   folderName: {
     fontSize: 14,
-    color: '#333333',
+    color: '#334155',
     flex: 1,
   },
   documentsContainer: {
@@ -282,18 +283,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0C2340',
+    color: '#1A5F7A',
     marginBottom: 12,
     marginTop: 16,
   },
   emptyText: {
-    color: '#7A869A',
+    color: '#94A3B8',
     fontSize: 14,
     fontStyle: 'italic',
     marginVertical: 12,
   },
   addButton: {
-    backgroundColor: '#0C2340',
+    backgroundColor: '#1A5F7A',
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
