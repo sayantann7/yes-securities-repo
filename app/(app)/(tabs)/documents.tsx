@@ -1,19 +1,25 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Platform } from 'react-native';
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { ChevronRight, ChevronDown, FolderOpen, File, FilePlus, Grid2x2 as Grid, List } from 'lucide-react-native';
+import { ChevronRight, ChevronDown, FolderOpen, File, FilePlus } from 'lucide-react-native';
 import { useFetchFolders } from '@/hooks/useFetchFolders';
 import FolderItem from '@/components/document/FolderItem';
 import DocumentItem from '@/components/document/DocumentItem';
 import { Folder } from '@/types';
 import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
 
+// Define constants for bottom spacing
+const TAB_BAR_HEIGHT = 64;
+const BOTTOM_SPACING = Platform.OS === 'ios' ? 24 : 16;
+const SAFE_AREA_BOTTOM = 20;
+const TOTAL_BOTTOM_SPACING = TAB_BAR_HEIGHT + BOTTOM_SPACING + SAFE_AREA_BOTTOM;
+
 export default function DocumentsScreen() {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const { folders, rootFolders, documents, isLoading } = useFetchFolders(currentFolderId);
   
+  // All your existing functions remain the same
   const toggleExpanded = (folderId: string) => {
     setExpandedFolders(prev => {
       const newSet = new Set(prev);
@@ -89,29 +95,21 @@ export default function DocumentsScreen() {
     });
   };
 
+  // Render section headers
+  const renderSectionHeader = (title: string) => (
+    <Text style={styles.sectionTitle}>{title}</Text>
+  );
+
+  // Render empty list component
+  const renderEmptyComponent = (message: string) => (
+    <Text style={styles.emptyText}>{message}</Text>
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Documents</Text>
-        <View style={styles.viewToggle}>
-          <TouchableOpacity 
-            style={[
-              styles.viewToggleButton, 
-              viewMode === 'grid' && styles.viewToggleButtonActive
-            ]} 
-            onPress={() => setViewMode('grid')}
-          >
-            <Grid size={20} color={viewMode === 'grid' ? '#1A5F7A' : '#94A3B8'} />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[
-              styles.viewToggleButton, 
-              viewMode === 'list' && styles.viewToggleButtonActive
-            ]} 
-            onPress={() => setViewMode('list')}
-          >
-            <List size={20} color={viewMode === 'list' ? '#1A5F7A' : '#94A3B8'} />
-          </TouchableOpacity>
+        <View style={styles.headerLeft}>
+          <Text style={styles.title}>Documents</Text>
         </View>
       </View>
       
@@ -124,73 +122,75 @@ export default function DocumentsScreen() {
       )}
       
       <View style={styles.content}>
-        <View style={styles.sidebar}>
-          <Text style={styles.sidebarTitle}>Folders</Text>
-          <ScrollView style={styles.folderTree}>
-            {renderFolderTree()}
-          </ScrollView>
-          
-          <TouchableOpacity style={styles.addButton}>
-            <FilePlus size={20} color="#FFFFFF" />
-            <Text style={styles.addButtonText}>New</Text>
-          </TouchableOpacity>
-        </View>
-        
         <View style={styles.documentsContainer}>
           {currentFolderId ? (
-            <>
-              <Text style={styles.sectionTitle}>Folders</Text>
-              <FlatList
-                data={folders.filter(f => f.parentId === currentFolderId)}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <FolderItem folder={item} onPress={() => openFolder(item)} />
-                )}
-                horizontal={viewMode === 'grid'}
-                numColumns={viewMode === 'grid' ? 1 : undefined}
-                ListEmptyComponent={
-                  <Text style={styles.emptyText}>No folders</Text>
-                }
-              />
+            // Current folder view
+            <View style={{flex: 1}}>
+              {/* Folders in current folder */}
+              <View>
+                {renderSectionHeader("Folders")}
+                <FlatList
+                  data={folders.filter(f => f.parentId === currentFolderId)}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <FolderItem folder={item} onPress={() => openFolder(item)} />
+                  )}
+                  ListEmptyComponent={() => renderEmptyComponent("No folders")}
+                  scrollEnabled={false}
+                />
+              </View>
               
-              <Text style={styles.sectionTitle}>Documents</Text>
-              <FlatList
-                data={documents}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <DocumentItem document={item} viewMode={viewMode} />
-                )}
-                horizontal={viewMode === 'grid'}
-                numColumns={viewMode === 'grid' ? 1 : undefined}
-                ListEmptyComponent={
-                  <Text style={styles.emptyText}>No documents in this folder</Text>
-                }
-              />
-            </>
+              {/* Documents in current folder */}
+              <View style={{marginBottom: TOTAL_BOTTOM_SPACING}}>
+                {renderSectionHeader("Documents")}
+                <FlatList
+                  data={documents}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <DocumentItem document={item} viewMode="list" />
+                  )}
+                  ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
+                />
+              </View>
+            </View>
           ) : (
-            <>
-              <Text style={styles.sectionTitle}>All Folders</Text>
-              <FlatList
-                data={rootFolders}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <FolderItem folder={item} onPress={() => openFolder(item)} />
-                )}
-                horizontal={viewMode === 'grid'}
-                numColumns={viewMode === 'grid' ? 1 : undefined}
-              />
-              
-              <Text style={styles.sectionTitle}>Recent Documents</Text>
-              <FlatList
-                data={documents.slice(0, 5)}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <DocumentItem document={item} viewMode={viewMode} />
-                )}
-                horizontal={viewMode === 'grid'}
-                numColumns={viewMode === 'grid' ? 1 : undefined}
-              />
-            </>
+            // Root view
+            <FlatList
+              data={[{id: 'folders'}, {id: 'documents'}]}
+              keyExtractor={(item) => item.id}
+              renderItem={({item}) => {
+                if (item.id === 'folders') {
+                  return (
+                    <View>
+                      {renderSectionHeader("All Folders")}
+                      <FlatList
+                        data={rootFolders}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                          <FolderItem folder={item} onPress={() => openFolder(item)} />
+                        )}
+                        scrollEnabled={false}
+                      />
+                    </View>
+                  );
+                } else {
+                  return (
+                    <View>
+                      {renderSectionHeader("Recent Documents")}
+                      <FlatList
+                        data={documents.slice(0, 5)}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                          <DocumentItem document={item} viewMode="list" />
+                        )}
+                        scrollEnabled={false}
+                      />
+                    </View>
+                  );
+                }
+              }}
+              contentContainerStyle={{paddingBottom: TOTAL_BOTTOM_SPACING}}
+            />
           )}
         </View>
       </View>
@@ -214,49 +214,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1A5F7A',
-  },
-  viewToggle: {
-    flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 8,
-    padding: 2,
-  },
-  viewToggleButton: {
-    padding: 8,
-    borderRadius: 6,
-  },
-  viewToggleButtonActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    color: '#0C2340',
   },
   content: {
     flex: 1,
     flexDirection: 'row',
-  },
-  sidebar: {
-    width: 240,
-    backgroundColor: '#FFFFFF',
-    borderRightWidth: 1,
-    borderRightColor: '#E2E8F0',
-    padding: 12,
-  },
-  sidebarTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A5F7A',
-    marginBottom: 12,
-    paddingHorizontal: 4,
-  },
-  folderTree: {
-    flex: 1,
   },
   folderRow: {
     flexDirection: 'row',
@@ -283,7 +252,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1A5F7A',
+    color: '#0C2340',
     marginBottom: 12,
     marginTop: 16,
   },
@@ -292,19 +261,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontStyle: 'italic',
     marginVertical: 12,
-  },
-  addButton: {
-    backgroundColor: '#1A5F7A',
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    marginTop: 12,
-  },
-  addButtonText: {
-    color: '#FFFFFF',
-    marginLeft: 8,
-    fontWeight: '600',
   },
 });

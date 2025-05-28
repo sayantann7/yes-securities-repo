@@ -6,6 +6,7 @@ import { FileText, Clock, Star, Users, BarChart2 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { RecentDocumentItem } from '@/components/document/RecentDocumentItem';
 import { useFetchDashboardData } from '@/hooks/useFetchDashboardData';
+import { Link } from 'expo-router';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -13,7 +14,13 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        scrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled={true}
+      >
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Hello, {user?.name}</Text>
@@ -37,14 +44,6 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.statCard}>
-            <View style={[styles.statIconContainer, { backgroundColor: 'rgba(234, 67, 53, 0.1)' }]}>
-              <Clock size={20} color="#EA4335" />
-            </View>
-            <Text style={styles.statValue}>42</Text>
-            <Text style={styles.statLabel}>Recent</Text>
-          </View>
-
-          <View style={styles.statCard}>
             <View style={[styles.statIconContainer, { backgroundColor: 'rgba(251, 188, 5, 0.1)' }]}>
               <Star size={20} color="#FBBC05" />
             </View>
@@ -65,7 +64,7 @@ export default function HomeScreen() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Documents</Text>
             <TouchableOpacity>
-              <Text style={styles.seeAllButton}>See all</Text>
+              <Text style={styles.seeAllButton}><Link href="/documents">See all</Link></Text>
             </TouchableOpacity>
           </View>
 
@@ -73,6 +72,7 @@ export default function HomeScreen() {
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.recentDocumentsContainer}
+            nestedScrollEnabled={true}
           >
             {recentDocuments.map((doc) => (
               <RecentDocumentItem key={doc.id} document={doc} />
@@ -104,6 +104,9 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
+        
+        {/* Adding bottom padding to ensure content is fully scrollable */}
+        <View style={styles.bottomPadding} />
       </ScrollView>
     </View>
   );
@@ -113,6 +116,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F7',
+    paddingTop: 20,
+  },
+  scrollContent: {
+    paddingBottom: 100, // Add padding at the bottom to ensure content is scrollable
   },
   header: {
     flexDirection: 'row',
@@ -123,7 +130,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   greeting: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
     color: '#0C2340',
   },
@@ -133,9 +140,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 65,
+    height: 65,
+    borderRadius: 40,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -148,7 +155,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
-    width: '23%',
+    width: '32%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -174,8 +181,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   section: {
-    marginTop: 24,
+    marginTop: 44,
     paddingHorizontal: 20,
+    marginBottom: 4,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -195,6 +203,7 @@ const styles = StyleSheet.create({
   },
   recentDocumentsContainer: {
     paddingRight: 20,
+    marginTop: 4,
   },
   activityCard: {
     backgroundColor: '#FFFFFF',
@@ -206,6 +215,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 2,
     marginBottom: 24,
+    marginTop: 10,
   },
   activityTitle: {
     fontSize: 16,
@@ -235,5 +245,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#7A869A',
     marginTop: 2,
+  },
+  bottomPadding: {
+    height: 80,
   },
 });

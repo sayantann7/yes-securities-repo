@@ -1,7 +1,6 @@
 import { Tabs } from 'expo-router';
-import { PhoneIncoming as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon } from 'lucide-react-native';
+import { House as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon } from 'lucide-react-native';
 import { Text, StyleSheet, Platform, View } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useColorScheme } from 'react-native';
 
 export default function TabLayout() {
@@ -16,15 +15,6 @@ export default function TabLayout() {
         tabBarInactiveTintColor: '#94A3B8',
         tabBarLabelStyle: styles.tabBarLabel,
         headerShown: false,
-        tabBarBackground: () => (
-          Platform.OS === 'ios' ? 
-            <BlurView 
-              tint={isDark ? 'dark' : 'light'} 
-              intensity={80} 
-              style={StyleSheet.absoluteFill} 
-            /> : 
-            <View style={styles.tabBarBackground} />
-        ),
       }}
     >
       <Tabs.Screen
@@ -75,7 +65,7 @@ const styles = StyleSheet.create({
     right: 16,
     height: 64,
     borderRadius: 20,
-    backgroundColor: Platform.OS === 'ios' ? 'transparent' : '#FFFFFF',
+    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -86,8 +76,10 @@ const styles = StyleSheet.create({
     elevation: 8,
     borderWidth: Platform.OS === 'android' ? 1 : 0,
     borderColor: 'rgba(0, 0, 0, 0.1)',
-    paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-    paddingTop: 8,
+    paddingBottom: 10,
+    paddingTop: 4,
+    marginHorizontal: 10,
+    marginBottom: 6,
   },
   tabBarBackground: {
     ...StyleSheet.absoluteFillObject,
