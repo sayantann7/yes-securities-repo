@@ -81,7 +81,9 @@ export default function FolderScreen() {
   };
   
   const handleOpenDocument = (document: Document) => {
-    router.push(`/document/${document.id}`);
+    // Encode the document ID to preserve slashes in the URL
+    const encodedId = encodeURIComponent(document.id);
+    router.push(`/document/${encodedId}`);
   };
   
   const navigateToRoot = () => {
