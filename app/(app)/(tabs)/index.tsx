@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { useEffect } from 'react';
-import { FileText, Clock, Star, Users, BarChart2 } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import UploadFileModal from '@/components/upload/UploadFileModal';
+import { FileText, Clock, Star, Users, BarChart2, FilePlus } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
@@ -15,9 +16,10 @@ export default function HomeScreen() {
   const { theme } = useTheme();
   const colors = Colors[theme];
   const { recentDocuments, popularDocuments, isLoading } = useFetchDashboardData();
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>    
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -30,12 +32,19 @@ export default function HomeScreen() {
             <Text style={[styles.greeting, { color: colors.primary }]}>Hello, {user?.name}</Text>
             <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
           </View>
-          <TouchableOpacity>
-            <Image 
-              source={{ uri: user?.avatar || '/avatar.jpg' }}
-              style={styles.avatar}
-            />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {user?.role === 'admin' && (
+              <TouchableOpacity onPress={() => setShowUploadModal(true)} style={{ marginRight: 16 }}>
+                <FilePlus size={24} color={colors.primary} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity>
+              <Image 
+                source={{ uri: user?.avatar || '/avatar.jpg' }}
+                style={styles.avatar}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.statsContainer}>
@@ -110,6 +119,9 @@ export default function HomeScreen() {
         </View>
         
         <View style={styles.bottomPadding} />
+        {user?.role === 'admin' && (
+          <UploadFileModal visible={showUploadModal} onClose={() => setShowUploadModal(false)} />
+        )}
       </ScrollView>
     </View>
   );
