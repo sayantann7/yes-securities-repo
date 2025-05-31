@@ -4,16 +4,20 @@ import { RootState } from '@/store';
 import { useEffect } from 'react';
 import { FileText, Clock, Star, Users, BarChart2 } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
+import { Colors } from '@/constants/Colors';
 import { RecentDocumentItem } from '@/components/document/RecentDocumentItem';
 import { useFetchDashboardData } from '@/hooks/useFetchDashboardData';
 import { Link } from 'expo-router';
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const colors = Colors[theme];
   const { recentDocuments, popularDocuments, isLoading } = useFetchDashboardData();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -21,50 +25,50 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true}
       >
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
           <View>
-            <Text style={styles.greeting}>Hello, {user?.name}</Text>
-            <Text style={styles.subGreeting}>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+            <Text style={[styles.greeting, { color: colors.primary }]}>Hello, {user?.name}</Text>
+            <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
           </View>
           <TouchableOpacity>
             <Image 
-              source={{ uri: user?.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg' }}
+              source={{ uri: user?.avatar || '/avatar.jpg' }}
               style={styles.avatar}
             />
           </TouchableOpacity>
         </View>
 
         <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={[styles.statIconContainer, { backgroundColor: 'rgba(66, 133, 244, 0.1)' }]}>
               <FileText size={20} color="#4285F4" />
             </View>
-            <Text style={styles.statValue}>253</Text>
-            <Text style={styles.statLabel}>Documents</Text>
+            <Text style={[styles.statValue, { color: colors.primary }]}>253</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Documents</Text>
           </View>
 
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={[styles.statIconContainer, { backgroundColor: 'rgba(251, 188, 5, 0.1)' }]}>
               <Star size={20} color="#FBBC05" />
             </View>
-            <Text style={styles.statValue}>18</Text>
-            <Text style={styles.statLabel}>Starred</Text>
+            <Text style={[styles.statValue, { color: colors.primary }]}>18</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Starred</Text>
           </View>
 
-          <View style={styles.statCard}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
             <View style={[styles.statIconContainer, { backgroundColor: 'rgba(52, 168, 83, 0.1)' }]}>
               <Users size={20} color="#34A853" />
             </View>
-            <Text style={styles.statValue}>7</Text>
-            <Text style={styles.statLabel}>Shared</Text>
+            <Text style={[styles.statValue, { color: colors.primary }]}>7</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Shared</Text>
           </View>
         </View>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Documents</Text>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Recent Documents</Text>
             <TouchableOpacity>
-              <Text style={styles.seeAllButton}><Link href="/documents">See all</Link></Text>
+              <Text style={[styles.seeAllButton, { color: colors.primary }]}><Link href="/documents">See all</Link></Text>
             </TouchableOpacity>
           </View>
 
@@ -82,30 +86,29 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Team Activity</Text>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Team Activity</Text>
           </View>
-          <View style={styles.activityCard}>
-            <BarChart2 size={24} color="#0C2340" style={{ marginBottom: 12 }} />
-            <Text style={styles.activityTitle}>Weekly Document Access</Text>
-            <Text style={styles.activitySubtitle}>Your team viewed 125 documents this week</Text>
+          <View style={[styles.activityCard, { backgroundColor: colors.surface }]}>
+            <BarChart2 size={24} color={colors.primary} style={{ marginBottom: 12 }} />
+            <Text style={[styles.activityTitle, { color: colors.primary }]}>Weekly Document Access</Text>
+            <Text style={[styles.activitySubtitle, { color: colors.textSecondary }]}>Your team viewed 125 documents this week</Text>
             <View style={styles.activityStatsRow}>
               <View style={styles.activityStat}>
-                <Text style={styles.activityStatValue}>+12%</Text>
-                <Text style={styles.activityStatLabel}>vs last week</Text>
+                <Text style={[styles.activityStatValue, { color: colors.primary }]}>+12%</Text>
+                <Text style={[styles.activityStatLabel, { color: colors.textSecondary }]}>vs last week</Text>
               </View>
               <View style={styles.activityStat}>
-                <Text style={styles.activityStatValue}>48</Text>
-                <Text style={styles.activityStatLabel}>new uploads</Text>
+                <Text style={[styles.activityStatValue, { color: colors.primary }]}>48</Text>
+                <Text style={[styles.activityStatLabel, { color: colors.textSecondary }]}>new uploads</Text>
               </View>
               <View style={styles.activityStat}>
-                <Text style={styles.activityStatValue}>18</Text>
-                <Text style={styles.activityStatLabel}>comments</Text>
+                <Text style={[styles.activityStatValue, { color: colors.primary }]}>18</Text>
+                <Text style={[styles.activityStatLabel, { color: colors.textSecondary }]}>comments</Text>
               </View>
             </View>
           </View>
         </View>
         
-        {/* Adding bottom padding to ensure content is fully scrollable */}
         <View style={styles.bottomPadding} />
       </ScrollView>
     </View>
@@ -115,11 +118,10 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
     paddingTop: 20,
   },
   scrollContent: {
-    paddingBottom: 100, // Add padding at the bottom to ensure content is scrollable
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
@@ -132,11 +134,9 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0C2340',
   },
   subGreeting: {
     fontSize: 14,
-    color: '#7A869A',
     marginTop: 4,
   },
   avatar: {
@@ -151,7 +151,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   statCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
@@ -173,11 +172,9 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0C2340',
   },
   statLabel: {
     fontSize: 12,
-    color: '#7A869A',
     marginTop: 2,
   },
   section: {
@@ -194,11 +191,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0C2340',
   },
   seeAllButton: {
     fontSize: 14,
-    color: '#0C2340',
     fontWeight: '500',
   },
   recentDocumentsContainer: {
@@ -206,7 +201,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   activityCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
@@ -220,11 +214,9 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0C2340',
   },
   activitySubtitle: {
     fontSize: 14,
-    color: '#7A869A',
     marginTop: 4,
     marginBottom: 16,
   },
@@ -234,19 +226,16 @@ const styles = StyleSheet.create({
   },
   activityStat: {
     alignItems: 'center',
-    flex: 1,
   },
   activityStatValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0C2340',
   },
   activityStatLabel: {
     fontSize: 12,
-    color: '#7A869A',
     marginTop: 2,
   },
   bottomPadding: {
-    height: 80,
+    height: 20,
   },
 });

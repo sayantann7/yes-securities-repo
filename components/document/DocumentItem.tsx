@@ -1,179 +1,143 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { FileText, FileImage, FileVideo, FileAudio, File } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { FileText, Download, Share, MoreHorizontal } from 'lucide-react-native';
 import { Document } from '@/types';
+import { useTheme } from '@/context/ThemeContext';
+import { Colors } from '@/constants/Colors';
 
 interface DocumentItemProps {
   document: Document;
-  viewMode?: 'grid' | 'list';
+  viewMode: 'list' | 'grid';
   onPress?: () => void;
 }
 
-export default function DocumentItem({ document, viewMode = 'list', onPress }: DocumentItemProps) {
-  const handlePress = () => {
-    if (onPress) {
-      onPress();
-    } else {
-      router.push(`/document/${document.id}`);
-    }
+export default function DocumentItem({ document, viewMode, onPress }: DocumentItemProps) {
+  const { theme } = useTheme();
+  const colors = Colors[theme];
+
+  const getFileIcon = (type: string) => {
+    // Return appropriate icon based on file type
+    return <FileText size={20} color={colors.primary} />;
   };
-  
-  const getDocumentIcon = () => {
-    switch (document.type) {
-      case 'pdf':
-        return <FileText size={24} color="#E53935" />;
-      case 'image':
-        return <FileImage size={24} color="#4285F4" />;
-      case 'video':
-        return <FileVideo size={24} color="#34A853" />;
-      case 'audio':
-        return <FileAudio size={24} color="#FBBC05" />;
-      default:
-        return <File size={24} color="#94A3B8" />;
-    }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
-  
+
   if (viewMode === 'grid') {
     return (
       <TouchableOpacity 
-        style={styles.gridItem} 
-        onPress={handlePress}
-        activeOpacity={0.7}
+        style={[styles.gridItem, { backgroundColor: colors.surface }]} 
+        onPress={onPress}
       >
-        <View style={styles.gridIconContainer}>
-          {document.type === 'image' && document.thumbnailUrl ? (
-            <Image source={{ uri: document.thumbnailUrl }} style={styles.thumbnail} />
-          ) : (
-            getDocumentIcon()
-          )}
+        <View style={[styles.gridIconContainer, { backgroundColor: colors.surfaceVariant }]}>
+          {getFileIcon(document.type)}
         </View>
-        <Text style={styles.gridName} numberOfLines={2}>{document.name}</Text>
-        <View style={styles.gridInfo}>
-          <Text style={styles.gridDate}>{document.createdAt}</Text>
-          <Text style={styles.gridSize}>{document.size}</Text>
-        </View>
+        <Text style={[styles.gridTitle, { color: colors.text }]} numberOfLines={2}>
+          {document.name}
+        </Text>
+        <Text style={[styles.gridSubtitle, { color: colors.textSecondary }]}>
+          {formatFileSize(Number(document.size))}
+        </Text>
       </TouchableOpacity>
     );
   }
-  
+
   return (
     <TouchableOpacity 
-      style={styles.listItem} 
-      onPress={handlePress}
-      activeOpacity={0.7}
+      style={[styles.listItem, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]} 
+      onPress={onPress}
     >
-      <View style={styles.listIconContainer}>
-        {document.type === 'image' && document.thumbnailUrl ? (
-          <Image source={{ uri: document.thumbnailUrl }} style={styles.thumbnail} />
-        ) : (
-          getDocumentIcon()
-        )}
+      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceVariant }]}>
+        {getFileIcon(document.type)}
       </View>
-      <View style={styles.listInfo}>
-        <Text style={styles.listName} numberOfLines={1}>{document.name}</Text>
-        <View style={styles.listSubInfo}>
-          <Text style={styles.listDate}>{document.createdAt}</Text>
-          <Text style={styles.listSize}>{document.size}</Text>
+      
+      <View style={styles.documentInfo}>
+        <Text style={[styles.documentName, { color: colors.text }]} numberOfLines={1}>
+          {document.name}
+        </Text>
+        <View style={styles.documentMeta}>
+          <Text style={[styles.documentSize, { color: colors.textSecondary }]}>
+            {document.size}
+          </Text>
+          <Text style={[styles.documentDate, { color: colors.textSecondary }]}>
+            {new Date(document.createdAt).toLocaleDateString()}
+          </Text>
         </View>
       </View>
+      
+      <TouchableOpacity style={styles.moreButton}>
+        <MoreHorizontal size={20} color={colors.textSecondary} />
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  gridItem: {
-    width: 180,
-    marginRight: 16,
-    marginBottom: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  gridIconContainer: {
-    width: '100%',
-    height: 140,
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-    marginBottom: 12,
-    overflow: 'hidden',
-  },
-  gridName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#334155',
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  gridInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  gridDate: {
-    fontSize: 12,
-    color: '#94A3B8',
-  },
-  gridSize: {
-    fontSize: 12,
-    color: '#94A3B8',
-    fontWeight: '500',
-  },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  listIconContainer: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderBottomWidth: 1,
     borderRadius: 8,
-    marginRight: 12,
-    overflow: 'hidden',
-  },
-  listInfo: {
-    flex: 1,
-  },
-  listName: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#334155',
     marginBottom: 4,
   },
-  listSubInfo: {
+  gridItem: {
+    width: '48%',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  gridIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  documentInfo: {
+    flex: 1,
+  },
+  documentName: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  documentMeta: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  listDate: {
+  documentSize: {
     fontSize: 12,
-    color: '#94A3B8',
-    marginRight: 12,
+    marginRight: 8,
   },
-  listSize: {
+  documentDate: {
     fontSize: 12,
-    color: '#94A3B8',
+  },
+  moreButton: {
+    padding: 8,
+  },
+  gridTitle: {
+    fontSize: 14,
     fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 4,
   },
-  thumbnail: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
+  gridSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
   },
 });

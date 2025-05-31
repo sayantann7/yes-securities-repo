@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native
 import { useLocalSearchParams, router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, Grid, List, Filter, ArrowUpDown } from 'lucide-react-native';
-import { getFolderById, getFolderContents } from '@/services/folderService';
+import { getFolderData, getFolderContents } from '@/services/folderService';
 import { Folder, Document } from '@/types';
 import FolderItem from '@/components/document/FolderItem';
 import DocumentItem from '@/components/document/DocumentItem';
@@ -26,13 +26,13 @@ export default function FolderScreen() {
         setIsLoading(true);
         
         // Fetch the current folder details
-        const folderData = await getFolderById(id);
+        const folderData = await getFolderData(id);
         setFolder(folderData);
         
         // Fetch subfolders and documents in this folder
         const contents = await getFolderContents(id);
         setSubfolders(contents.folders);
-        setDocuments(contents.documents);
+        setDocuments(contents.files);
         
         // Build folder path
         const path = await buildFolderPath(id);
@@ -51,7 +51,6 @@ export default function FolderScreen() {
   
   const buildFolderPath = async (folderId: string): Promise<Array<{ id: string; name: string }>> => {
     // This would fetch the complete path to the folder
-    // For demonstration, we'll use a simple mock
     const folder = await getFolderById(folderId);
     const path = [{ id: folder.id, name: folder.name }];
     

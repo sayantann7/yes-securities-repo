@@ -7,6 +7,8 @@ import FolderItem from '@/components/document/FolderItem';
 import DocumentItem from '@/components/document/DocumentItem';
 import { Folder } from '@/types';
 import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
+import { useTheme } from '@/context/ThemeContext';
+import { Colors } from '@/constants/Colors';
 
 // Define constants for bottom spacing
 const TAB_BAR_HEIGHT = 64;
@@ -15,6 +17,8 @@ const SAFE_AREA_BOTTOM = 20;
 const TOTAL_BOTTOM_SPACING = TAB_BAR_HEIGHT + BOTTOM_SPACING + SAFE_AREA_BOTTOM;
 
 export default function DocumentsScreen() {
+  const { theme } = useTheme();
+  const colors = Colors[theme];
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const { folders, rootFolders, documents, isLoading } = useFetchFolders(currentFolderId);
@@ -80,13 +84,13 @@ export default function DocumentsScreen() {
                 style={styles.expandButton}
               >
                 {isExpanded ? 
-                  <ChevronDown size={16} color="#94A3B8" /> : 
-                  <ChevronRight size={16} color="#94A3B8" />
+                  <ChevronDown size={16} color={colors.textSecondary} /> : 
+                  <ChevronRight size={16} color={colors.textSecondary} />
                 }
               </TouchableOpacity>
             )}
             <FolderOpen size={20} color="#FBBC05" style={styles.folderIcon} />
-            <Text style={styles.folderName}>{folder.name}</Text>
+            <Text style={[styles.folderName, { color: colors.text }]}>{folder.name}</Text>
           </TouchableOpacity>
           
           {isExpanded && renderFolderTree(folder.id, level + 1)}
@@ -97,19 +101,19 @@ export default function DocumentsScreen() {
 
   // Render section headers
   const renderSectionHeader = (title: string) => (
-    <Text style={styles.sectionTitle}>{title}</Text>
+    <Text style={[styles.sectionTitle, { color: colors.primary }]}>{title}</Text>
   );
 
   // Render empty list component
   const renderEmptyComponent = (message: string) => (
-    <Text style={styles.emptyText}>{message}</Text>
+    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{message}</Text>
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <View style={styles.headerLeft}>
-          <Text style={styles.title}>Documents</Text>
+          <Text style={[styles.title, { color: colors.primary }]}>Documents</Text>
         </View>
       </View>
       
@@ -201,7 +205,6 @@ export default function DocumentsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FB',
   },
   header: {
     flexDirection: 'row',
@@ -210,9 +213,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   headerLeft: {
     flexDirection: 'row',
@@ -221,7 +222,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#0C2340',
   },
   content: {
     flex: 1,
@@ -242,7 +242,6 @@ const styles = StyleSheet.create({
   },
   folderName: {
     fontSize: 14,
-    color: '#334155',
     flex: 1,
   },
   documentsContainer: {
@@ -252,12 +251,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0C2340',
     marginBottom: 12,
     marginTop: 16,
   },
   emptyText: {
-    color: '#94A3B8',
     fontSize: 14,
     fontStyle: 'italic',
     marginVertical: 12,

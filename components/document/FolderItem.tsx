@@ -1,6 +1,8 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { FolderOpen } from 'lucide-react-native';
+import { Folder as FolderIcon, MoreHorizontal } from 'lucide-react-native';
 import { Folder } from '@/types';
+import { useTheme } from '@/context/ThemeContext';
+import { Colors } from '@/constants/Colors';
 
 interface FolderItemProps {
   folder: Folder;
@@ -8,25 +10,30 @@ interface FolderItemProps {
 }
 
 export default function FolderItem({ folder, onPress }: FolderItemProps) {
+  const { theme } = useTheme();
+  const colors = Colors[theme];
+
   return (
     <TouchableOpacity 
-      style={styles.container} 
+      style={[styles.container, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}
       onPress={onPress}
-      activeOpacity={0.7}
     >
-      <View style={styles.iconContainer}>
-        <FolderOpen size={24} color="#FBBC05" />
+      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceVariant }]}>
+        <FolderIcon size={24} color="#6B73FF" />
       </View>
-      <View style={styles.infoContainer}>
-        <Text style={styles.folderName}>{folder.name}</Text>
-        <View style={styles.metaContainer}>
-          <Text style={styles.metaText}>
-            {folder.itemCount || 0} {folder.itemCount === 1 ? 'item' : 'items'}
-          </Text>
-          <View style={styles.metaDot} />
-          <Text style={styles.metaText}>{folder.createdAt}</Text>
-        </View>
+      
+      <View style={styles.folderInfo}>
+        <Text style={[styles.folderName, { color: colors.text }]} numberOfLines={1}>
+          {folder.name}
+        </Text>
+        <Text style={[styles.folderCount, { color: colors.textSecondary }]}>
+          {folder.itemCount || 0} items
+        </Text>
       </View>
+      
+      <TouchableOpacity style={styles.moreButton}>
+        <MoreHorizontal size={20} color={colors.textSecondary} />
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 }
@@ -36,46 +43,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderBottomWidth: 1,
+    borderRadius: 8,
+    marginBottom: 4,
   },
   iconContainer: {
     width: 48,
     height: 48,
-    backgroundColor: '#FEF3C7',
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 8,
     marginRight: 12,
   },
-  infoContainer: {
+  folderInfo: {
     flex: 1,
   },
   folderName: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#334155',
-    marginBottom: 4,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
   },
-  metaContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  metaText: {
+  folderCount: {
     fontSize: 12,
-    color: '#94A3B8',
   },
-  metaDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: '#94A3B8',
-    marginHorizontal: 8,
+  moreButton: {
+    padding: 8,
   },
 });

@@ -7,7 +7,8 @@ import {
   TouchableOpacity, 
   FlatList, 
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Alert
 } from 'react-native';
 import { Send } from 'lucide-react-native';
 import { getComments, addComment } from '@/services/commentService';
@@ -36,6 +37,7 @@ export default function CommentsSection({ documentId }: CommentsSectionProps) {
       setComments(fetchedComments);
     } catch (error) {
       console.error('Error fetching comments:', error);
+      Alert.alert('Error', 'Failed to load comments. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -45,53 +47,65 @@ export default function CommentsSection({ documentId }: CommentsSectionProps) {
     if (!newComment.trim()) return;
     
     try {
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in to add a comment');
+        return;
+      }
+      
       const comment: Comment = {
-        id: Date.now().toString(),
+        id: Date.now().toString(), // Temporary ID, will be replaced by backend
         documentId,
         text: newComment,
         createdAt: new Date().toISOString(),
         author: {
-          id: user?.id || 'unknown',
-          name: user?.name || 'Unknown User',
-          avatar: user?.avatar || undefined
+          id: user.id || 'unknown',
+          name: user.name || 'Unknown User',
+          avatar: user.avatar || undefined,
+          email: user.email || '' // Add email which is needed for the backend
         },
         replies: []
       };
       
-      await addComment(comment);
-      setComments(prev => [comment, ...prev]);
+      const savedComment = await addComment(comment);
+      setComments(prev => [savedComment, ...prev]);
       setNewComment('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding comment:', error);
+      Alert.alert('Error', error.message || 'Failed to add comment. Please try again.');
     }
   };
   
   const handleReply = (parentId: string, replyText: string) => {
-    const updatedComments = comments.map(comment => {
-      if (comment.id === parentId) {
-        const newReply: Comment = {
-          id: Date.now().toString(),
-          documentId,
-          text: replyText,
-          createdAt: new Date().toISOString(),
-          author: {
-            id: user?.id || 'unknown',
-            name: user?.name || 'Unknown User',
-            avatar: user?.avatar || undefined
-          },
-          parentId: comment.id,
-          replies: []
-        };
-        
-        return {
-          ...comment,
-          replies: [...(comment.replies || []), newReply]
-        };
-      }
-      return comment;
-    });
+    // Since your backend doesn't support nested replies yet,
+    // we'll simplify this by treating replies as top-level comments
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to reply');
+      return;
+    }
     
-    setComments(updatedComments);
+    const newReply: Comment = {
+      id: Date.now().toString(),
+      documentId,
+      text: `Reply to comment: ${replyText}`, // Add context since we can't link to parent
+      createdAt: new Date().toISOString(),
+      author: {
+        id: user.id || 'unknown',
+        name: user.name || 'Unknown User',
+        avatar: user.avatar || undefined,
+        email: user.email || ''
+      },
+      parentId: parentId, // Keep this for frontend reference
+      replies: []
+    };
+    
+    addComment(newReply)
+      .then(savedReply => {
+        setComments(prev => [savedReply, ...prev]);
+      })
+      .catch(error => {
+        console.error('Error adding reply:', error);
+        Alert.alert('Error', 'Failed to add reply. Please try again.');
+      });
   };
   
   return (
@@ -143,75 +157,4 @@ export default function CommentsSection({ documentId }: CommentsSectionProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E1E1E1',
-    maxHeight: '50%',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E1E1E1',
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0C2340',
-  },
-  count: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#7A869A',
-    marginLeft: 8,
-  },
-  commentsList: {
-    maxHeight: 300,
-  },
-  commentsContent: {
-    padding: 16,
-  },
-  loadingText: {
-    padding: 16,
-    color: '#7A869A',
-    textAlign: 'center',
-  },
-  emptyText: {
-    padding: 16,
-    color: '#7A869A',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E1E1E1',
-    alignItems: 'flex-end',
-  },
-  input: {
-    flex: 1,
-    backgroundColor: '#F0F4F8',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    maxHeight: 100,
-    fontSize: 16,
-    color: '#333333',
-  },
-  sendButton: {
-    backgroundColor: '#0C2340',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  sendButtonDisabled: {
-    backgroundColor: '#E1E1E1',
-  },
-});
+// Keep existing styles

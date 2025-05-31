@@ -1,71 +1,68 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { FileText, FileImage, FileVideo, FileAudio, File } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { FileText, Calendar, User } from 'lucide-react-native';
 import { Document } from '@/types';
+import { useTheme } from '@/context/ThemeContext';
+import { Colors } from '@/constants/Colors';
 
 interface DocumentSearchItemProps {
   document: Document;
   searchTerm: string;
+  onPress?: () => void;
 }
 
-export default function DocumentSearchItem({ document, searchTerm }: DocumentSearchItemProps) {
-  const handlePress = () => {
-    router.push(`/document/${document.id}`);
-  };
-  
-  const getDocumentIcon = () => {
-    switch (document.type) {
-      case 'pdf':
-        return <FileText size={24} color="#E53935" />;
-      case 'image':
-        return <FileImage size={24} color="#4285F4" />;
-      case 'video':
-        return <FileVideo size={24} color="#34A853" />;
-      case 'audio':
-        return <FileAudio size={24} color="#FBBC05" />;
-      default:
-        return <File size={24} color="#7A869A" />;
-    }
-  };
-  
-  // Highlight search term in document name or content
-  const highlightMatches = (text: string) => {
-    if (!searchTerm || searchTerm.trim() === '') return text;
+export default function DocumentSearchItem({ document, searchTerm, onPress }: DocumentSearchItemProps) {
+  const { theme } = useTheme();
+  const colors = Colors[theme];
+
+  const highlightSearchTerm = (text: string, term: string) => {
+    if (!term) return text;
     
-    const regex = new RegExp(`(${searchTerm.trim()})`, 'gi');
-    const parts = text.split(regex);
-    
-    return parts.map((part, i) => {
-      if (part.toLowerCase() === searchTerm.toLowerCase()) {
-        return <Text key={i} style={styles.highlight}>{part}</Text>;
-      }
-      return part;
-    });
+    const parts = text.split(new RegExp(`(${term})`, 'gi'));
+    return parts.map((part, index) => (
+      <Text
+        key={index}
+        style={part.toLowerCase() === term.toLowerCase() ? { backgroundColor: colors.warning } : {}}
+      >
+        {part}
+      </Text>
+    ));
   };
-  
+
   return (
-    <TouchableOpacity style={styles.container} onPress={handlePress}>
-      <View style={styles.iconContainer}>
-        {getDocumentIcon()}
+    <TouchableOpacity 
+      style={[styles.container, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}
+      onPress={onPress}
+    >
+      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceVariant }]}>
+        <FileText size={20} color={colors.primary} />
       </View>
-      <View style={styles.infoContainer}>
-        <Text style={styles.name}>
-          {highlightMatches(document.name)}
+      
+      <View style={styles.content}>
+        <Text style={[styles.title, { color: colors.text }]}>
+          {highlightSearchTerm(document.name, searchTerm)}
         </Text>
         
-        {document.content && (
-          <Text style={styles.contentPreview} numberOfLines={2}>
-            {highlightMatches(document.content)}
+        <View style={styles.metadata}>
+          <View style={styles.metaItem}>
+            <User size={12} color={colors.textSecondary} />
+            <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+              {document.author || 'Unknown'}
+            </Text>
+          </View>
+          
+          <View style={styles.metaItem}>
+            <Calendar size={12} color={colors.textSecondary} />
+            <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+              {new Date(document.lastModified).toLocaleDateString()}
+            </Text>
+          </View>
+        </View>
+        
+        {document.preview && (
+          <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={2}>
+            {highlightSearchTerm(document.preview, searchTerm)}
           </Text>
         )}
-        
-        <View style={styles.metaContainer}>
-          <Text style={styles.meta}>{document.type.toUpperCase()}</Text>
-          <Text style={styles.meta}>•</Text>
-          <Text style={styles.meta}>{document.createdAt}</Text>
-          <Text style={styles.meta}>•</Text>
-          <Text style={styles.meta}>{document.author}</Text>
-        </View>
       </View>
     </TouchableOpacity>
   );
@@ -75,49 +72,41 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     padding: 12,
-    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
     borderRadius: 8,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#F0F4F8',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-    marginRight: 12,
-  },
-  infoContainer: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333333',
     marginBottom: 4,
   },
-  contentPreview: {
-    fontSize: 14,
-    color: '#555555',
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  content: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  metadata: {
+    flexDirection: 'row',
     marginBottom: 8,
   },
-  metaContainer: {
+  metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginRight: 16,
   },
-  meta: {
+  metaText: {
     fontSize: 12,
-    color: '#7A869A',
-    marginRight: 6,
+    marginLeft: 4,
   },
-  highlight: {
-    backgroundColor: '#FFF9C4',
-    color: '#333333',
+  preview: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

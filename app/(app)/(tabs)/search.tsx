@@ -14,8 +14,13 @@ import DocumentSearchItem from '@/components/document/DocumentSearchItem';
 import { searchDocuments } from '@/services/documentService';
 import { Document } from '@/types';
 import FilterModal from '@/components/search/FilterModal';
+import { useTheme } from '@/context/ThemeContext';
+import { Colors } from '@/constants/Colors';
 
 export default function SearchScreen() {
+  const { theme } = useTheme();
+  const colors = Colors[theme];
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -106,38 +111,38 @@ export default function SearchScreen() {
     if (!hasActiveFilters()) return null;
     
     return (
-      <View style={styles.filterChipsContainer}>
+      <View style={[styles.filterChipsContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         {activeFilters.fileTypes.map(fileType => (
           <TouchableOpacity 
             key={fileType} 
-            style={styles.filterChip}
+            style={[styles.filterChip, { backgroundColor: colors.surfaceVariant }]}
             onPress={() => removeFileTypeFilter(fileType)}
           >
-            <Text style={styles.filterChipText}>Type: {fileType}</Text>
-            <X size={14} color="#0C2340" />
+            <Text style={[styles.filterChipText, { color: colors.primary }]}>Type: {fileType}</Text>
+            <X size={14} color={colors.primary} />
           </TouchableOpacity>
         ))}
         
         {activeFilters.authors.map(author => (
           <TouchableOpacity 
             key={author} 
-            style={styles.filterChip}
+            style={[styles.filterChip, { backgroundColor: colors.surfaceVariant }]}
             onPress={() => removeAuthorFilter(author)}
           >
-            <Text style={styles.filterChipText}>By: {author}</Text>
-            <X size={14} color="#0C2340" />
+            <Text style={[styles.filterChipText, { color: colors.primary }]}>By: {author}</Text>
+            <X size={14} color={colors.primary} />
           </TouchableOpacity>
         ))}
         
         {(activeFilters.dateRange.start || activeFilters.dateRange.end) && (
           <TouchableOpacity 
-            style={styles.filterChip}
+            style={[styles.filterChip, { backgroundColor: colors.surfaceVariant }]}
             onPress={clearDateFilter}
           >
-            <Text style={styles.filterChipText}>
+            <Text style={[styles.filterChipText, { color: colors.primary }]}>
               Date: {activeFilters.dateRange.start?.toLocaleDateString() || 'Any'} - {activeFilters.dateRange.end?.toLocaleDateString() || 'Any'}
             </Text>
-            <X size={14} color="#0C2340" />
+            <X size={14} color={colors.primary} />
           </TouchableOpacity>
         )}
         
@@ -145,40 +150,40 @@ export default function SearchScreen() {
           style={styles.clearAllButton}
           onPress={clearAllFilters}
         >
-          <Text style={styles.clearAllText}>Clear All</Text>
+          <Text style={[styles.clearAllText, { color: colors.primary }]}>Clear All</Text>
         </TouchableOpacity>
       </View>
     );
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Search</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.title, { color: colors.primary }]}>Search</Text>
       </View>
       
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <SearchIcon color="#7A869A" size={20} style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.background }]}>
+          <SearchIcon color={colors.textSecondary} size={20} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder="Search documents, folders, content..."
-            placeholderTextColor="#7A869A"
+            placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-              <X color="#7A869A" size={18} />
+              <X color={colors.textSecondary} size={18} />
             </TouchableOpacity>
           )}
         </View>
         
         <TouchableOpacity 
-          style={styles.filterButton}
+          style={[styles.filterButton, { backgroundColor: colors.background }]}
           onPress={() => setShowFilterModal(true)}
         >
-          <Filter color="#0C2340" size={20} />
+          <Filter color={colors.primary} size={20} />
         </TouchableOpacity>
       </View>
       
@@ -187,12 +192,12 @@ export default function SearchScreen() {
       <View style={styles.resultsContainer}>
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0C2340" />
-            <Text style={styles.loadingText}>Searching...</Text>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Searching...</Text>
           </View>
         ) : results.length > 0 ? (
           <>
-            <Text style={styles.resultsCount}>{results.length} results found</Text>
+            <Text style={[styles.resultsCount, { color: colors.textSecondary }]}>{results.length} results found</Text>
             <FlatList
               data={results}
               keyExtractor={(item) => item.id}
@@ -205,15 +210,15 @@ export default function SearchScreen() {
           </>
         ) : searchQuery.trim() !== '' ? (
           <View style={styles.emptyResultsContainer}>
-            <FileText size={48} color="#D1D5DB" />
-            <Text style={styles.noResultsText}>No documents found</Text>
-            <Text style={styles.noResultsSubtext}>Try adjusting your search or filters</Text>
+            <FileText size={48} color={colors.textSecondary} />
+            <Text style={[styles.noResultsText, { color: colors.primary }]}>No documents found</Text>
+            <Text style={[styles.noResultsSubtext, { color: colors.textSecondary }]}>Try adjusting your search or filters</Text>
           </View>
         ) : (
           <View style={styles.startSearchContainer}>
-            <SearchIcon size={48} color="#D1D5DB" />
-            <Text style={styles.startSearchText}>Start searching</Text>
-            <Text style={styles.startSearchSubtext}>Enter keywords to find documents, folders, or content</Text>
+            <SearchIcon size={48} color={colors.textSecondary} />
+            <Text style={[styles.startSearchText, { color: colors.primary }]}>Start searching</Text>
+            <Text style={[styles.startSearchSubtext, { color: colors.textSecondary }]}>Enter keywords to find documents, folders, or content</Text>
           </View>
         )}
       </View>
@@ -231,33 +236,27 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#0C2340',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E1E1E1',
   },
   searchBar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F7',
     borderRadius: 8,
     paddingHorizontal: 12,
     height: 44,
@@ -268,7 +267,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#333333',
   },
   clearButton: {
     padding: 4,
@@ -279,7 +277,6 @@ const styles = StyleSheet.create({
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F7',
     borderRadius: 8,
   },
   resultsContainer: {
@@ -288,7 +285,6 @@ const styles = StyleSheet.create({
   },
   resultsCount: {
     fontSize: 14,
-    color: '#7A869A',
     marginBottom: 12,
   },
   resultsList: {
@@ -302,7 +298,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#7A869A',
   },
   emptyResultsContainer: {
     flex: 1,
@@ -312,12 +307,10 @@ const styles = StyleSheet.create({
   noResultsText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0C2340',
     marginTop: 16,
   },
   noResultsSubtext: {
     fontSize: 14,
-    color: '#7A869A',
     marginTop: 8,
     textAlign: 'center',
     paddingHorizontal: 32,
@@ -330,12 +323,10 @@ const styles = StyleSheet.create({
   startSearchText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0C2340',
     marginTop: 16,
   },
   startSearchSubtext: {
     fontSize: 14,
-    color: '#7A869A',
     marginTop: 8,
     textAlign: 'center',
     paddingHorizontal: 32,
@@ -345,14 +336,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E1E1E1',
   },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F4F8',
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -361,7 +349,6 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: 13,
-    color: '#0C2340',
     marginRight: 6,
   },
   clearAllButton: {
@@ -371,7 +358,6 @@ const styles = StyleSheet.create({
   },
   clearAllText: {
     fontSize: 13,
-    color: '#0C2340',
     fontWeight: '500',
   },
 });

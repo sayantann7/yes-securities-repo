@@ -2,12 +2,17 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { FileText, FileImage, FileVideo, FileAudio, File } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Document } from '@/types';
+import { useTheme } from '@/context/ThemeContext';
+import { Colors } from '@/constants/Colors';
 
 interface RecentDocumentItemProps {
   document: Document;
 }
 
 export function RecentDocumentItem({ document }: RecentDocumentItemProps) {
+  const { theme } = useTheme();
+  const colors = Colors[theme];
+
   const handlePress = () => {
     router.push(`/document/${document.id}`);
   };
@@ -23,21 +28,25 @@ export function RecentDocumentItem({ document }: RecentDocumentItemProps) {
       case 'audio':
         return <FileAudio size={24} color="#FBBC05" />;
       default:
-        return <File size={24} color="#7A869A" />;
+        return <File size={24} color={colors.textSecondary} />;
     }
   };
   
   return (
-    <TouchableOpacity style={styles.container} onPress={handlePress}>
-      <View style={styles.iconContainer}>
+    <TouchableOpacity style={[styles.container, { backgroundColor: colors.surface }]} onPress={handlePress}>
+      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceVariant }]}>
         {document.type === 'image' && document.thumbnailUrl ? (
           <Image source={{ uri: document.thumbnailUrl }} style={styles.thumbnail} />
         ) : (
           getDocumentIcon()
         )}
       </View>
-      <Text style={styles.name} numberOfLines={2}>{document.name}</Text>
-      <Text style={styles.date}>{document.createdAt}</Text>
+      <Text style={[styles.name, { color: colors.text }]} numberOfLines={2}>
+        {document.name}
+      </Text>
+      <Text style={[styles.date, { color: colors.textSecondary }]}>
+        {document.createdAt}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -46,11 +55,17 @@ const styles = StyleSheet.create({
   container: {
     width: 140,
     marginRight: 12,
+    borderRadius: 12,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   iconContainer: {
-    width: 140,
-    height: 100,
-    backgroundColor: '#F0F4F8',
+    width: 124,
+    height: 88,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
@@ -65,11 +80,9 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333333',
     marginBottom: 4,
   },
   date: {
     fontSize: 12,
-    color: '#7A869A',
   },
 });

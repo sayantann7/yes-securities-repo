@@ -1,123 +1,187 @@
 import { Document } from '@/types';
 
-// Mock data for documents
-const MOCK_DOCUMENTS: Document[] = [
-  {
-    id: 'd1',
-    name: 'Q2 Sales Report 2025.pdf',
-    type: 'pdf',
-    size: '2.4 MB',
-    url: 'https://example.com/documents/q2-sales-report.pdf',
-    createdAt: '2025-06-15',
-    author: 'John Doe',
-    folderId: 'f1',
-    commentCount: 5
-  },
-  {
-    id: 'd2',
-    name: 'Investment Strategy Presentation.pdf',
-    type: 'pdf',
-    size: '5.8 MB',
-    url: 'https://example.com/documents/investment-strategy.pdf',
-    createdAt: '2025-06-10',
-    author: 'Jane Smith',
-    folderId: 'f1',
-    commentCount: 3
-  },
-  {
-    id: 'd3',
-    name: 'Client Meeting Notes.pdf',
-    type: 'pdf',
-    size: '1.2 MB',
-    url: 'https://example.com/documents/client-meeting-notes.pdf',
-    createdAt: '2025-06-05',
-    author: 'Robert Johnson',
-    folderId: 'f2',
-    commentCount: 0
-  },
-  {
-    id: 'd4',
-    name: 'Market Analysis June 2025.pdf',
-    type: 'pdf',
-    size: '3.7 MB',
-    url: 'https://example.com/documents/market-analysis.pdf',
-    createdAt: '2025-06-01',
-    author: 'Emily Davis',
-    folderId: 'f2',
-    commentCount: 8
-  },
-  {
-    id: 'd5',
-    name: 'Company Logo.png',
-    type: 'image',
-    size: '0.5 MB',
-    url: 'https://images.pexels.com/photos/5849577/pexels-photo-5849577.jpeg',
-    thumbnailUrl: 'https://images.pexels.com/photos/5849577/pexels-photo-5849577.jpeg?auto=compress&cs=tinysrgb&w=300',
-    createdAt: '2025-05-20',
-    author: 'Michael Wilson',
-    folderId: 'f3',
-    commentCount: 1
-  },
-  {
-    id: 'd6',
-    name: 'Product Presentation Video.mp4',
-    type: 'video',
-    size: '45.2 MB',
-    url: 'https://example.com/documents/product-presentation.mp4',
-    createdAt: '2025-05-15',
-    author: 'Sarah Thompson',
-    folderId: 'f3',
-    commentCount: 12
-  },
-  {
-    id: 'd7',
-    name: 'Financial Analysis Spreadsheet.xlsx',
-    type: 'spreadsheet',
-    size: '1.8 MB',
-    url: 'https://example.com/documents/financial-analysis.xlsx',
-    createdAt: '2025-05-10',
-    author: 'David Rodriguez',
-    folderId: 'f4',
-    content: 'Detailed financial analysis of Q2 2025 performance metrics across all business units',
-    commentCount: 7
-  },
-  {
-    id: 'd8',
-    name: 'Investment Proposal Template.docx',
-    type: 'document',
-    size: '0.9 MB',
-    url: 'https://example.com/documents/investment-proposal.docx',
-    createdAt: '2025-05-05',
-    author: 'Jennifer Lee',
-    folderId: 'f4',
-    content: 'Standard template for creating investment proposals for high-net-worth clients',
-    commentCount: 2
-  },
-];
+// Base URL for API requests
+const API_URL = 'http://192.168.1.34:3000/api';
 
-// In a real app, these would be API calls to a backend server
-export const getDocuments = async (folderId: string | null = null): Promise<Document[]> => {
-  // Simulate API request delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+// Helper function to determine file type from key
+const getFileType = (key: string): string => {
+  const extension = key.split('.').pop()?.toLowerCase() || '';
   
-  if (folderId) {
-    return MOCK_DOCUMENTS.filter(doc => doc.folderId === folderId);
+  switch (extension) {
+    case 'pdf':
+      return 'pdf';
+    case 'png':
+    case 'jpg':
+    case 'jpeg':
+    case 'gif':
+    case 'svg':
+      return 'image';
+    case 'mp4':
+    case 'mov':
+    case 'avi':
+      return 'video';
+    case 'mp3':
+    case 'wav':
+      return 'audio';
+    case 'xlsx':
+    case 'xls':
+      return 'spreadsheet';
+    case 'docx':
+    case 'doc':
+      return 'document';
+    case 'pptx':
+    case 'ppt':
+      return 'presentation';
+    default:
+      return 'file';
   }
-  
-  return MOCK_DOCUMENTS;
+};
+
+// Format file size in a readable way
+const formatFileSize = (sizeInBytes: number): string => {
+  if (sizeInBytes < 1024) {
+    return `${sizeInBytes} B`;
+  } else if (sizeInBytes < 1024 * 1024) {
+    return `${(sizeInBytes / 1024).toFixed(1)} KB`;
+  } else if (sizeInBytes < 1024 * 1024 * 1024) {
+    return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
+  } else {
+    return `${(sizeInBytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  }
+};
+
+const getDocumentUrl = async (id: string): Promise<string> => {
+  return await getDocumentById(id).then(doc => doc.url)
+};
+
+export const getDocuments = async (folderId: string | null = null): Promise<Document[]> => {
+  try {
+    let prefix = '';
+    if (folderId) {
+      prefix = folderId;
+    }
+
+    // Changed from GET to POST
+    const response = await fetch(`${API_URL}/folders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prefix }),
+    });
+
+    if (!response.ok) {
+      console.error('Failed to fetch documents, status:', response.status);
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
+      throw new Error('Failed to fetch documents');
+    }
+
+    const data = await response.json();
+    console.log('Documents API response:', data); // For debugging
+    
+    // Transform the files from S3 into Document objects
+    const documents: Document[] = [];
+    
+    // Check if files exists and is an array - FIXED THIS CONDITION
+    if (data.files && Array.isArray(data.files)) {
+      console.log(`Processing ${data.files.length} files in folder ${prefix || 'root'}`);
+      
+      for (const item of data.files) {
+        if (!item || !item.Key) {
+          console.warn('Invalid file item:', item);
+          continue;
+        }
+        
+        const keyParts = item.Key.split('/');
+        const fileName = keyParts[keyParts.length - 1];
+        
+        try {
+          // Fetch document URL directly without circular dependency
+          const urlResponse = await fetch(`${API_URL}/files/fetch`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ key: item.Key }),
+          });
+          
+          if (!urlResponse.ok) {
+            console.error(`Failed to get URL for ${item.Key}, status:`, urlResponse.status);
+            continue;
+          }
+          
+          const urlData = await urlResponse.json();
+          
+          documents.push({
+            id: item.Key,
+            name: fileName,
+            type: getFileType(fileName),
+            size: formatFileSize(item.Size || 0),
+            url: urlData.url, // Use URL directly from response
+            createdAt: new Date(item.LastModified || Date.now()).toISOString(),
+            author: 'Unknown',
+            folderId: folderId,
+            commentCount: 0
+          });
+        } catch (err) {
+          console.error(`Error processing file ${item.Key}:`, err);
+        }
+      }
+    } else {
+      console.log(`No files found in folder ${prefix || 'root'}, only folders`);
+    }
+    
+    return documents;
+  } catch (error) {
+    console.error('Error fetching documents:', error);
+    throw error;
+  }
 };
 
 export const getDocumentById = async (id: string): Promise<Document> => {
-  // Simulate API request delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const document = MOCK_DOCUMENTS.find(doc => doc.id === id);
-  
-  if (!document) {
+  try {
+    // First, we need to get the metadata about the document
+    const keyParts = id.split('/');
+    const fileName = keyParts[keyParts.length - 1];
+    const folderId = keyParts.slice(0, -1).join('/') + '/';
+    
+    // Get the signed URL for viewing/downloading - changed to POST
+    const urlResponse = await fetch(`${API_URL}/files/fetch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ key: id }),
+    });
+
+    if (!urlResponse.ok) {
+      console.error('Failed to get document URL, status:', urlResponse.status);
+      const errorText = await urlResponse.text();
+      console.error('Error response:', errorText);
+      throw new Error('Failed to get document URL');
+    }
+
+    const urlData = await urlResponse.json();
+    console.log('Document URL response:', urlData); // For debugging
+    
+    // Since we don't have a direct way to get full metadata from just the key,
+    // we'll create a document object with available information
+    return {
+      id: id,
+      name: fileName,
+      type: getFileType(fileName),
+      size: 'Unknown', // Would need separate call to get size
+      url: urlData.url,
+      createdAt: new Date().toISOString(),
+      author: 'Unknown', // S3 doesn't provide author information
+      folderId: folderId,
+      commentCount: 0 // Needs separate tracking system
+    };
+  } catch (error) {
+    console.error('Error getting document:', error);
     throw new Error('Document not found');
   }
-  
-  return document;
 };
 
 export const searchDocuments = async (
@@ -128,41 +192,46 @@ export const searchDocuments = async (
     authors?: string[];
   }
 ): Promise<Document[]> => {
-  // Simulate API request delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // Basic search implementation
-  let results = MOCK_DOCUMENTS.filter(doc => 
-    doc.name.toLowerCase().includes(query.toLowerCase()) ||
-    (doc.content && doc.content.toLowerCase().includes(query.toLowerCase()))
-  );
-  
-  // Apply filters if provided
-  if (filters) {
-    if (filters.fileTypes && filters.fileTypes.length > 0) {
-      results = results.filter(doc => filters.fileTypes?.includes(doc.type));
+  try {
+    // Fetch all documents from root
+    const allDocuments = await getDocuments('');
+    
+    // Filter documents based on search query
+    let results = allDocuments.filter(doc => 
+      doc.name.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    // Apply additional filters
+    if (filters) {
+      if (filters.fileTypes && filters.fileTypes.length > 0) {
+        results = results.filter(doc => filters.fileTypes?.includes(doc.type));
+      }
+      
+      if (filters.dateRange?.start || filters.dateRange?.end) {
+        results = results.filter(doc => {
+          const docDate = new Date(doc.createdAt);
+          
+          if (filters.dateRange?.start && filters.dateRange?.end) {
+            return docDate >= filters.dateRange.start && docDate <= filters.dateRange.end;
+          } else if (filters.dateRange?.start) {
+            return docDate >= filters.dateRange.start;
+          } else if (filters.dateRange?.end) {
+            return docDate <= filters.dateRange.end;
+          }
+          
+          return true;
+        });
+      }
+      
+      // Author filtering is less relevant with S3 but keeping for UI compatibility
+      if (filters.authors && filters.authors.length > 0) {
+        results = results.filter(doc => filters.authors?.includes(doc.author));
+      }
     }
     
-    if (filters.authors && filters.authors.length > 0) {
-      results = results.filter(doc => filters.authors?.includes(doc.author));
-    }
-    
-    if (filters.dateRange?.start || filters.dateRange?.end) {
-      results = results.filter(doc => {
-        const docDate = new Date(doc.createdAt);
-        
-        if (filters.dateRange?.start && filters.dateRange?.end) {
-          return docDate >= filters.dateRange.start && docDate <= filters.dateRange.end;
-        } else if (filters.dateRange?.start) {
-          return docDate >= filters.dateRange.start;
-        } else if (filters.dateRange?.end) {
-          return docDate <= filters.dateRange.end;
-        }
-        
-        return true;
-      });
-    }
+    return results;
+  } catch (error) {
+    console.error('Error searching documents:', error);
+    throw error;
   }
-  
-  return results;
 };

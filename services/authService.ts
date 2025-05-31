@@ -1,49 +1,109 @@
 import { User } from '@/context/AuthContext';
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
-// Mock data for authentication
-const MOCK_USER: User = {
-  id: '1',
-  name: 'John Doe',
-  email: 'john.doe@yessecurities.com',
-  role: 'sales',
-  avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg'
+// Base URL for API requests
+const API_URL = 'http://192.168.1.34:3000';
+
+// Export this helper function so it can be used elsewhere
+export const getToken = async (): Promise<string | null> => {
+  if (Platform.OS === 'web') {
+    return localStorage.getItem('auth_token');
+  } else {
+    return await SecureStore.getItemAsync('auth_token');
+  }
 };
 
-const MOCK_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE4OTAyMzkwMjJ9.fxB2Q9H2dP5PKI6G8LVX9TdCvO4XyzCOMzx-iY0vwQw';
-
-// In a real app, these would be API calls to a backend server
 export const authService = {
   login: async (email: string, password: string): Promise<{ token: string; user: User }> => {
-    // Simulate API request delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Simple validation
-    if (email.trim() === '' || password.trim() === '') {
-      throw new Error('Email and password are required');
+    try {
+      const response = await fetch(`${API_URL}/user/signin`, {
+        method: 'POST', 
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+
+      console.log('Login response:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Authentication failed');
+      }
+      
+      // Transform backend response to match frontend expected format
+      const userData: User = {
+        id: data.user.id,
+        name: data.user.fullname,
+        email: data.user.email,
+        role: data.user.role,
+      };
+      
+      return {
+        token: data.token,
+        user: userData
+      };
+    } catch (error: any) {
+      if (error.message) {
+        throw new Error(error.message);
+      }
+      throw new Error('Network error. Please check your connection.');
     }
-    
-    // For demo purposes, accept any email/password combination
-    // In a real app, this would validate credentials against a backend
-    
-    return {
-      token: MOCK_TOKEN,
-      user: MOCK_USER
-    };
   },
   
   getUserProfile: async (): Promise<User> => {
-    // Simulate API request delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // This would typically use the token to fetch the user profile
+    // Since your backend doesn't have a dedicated endpoint for this yet,
+    // we'll rely on the data stored after login
+    const token = await getToken();
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
     
-    // In a real app, this would fetch the user profile from a backend using the stored token
-    return MOCK_USER;
+    // Get user from stored data
+    // In a complete implementation, you would fetch this from the backend
+    const userData = getUserDataFromToken(token);
+    return userData;
   },
   
   refreshToken: async (): Promise<string> => {
-    // Simulate API request delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Your backend doesn't have a refresh token endpoint yet
+    // This would be implemented when your backend supports it
+    throw new Error('Refresh token not implemented');
+  }
+};
+
+// Helper function to extract user data from JWT token
+const getUserDataFromToken = (token: string): User => {
+  try {
+    // Decode the JWT token (simple decode, not verification)
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join('')
+    );
     
-    // In a real app, this would send the refresh token to get a new access token
-    return MOCK_TOKEN;
+    const payload = JSON.parse(jsonPayload);
+    
+    // This assumes your backend includes user details in the token
+    // You may need to adjust based on what's actually in your token
+    return {
+      id: payload.userId,
+      email: payload.email,
+      name: '', // These fields aren't in the token
+      role: 'sales', // Using default values
+    };
+  } catch (error) {
+    console.error('Error decoding token:', error);
+    return {
+      id: '',
+      name: '',
+      email: '',
+      role: 'sales',
+    };
   }
 };

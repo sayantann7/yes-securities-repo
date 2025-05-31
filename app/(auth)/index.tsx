@@ -92,9 +92,9 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
         
-        <TouchableOpacity style={styles.forgotPassword}>
+        {/* <TouchableOpacity style={styles.forgotPassword}>
           <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         
         <TouchableOpacity 
           style={styles.loginButton} 
@@ -116,6 +116,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F7',
+    paddingTop: 90,
   },
   logoContainer: {
     alignItems: 'center',
