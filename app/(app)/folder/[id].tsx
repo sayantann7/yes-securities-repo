@@ -2,7 +2,8 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native
 import { useLocalSearchParams, router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, Grid, List, Filter, ArrowUpDown } from 'lucide-react-native';
-import { getFolderData, getFolderContents } from '@/services/folderService';
+import { getFolderData, getFolderById, getFolders } from '@/services/folderService';
+import { getDocuments } from '@/services/documentService';
 import { Folder, Document } from '@/types';
 import FolderItem from '@/components/document/FolderItem';
 import DocumentItem from '@/components/document/DocumentItem';
@@ -29,10 +30,15 @@ export default function FolderScreen() {
         const folderData = await getFolderData(id);
         setFolder(folderData);
         
-        // Fetch subfolders and documents in this folder
-        const contents = await getFolderContents(id);
-        setSubfolders(contents.folders);
-        setDocuments(contents.files);
+        // Fetch subfolders in this folder
+        const subfoldersList = await getFolders(id);
+        console.log('Fetched subfolders:', subfoldersList);
+        setSubfolders(subfoldersList);
+        
+        // Fetch documents in this folder
+        const documentsList = await getDocuments(id);
+        console.log('Fetched documents:', documentsList);
+        setDocuments(documentsList);
         
         // Build folder path
         const path = await buildFolderPath(id);

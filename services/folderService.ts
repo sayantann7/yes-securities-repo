@@ -6,9 +6,10 @@ const API_URL = 'http://192.168.1.34:3000/api';
 
 export const getFolders = async (parentId: string | null = null): Promise<Folder[]> => {
   try {
+    // Normalize prefix: ensure trailing slash if parentId provided
     let prefix = '';
     if (parentId) {
-      prefix = parentId;
+      prefix = parentId.endsWith('/') ? parentId : `${parentId}/`;
     }
 
     // Changed from GET to POST
@@ -92,42 +93,18 @@ export const getFolderData = async (folderId: string | null = null): Promise<Fol
   }
 };
 
-export const getFolderContents = async (folderId: string | null = null): Promise<{ folders: any[]; files: any[] }> => {
-  try {
-    let prefix = '';
-    if (folderId) {
-      prefix = folderId;
-    }
-
-    // Changed from GET to POST
-    const response = await fetch(`${API_URL}/folders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ prefix }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch folders');
-    }
-
-    const data = await response.json();
-
-    // Assuming data.files is an array, not using shift() to avoid removing the first element
-    const files = Array.isArray(data.files) ? data.files : [];
-
-    const folderData = { 
-      folders: Array.isArray(data.folders) ? data.folders : [],
-      files: files
-    };
-
-    return folderData;
-  } catch (error) {
-    console.error('Error fetching folders:', error);
-    throw error;
-  }
+// Fetch both subfolders and documents using existing services
+export const getFolderContents = async (
+  folderId: string | null = null
+): Promise<{ folders: Folder[]; files: Document[] }> => {
+  // Reuse getFolders and getDocuments to retrieve properly formatted data
+  const folders = await getFolders(folderId);
+  const files = await getDocuments(folderId);
+  return { folders, files };
 };
+
+// Provide a way to fetch a single folder by ID for breadcrumb building
+export const getFolderById = getFolderData;
 
 function formatPrefix(prefix : string): string {
   // 1. Strip off any trailing slash (if present)

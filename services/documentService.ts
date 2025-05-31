@@ -56,9 +56,10 @@ const getDocumentUrl = async (id: string): Promise<string> => {
 
 export const getDocuments = async (folderId: string | null = null): Promise<Document[]> => {
   try {
+    // Ensure API prefix ends with slash if a folderId is provided
     let prefix = '';
     if (folderId) {
-      prefix = folderId;
+      prefix = folderId.endsWith('/') ? folderId : `${folderId}/`;
     }
 
     // Changed from GET to POST
@@ -88,23 +89,26 @@ export const getDocuments = async (folderId: string | null = null): Promise<Docu
       console.log(`Processing ${data.files.length} files in folder ${prefix || 'root'}`);
       
       for (const item of data.files) {
-        if (!item || !item.Key) {
-          console.warn('Invalid file item:', item);
+        // Determine S3 key (string or object), skip invalid/folders
+        const key = typeof item === 'string' ? item : item.Key;
+        if (!key || key.endsWith('/')) {
           continue;
         }
-        
-        const keyParts = item.Key.split('/');
+        const keyParts = key.split('/');
         const fileName = keyParts[keyParts.length - 1];
-        
-        try {
-          // Fetch document URL directly without circular dependency
-          const urlResponse = await fetch(`${API_URL}/files/fetch`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ key: item.Key }),
-          });
+        // Extract size and lastModified if present
+        const sizeBytes = typeof item === 'object' && item.Size ? item.Size : 0;
+        const lastModified = typeof item === 'object' && item.LastModified ? item.LastModified : Date.now();
+         
+         try {
+           // Fetch document URL directly without circular dependency
+           const urlResponse = await fetch(`${API_URL}/files/fetch`, {
+             method: 'POST',
+             headers: {
+               'Content-Type': 'application/json',
+             },
+             body: JSON.stringify({ key }),
+           });
           
           if (!urlResponse.ok) {
             console.error(`Failed to get URL for ${item.Key}, status:`, urlResponse.status);
@@ -114,12 +118,12 @@ export const getDocuments = async (folderId: string | null = null): Promise<Docu
           const urlData = await urlResponse.json();
           
           documents.push({
-            id: item.Key,
+            id: key,
             name: fileName,
             type: getFileType(fileName),
-            size: formatFileSize(item.Size || 0),
+            size: formatFileSize(sizeBytes),
             url: urlData.url, // Use URL directly from response
-            createdAt: new Date(item.LastModified || Date.now()).toISOString(),
+            createdAt: new Date(lastModified).toISOString(),
             author: 'Unknown',
             folderId: folderId,
             commentCount: 0
