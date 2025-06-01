@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import { ChevronLeft, FilePlus } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
@@ -22,7 +23,8 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
   const colors = Colors[theme];
 
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<any | null>(null);
+  // include fileObj for web file blobs
+  const [selectedFiles, setSelectedFiles] = useState<Array<{ uri: string; name: string; mimeType?: string; fileObj?: Blob }>>([]);
   const [uploading, setUploading] = useState(false);
 
   const { folders, rootFolders, documents, isLoading } = useFetchFolders(currentFolderId);
@@ -41,43 +43,68 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
   };
 
   const handleFilePick = async () => {
-    const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setSelectedFile(result.assets[0]);
+    const result = await DocumentPicker.getDocumentAsync({ type: '*/*', multiple: true });
+    if (!result.canceled && result.assets) {
+      setSelectedFiles(result.assets);
+    }
+  };
+
+  const handleFolderPick = async () => {
+    if (Platform.OS === 'android') {
+      const res = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+      if (res.granted && res.directoryUri) {
+        const items = await FileSystem.StorageAccessFramework.readDirectoryAsync(res.directoryUri);
+        const files = items
+          .filter(name => name.includes('.'))
+          .map(name => ({ uri: `${res.directoryUri}/${name}`, name, mimeType: undefined }));
+        setSelectedFiles(prev => [...prev, ...files]);
+      }
+    } else if (Platform.OS === 'web') {
+      // Web: use HTML input element for folder selection
+      const inputPicker = document.createElement('input');
+      inputPicker.type = 'file';
+      inputPicker.multiple = true;
+      inputPicker.setAttribute('webkitdirectory', '');
+      inputPicker.setAttribute('directory', '');
+      inputPicker.onchange = (event: any) => {
+        const files = Array.from((event.target as HTMLInputElement).files || []);
+        const mapped = files.map(f => ({
+          uri: '',
+          name: (f as any).webkitRelativePath || f.name,
+          mimeType: f.type,
+          fileObj: f,
+        }));
+        setSelectedFiles(prev => [...prev, ...mapped]);
+      };
+      inputPicker.click();
+    } else {
+      // iOS fallback: multi-file picker
+      const result = await DocumentPicker.getDocumentAsync({ type: '*/*', multiple: true });
+      if (!result.canceled && result.assets) {
+        setSelectedFiles(prev => [...prev, ...result.assets]);
+      }
     }
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (selectedFiles.length === 0) return;
     setUploading(true);
     try {
-      // Construct key with folder
       const prefix = currentFolderId ? (currentFolderId.endsWith('/') ? currentFolderId : `${currentFolderId}/`) : '';
-      const key = `${prefix}${selectedFile.name}`;
+      for (const file of selectedFiles) {
+        const key = `${prefix}${file.name}`;
 
-      // Get signed URL
-      const resp = await fetch(`${API_URL}/files/upload`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          key, 
-          contentType: selectedFile.mimeType || 'application/octet-stream' 
-        }),
-      });
-      const { url: signedUrl } = await resp.json();
+        const resp = await fetch(`${API_URL}/files/upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key, contentType: file.mimeType || 'application/octet-stream' }),
+        });
+        const { url: signedUrl } = await resp.json();
 
-      // Fetch file and upload to signed URL
-      const fileBlob = await fetch(selectedFile.uri).then(r => r.blob());
-      const uploadHeaders = new Headers();
-      uploadHeaders.append('Content-Type', selectedFile.mimeType || 'application/octet-stream');
-      
-      const res = await fetch(signedUrl, {
-        method: 'PUT',
-        headers: uploadHeaders,
-        body: fileBlob,
-      });
-      console.log('Upload response:', res);
-      // Close modal
+        // use blob from fileObj if provided (web), otherwise fetch by uri
+        const blob = file.fileObj ? file.fileObj : await fetch(file.uri).then(r => r.blob());
+        await fetch(signedUrl, { method: 'PUT', headers: { 'Content-Type': file.mimeType || 'application/octet-stream' }, body: blob });
+      }
       onClose();
     } catch (err) {
       console.error('Upload failed:', err);
@@ -139,12 +166,16 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
           )}
          </View>
 
-         <View style={styles.actions}>          
+         <View style={styles.actions}>
+           <TouchableOpacity onPress={handleFolderPick} style={[styles.pickBtn, { backgroundColor: colors.primary }]}>            
+             <FilePlus size={20} color="#fff" />
+             <Text style={styles.pickText}>Select Folder</Text>
+           </TouchableOpacity>
            <TouchableOpacity onPress={handleFilePick} style={[styles.pickBtn, { backgroundColor: colors.primary }]}>            
              <FilePlus size={20} color="#fff" />
-             <Text style={styles.pickText}>{selectedFile?.name || 'Select File'}</Text>
+             <Text style={styles.pickText}>{selectedFiles.length > 0 ? `${selectedFiles.length} file(s)` : 'Select File(s)'}</Text>
            </TouchableOpacity>
-           <TouchableOpacity onPress={handleUpload} disabled={!selectedFile || uploading} style={[styles.uploadBtn, { backgroundColor: colors.primary }]}>          
+           <TouchableOpacity onPress={handleUpload} disabled={selectedFiles.length === 0 || uploading} style={[styles.uploadBtn, { backgroundColor: colors.primary }]}>          
              {uploading ? <ActivityIndicator color="#fff" /> : <Text style={styles.uploadText}>Upload</Text>}
            </TouchableOpacity>
          </View>
