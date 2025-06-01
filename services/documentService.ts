@@ -188,6 +188,18 @@ export const getDocumentById = async (id: string): Promise<Document> => {
   }
 };
 
+// Helper to fetch subfolder prefixes from the API for a given prefix
+async function fetchFolderPrefixes(prefix: string): Promise<string[]> {
+  const response = await fetch(`${API_URL}/folders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prefix })
+  });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return Array.isArray(data.folders) ? data.folders : [];
+}
+
 export const searchDocuments = async (
   query: string,
   filters?: {
@@ -197,14 +209,28 @@ export const searchDocuments = async (
   }
 ): Promise<Document[]> => {
   try {
-    // Fetch all documents from root
-    const allDocuments = await getDocuments('');
-    
-    // Filter documents based on search query
-    let results = allDocuments.filter(doc => 
-      doc.name.toLowerCase().includes(query.toLowerCase())
+    // Recursively fetch all documents across all folder prefixes
+    const allDocuments: Document[] = [];
+    const queue: string[] = ['']; // start with root prefix ''
+    while (queue.length > 0) {
+      const prefix = queue.shift()!;
+      // Fetch documents under this prefix
+      const docs = await getDocuments(prefix || null);
+      allDocuments.push(...docs);
+      // Fetch subfolder prefixes for recursion
+      const subfolderPrefixes = await fetchFolderPrefixes(prefix);
+      queue.push(...subfolderPrefixes);
+    }
+     
+    // Lowercase query for case-insensitive search
+    const lowerQuery = query.toLowerCase();
+
+    // Filter documents based on search query (name or content)
+    let results = allDocuments.filter(doc =>
+      doc.name.toLowerCase().includes(lowerQuery) ||
+      (doc.content?.toLowerCase().includes(lowerQuery) ?? false)
     );
-    
+
     // Apply additional filters
     if (filters) {
       if (filters.fileTypes && filters.fileTypes.length > 0) {
@@ -233,6 +259,8 @@ export const searchDocuments = async (
       }
     }
     
+    // Debug logs to verify search results
+    console.log(`searchDocuments: totalDocs=${allDocuments.length}, query="${query}", filtered=${results.length}`);
     return results;
   } catch (error) {
     console.error('Error searching documents:', error);

@@ -15,6 +15,7 @@ import { searchDocuments } from '@/services/documentService';
 import { Document } from '@/types';
 import FilterModal from '@/components/search/FilterModal';
 import { useTheme } from '@/context/ThemeContext';
+import { router } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 
 export default function SearchScreen() {
@@ -42,7 +43,6 @@ export default function SearchScreen() {
       setResults([]);
       return;
     }
-    
     const fetchResults = async () => {
       setIsLoading(true);
       try {
@@ -50,12 +50,10 @@ export default function SearchScreen() {
         setResults(searchResults);
       } catch (error) {
         console.error('Search error:', error);
-        // Handle error state
       } finally {
         setIsLoading(false);
       }
     };
-    
     fetchResults();
   }, [debouncedSearchQuery, activeFilters]);
   
@@ -202,7 +200,11 @@ export default function SearchScreen() {
               data={results}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <DocumentSearchItem document={item} searchTerm={searchQuery} />
+                <DocumentSearchItem
+                  document={item}
+                  searchTerm={searchQuery}
+                  onPress={() => router.push(`/document/${item.id}`)}
+                />
               )}
               contentContainerStyle={styles.resultsList}
               showsVerticalScrollIndicator={false}

@@ -53,14 +53,14 @@ export default function DocumentSearchItem({ document, searchTerm, onPress }: Do
           <View style={styles.metaItem}>
             <Calendar size={12} color={colors.textSecondary} />
             <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-              {new Date(document.lastModified).toLocaleDateString()}
+              {new Date(document.createdAt).toLocaleDateString()}
             </Text>
           </View>
         </View>
         
-        {document.preview && (
+        {document.content && (
           <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={2}>
-            {highlightSearchTerm(document.preview, searchTerm)}
+            {highlightSearchTerm(document.content, searchTerm)}
           </Text>
         )}
       </View>
