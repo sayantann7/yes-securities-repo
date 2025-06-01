@@ -110,9 +110,9 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
           <Text style={[styles.sectionTitle, { color: colors.primary }]}>Folders</Text>
           {isLoading ? (
             <ActivityIndicator size="small" color={colors.primary} />
-          ) : (currentFolderId ? folders.filter(f => f.parentId === currentFolderId) : rootFolders).length > 0 ? (
+          ) : rootFolders.length > 0 ? (
             <FlatList
-              data={currentFolderId ? folders.filter(f => f.parentId === currentFolderId) : rootFolders}
+              data={rootFolders}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
                 <FolderItem folder={item} onPress={() => setCurrentFolderId(item.id)} />
