@@ -32,18 +32,20 @@ export const getFolders = async (parentId: string | null = null): Promise<Folder
     
     // Check if CommonPrefixes exists and is an array
     if (data.folders && Array.isArray(data.folders)) {
-      data.folders.forEach((prefix: any) => {
-
-        const name = formatPrefix(prefix);
+      // Use Promise.all to fetch document counts concurrently
+      await Promise.all(data.folders.map(async (folderPrefix: any) => {
+        const name = formatPrefix(folderPrefix);
+        // Fetch documents for the current folder to get the itemCount
+        const documents = await getDocuments(folderPrefix);
         
         folders.push({
-          id: prefix, 
+          id: folderPrefix, 
           name: name,
           parentId: parentId,
           createdAt: new Date().toISOString(),
-          itemCount: 0,
+          itemCount: documents.length, // Set itemCount to the number of documents
         });
-      });
+      }));
     }
     
     return folders;
@@ -77,14 +79,16 @@ export const getFolderData = async (folderId: string | null = null): Promise<Fol
 
     // Use formatPrefix to get the folder name
     const name = formatPrefix(prefix);
+    // Fetch documents for the current folder to get the itemCount
+    const documents = await getDocuments(prefix);
 
     // parentId is the input folderId's parent, which is not available here, so set as null or as needed
     return {
       id: prefix,
       name: name,
-      parentId: null,
+      parentId: null, // Or determine the parentId if possible/needed
       createdAt: new Date().toISOString(),
-      itemCount: Array.isArray(data.folders) ? data.folders.length : 0
+      itemCount: documents.length // Set itemCount to the number of documents
     };
 
   } catch (error) {
