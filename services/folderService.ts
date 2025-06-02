@@ -110,6 +110,35 @@ export const getFolderContents = async (
 // Provide a way to fetch a single folder by ID for breadcrumb building
 export const getFolderById = getFolderData;
 
+/**
+ * Create a new folder in the storage.
+ * parentId: current folder prefix or null for root
+ * name: new folder name
+ */
+export const createFolder = async (parentId: string | null, name: string): Promise<void> => {
+  try {
+    // Determine prefix path
+    let prefix = '';
+    if (parentId) {
+      prefix = parentId.endsWith('/') ? parentId : `${parentId}/`;
+    }
+    // Call API to create folder at its own endpoint
+    const response = await fetch(`${API_URL}/folders/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prefix, name }),
+    });
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('createFolder response error:', response.status, errorBody);
+      throw new Error('Failed to create folder');
+    }
+  } catch (error) {
+    console.error('Error creating folder:', error);
+    throw error;
+  }
+};
+
 function formatPrefix(prefix : string): string {
   // 1. Strip off any trailing slash (if present)
   const noSlash = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;

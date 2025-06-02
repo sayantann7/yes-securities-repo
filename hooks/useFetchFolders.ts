@@ -9,6 +9,7 @@ export function useFetchFolders(folderId: string | null = null) {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [trigger, setTrigger] = useState(0);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -36,7 +37,11 @@ export function useFetchFolders(folderId: string | null = null) {
     };
     
     fetchData();
-  }, [folderId]);
+  }, [folderId, trigger]);
   
-  return { folders, rootFolders, documents, isLoading, error };
+  /**
+   * Call to reload folders and documents.
+   */
+  const reload = () => setTrigger(prev => prev + 1);
+  return { folders, rootFolders, documents, isLoading, error, reload };
 }

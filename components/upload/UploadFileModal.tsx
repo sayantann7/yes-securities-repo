@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform, TextInput } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { ChevronLeft, FilePlus } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 import { useFetchFolders } from '@/hooks/useFetchFolders';
+import { createFolder } from '@/services/folderService';
 import DocumentItem from '@/components/document/DocumentItem';
 import FolderItem from '@/components/document/FolderItem';
 import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
@@ -26,8 +27,10 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
   // include fileObj for web file blobs
   const [selectedFiles, setSelectedFiles] = useState<Array<{ uri: string; name: string; mimeType?: string; fileObj?: Blob }>>([]);
   const [uploading, setUploading] = useState(false);
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
 
-  const { folders, rootFolders, documents, isLoading } = useFetchFolders(currentFolderId);
+  const { folders, rootFolders, documents, isLoading, reload } = useFetchFolders(currentFolderId);
 
   const getFolderPath = (): { id: string; name: string }[] => {
     if (!currentFolderId) return [];
@@ -40,6 +43,18 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
       if (!current) break;
     }
     return path;
+  };
+
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    try {
+      await createFolder(currentFolderId, newFolderName.trim());
+      setCreatingFolder(false);
+      setNewFolderName('');
+      reload();
+    } catch (err) {
+      console.error('Create folder failed:', err);
+    }
   };
 
   const handleFilePick = async () => {
@@ -123,6 +138,27 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
           <Text style={[styles.headerTitle, { color: colors.primary }]}>Upload File</Text>
         </View>
 
+        {/* Create Folder Input */}
+        {creatingFolder && (
+          <View style={[styles.createFolderContainer, { backgroundColor: colors.surface }]}>            
+            <TextInput
+              placeholder="Folder Name"
+              placeholderTextColor={colors.textSecondary}
+              value={newFolderName}
+              onChangeText={setNewFolderName}
+              style={[styles.input, { borderColor: colors.textSecondary, color: colors.textSecondary }]}
+            />
+            <View style={styles.createActions}>
+              <TouchableOpacity onPress={() => setCreatingFolder(false)}>
+                <Text style={[styles.createActionText, { color: colors.primary }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleCreateFolder} disabled={!newFolderName.trim()}>
+                <Text style={[styles.createActionText, { color: colors.primary }]}>Create</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* Breadcrumb navigation */}
         {getFolderPath().length > 0 && (
           <BreadcrumbNav
@@ -134,7 +170,12 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
 
         <View style={styles.listContainer}>
           {/* Folders Section */}
-          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Folders</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Folders</Text>
+            <TouchableOpacity onPress={() => { setCreatingFolder(true); setNewFolderName(''); }}>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: colors.primary }}>New Folder</Text>
+            </TouchableOpacity>
+          </View>
           {isLoading ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : rootFolders.length > 0 ? (
@@ -167,6 +208,7 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
          </View>
 
          <View style={styles.actions}>
+          {/* File/Folder upload actions */}
            <TouchableOpacity onPress={handleFolderPick} style={[styles.pickBtn, { backgroundColor: colors.primary }]}>            
              <FilePlus size={20} color="#fff" />
              <Text style={styles.pickText}>Select Folder</Text>
@@ -181,11 +223,15 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
          </View>
        </View>
      </Modal>
-  );
+   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: Platform.OS === 'ios' ? 60 : 40 },
+  createFolderContainer: { paddingHorizontal: 16, paddingBottom: 8 },
+  input: { borderWidth: 1, borderRadius: 8, padding: 8, marginBottom: 8 },
+  createActions: { flexDirection: 'row', justifyContent: 'flex-end' },
+  createActionText: { fontSize: 14, fontWeight: '600', marginLeft: 16 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 16 },
   closeBtn: { padding: 8 },
   headerTitle: { fontSize: 20, fontWeight: '600', marginLeft: 8 },
