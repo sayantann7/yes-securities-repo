@@ -49,11 +49,11 @@ export default function LoginScreen() {
     >
       <View style={styles.logoContainer}>
         <Image 
-          source={{ uri: 'https://images.pexels.com/photos/5849577/pexels-photo-5849577.jpeg' }} 
+          source={{ uri: 'https://yesinvest.in/UploadImages/default-source/media/newlogo.png' }} 
           style={styles.logoPlaceholder}
         />
-        <Text style={styles.title}>Yes Securities</Text>
-        <Text style={styles.subtitle}>Sales Team Portal</Text>
+        <Text style={styles.title}>Sales Team Portal</Text>
+        {/* <Text style={styles.subtitle}></Text> */}
       </View>
 
       <View style={styles.formContainer}>
@@ -124,14 +124,15 @@ const styles = StyleSheet.create({
     marginTop: 60,
   },
   logoPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 360,
+    height: 90,
+    borderRadius: 0,
+    padding: 28, 
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#0C2340', // Dark navy blue
+    color: '#002EDC',
     marginTop: 12,
   },
   subtitle: {
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#0C2340',
+    color: '#002EDC',
     marginBottom: 20,
   },
   inputContainer: {
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   loginButton: {
-    backgroundColor: '#0C2340', // Dark navy blue
+    backgroundColor: '#002EDC',
     borderRadius: 8,
     height: 52,
     justifyContent: 'center',

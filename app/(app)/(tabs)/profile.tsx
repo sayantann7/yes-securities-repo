@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, Switch, ScrollView, Alert, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Switch, ScrollView, Alert, Platform, Modal, TextInput } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
@@ -8,15 +9,41 @@ import {
 } from 'lucide-react-native';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
   const { isDarkMode, toggleTheme, theme } = useTheme();
   const colors = Colors[theme];
+  
+  // Modal state and form
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newFullname, setNewFullname] = useState(user?.name || '');
+  const [newEmail, setNewEmail] = useState(user?.email || '');
+
+  useEffect(() => {
+    if (modalVisible && user) {
+      setNewFullname(user.name);
+      setNewEmail(user.email);
+    }
+  }, [modalVisible]);
   
   const handleLogout = async () => {
     try {
       await logout();
     } catch (error) {
       console.error('Logout error:', error);
+    }
+  };
+  
+  const openEditModal = () => {
+    setModalVisible(true);
+  };
+  
+  const handleSave = async () => {
+    try {
+      await updateProfile(newFullname, newEmail);
+      setModalVisible(false);
+      Alert.alert('Success', 'Profile updated successfully');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to update profile');
     }
   };
   
@@ -40,7 +67,7 @@ export default function ProfileScreen() {
       <ScrollView>
         <View style={[styles.profileSection, { backgroundColor: colors.surface }]}>
           <Image 
-            source={{ uri: user?.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg' }}
+            source={{ uri: user?.avatar || `https://avatar.iran.liara.run/username?username=${user?.name.split(' ')[0]}+${user?.name.split(' ')[1]}` }}
             style={styles.profileImage}
           />
           <View style={styles.profileInfo}>
@@ -50,16 +77,47 @@ export default function ProfileScreen() {
           </View>
         </View>
         
-        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>  
           <Text style={[styles.sectionTitle, { color: colors.primary }]}>Account</Text>
           
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.borderLight }]}>
-            <View style={[styles.menuIconContainer, { backgroundColor: colors.surfaceVariant }]}>
+          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.borderLight }]} onPress={openEditModal}>  
+            <View style={[styles.menuIconContainer, { backgroundColor: colors.surfaceVariant }]}>  
               <User size={20} color={colors.primary} />
             </View>
             <Text style={[styles.menuItemText, { color: colors.text }]}>Edit Profile</Text>
-            <Text style={[styles.menuItemAction, { color: colors.textSecondary }]}>></Text>
+            <Text style={[styles.menuItemAction, { color: colors.textSecondary }]}>{'>'}</Text>
           </TouchableOpacity>
+          {/* Edit Profile Modal */}
+          <Modal visible={modalVisible} animationType="slide" transparent>
+            <View style={styles.modalContainer}>
+              <View style={[styles.modalContent, { backgroundColor: colors.surface }]}> 
+                <Text style={[styles.modalTitle, { color: colors.primary }]}>Edit Profile</Text>
+                <TextInput
+                  style={[styles.input, { color: colors.text, borderColor: colors.border }]}  
+                  placeholder="Full Name"
+                  placeholderTextColor={colors.textSecondary}
+                  value={newFullname}
+                  onChangeText={setNewFullname}
+                />
+                <TextInput
+                  style={[styles.input, { color: colors.text, borderColor: colors.border }]}  
+                  placeholder="Email"
+                  placeholderTextColor={colors.textSecondary}
+                  keyboardType="email-address"
+                  value={newEmail}
+                  onChangeText={setNewEmail}
+                />
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={[styles.button, { backgroundColor: colors.error }]} onPress={() => setModalVisible(false)}>
+                    <Text style={[styles.buttonText]}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={handleSave}>
+                    <Text style={[styles.buttonText, { color: '#fff' }]}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
         </View>
         
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
@@ -243,5 +301,43 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
     marginBottom: 24,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    borderRadius: 8,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 12,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  button: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginHorizontal: 4,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });

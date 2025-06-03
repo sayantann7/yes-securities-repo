@@ -2,7 +2,7 @@ import { Folder, Document } from '@/types';
 import { getDocuments } from './documentService';
 
 // Keep your existing API URL or update to localhost if testing locally
-const API_URL = 'http://192.168.1.34:3000/api';
+const API_URL = 'http://192.168.1.7:3000/api';
 
 export const getFolders = async (parentId: string | null = null): Promise<Folder[]> => {
   try {

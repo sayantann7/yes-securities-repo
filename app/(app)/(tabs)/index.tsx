@@ -34,7 +34,10 @@ export default function HomeScreen() {
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {user?.role === 'admin' && (
-              <TouchableOpacity onPress={() => setShowUploadModal(true)} style={{ marginRight: 16 }}>
+              <TouchableOpacity
+                onPress={() => setShowUploadModal(true)}
+                style={{ marginRight: 16, padding: 8 }}
+              >
                 <FilePlus size={24} color={colors.primary} />
               </TouchableOpacity>
             )}

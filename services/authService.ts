@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 // Base URL for API requests
-const API_URL = 'http://192.168.1.34:3000';
+const API_URL = 'http://192.168.1.7:3000';
 
 // Export this helper function so it can be used elsewhere
 export const getToken = async (): Promise<string | null> => {
@@ -72,6 +72,38 @@ export const authService = {
     // Your backend doesn't have a refresh token endpoint yet
     // This would be implemented when your backend supports it
     throw new Error('Refresh token not implemented');
+  },
+  
+  updateProfile: async (fullname: string, email: string): Promise<User> => {
+    try {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/user`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ fullname, email }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update profile');
+      }
+      const updated = data.user;
+      const userData: User = {
+        id: updated.id,
+        name: updated.fullname,
+        email: updated.email,
+        role: updated.role,
+        avatar: updated.avatar,
+      };
+      return userData;
+    } catch (error: any) {
+      if (error.message) {
+        throw new Error(error.message);
+      }
+      throw new Error('Network error. Please check your connection.');
+    }
   }
 };
 
