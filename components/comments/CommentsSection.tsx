@@ -18,13 +18,21 @@ import { useAuth } from '@/context/AuthContext';
 
 interface CommentsSectionProps {
   documentId: string;
+  onCommentsCountChange?: (count: number) => void;
 }
 
-export default function CommentsSection({ documentId }: CommentsSectionProps) {
+export default function CommentsSection({ documentId, onCommentsCountChange }: CommentsSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
+  
+  // Notify parent of comments count change
+  useEffect(() => {
+    if (onCommentsCountChange) {
+      onCommentsCountChange(comments.length);
+    }
+  }, [comments, onCommentsCountChange]);
   
   useEffect(() => {
     fetchComments();

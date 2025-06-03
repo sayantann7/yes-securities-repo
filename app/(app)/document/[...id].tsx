@@ -3,6 +3,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, Download, Share2, Star, MessageSquare, Bookmark } from 'lucide-react-native';
 import { getDocumentById } from '@/services/documentService';
+import { getComments } from '@/services/commentService';
 import { Document as DocumentType } from '@/types';
 import PDFViewer from '@/components/viewers/PDFViewer';
 import ImageViewer from '@/components/viewers/ImageViewer';
@@ -36,6 +37,20 @@ export default function DocumentScreen() {
     if (documentId) {
       fetchDocument();
     }
+  }, [documentId]);
+
+  // Fetch initial comment count on page load
+  useEffect(() => {
+    const fetchCommentsCount = async () => {
+      try {
+        if (!documentId) return;
+        const fetched = await getComments(documentId);
+        setCommentsCount(fetched.length);
+      } catch (error) {
+        console.error('Error fetching initial comments count:', error);
+      }
+    };
+    fetchCommentsCount();
   }, [documentId]);
 
   const handleBack = () => {

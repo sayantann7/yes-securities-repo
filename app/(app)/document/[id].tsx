@@ -3,6 +3,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, Download, Share2, Star, MessageSquare, Bookmark } from 'lucide-react-native';
 import { getDocumentById } from '@/services/documentService';
+import { getComments } from '@/services/commentService';
 import { Document as DocumentType } from '@/types';
 import PDFViewer from '@/components/viewers/PDFViewer';
 import ImageViewer from '@/components/viewers/ImageViewer';
@@ -14,6 +15,7 @@ export default function DocumentScreen() {
   const [document, setDocument] = useState<DocumentType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [commentsCount, setCommentsCount] = useState<number>(0);
   const [showComments, setShowComments] = useState(false);
   
   useEffect(() => {
@@ -33,6 +35,20 @@ export default function DocumentScreen() {
     if (id) {
       fetchDocument();
     }
+  }, [id]);
+  
+  // Fetch initial comment count on page load
+  useEffect(() => {
+    const fetchCommentsCount = async () => {
+      try {
+        if (!id) return;
+        const fetched = await getComments(id);
+        setCommentsCount(fetched.length);
+      } catch (error) {
+        console.error('Error fetching initial comments count:', error);
+      }
+    };
+    fetchCommentsCount();
   }, [id]);
   
   const handleBack = () => {
@@ -135,7 +151,7 @@ export default function DocumentScreen() {
         >
           <MessageSquare size={20} color={showComments ? "#0C2340" : "#7A869A"} />
           <Text style={[styles.footerButtonText, showComments && styles.footerButtonTextActive]}>
-            Comments ({document.commentCount || 0})
+            Comments ({commentsCount})
           </Text>
         </TouchableOpacity>
         
@@ -146,7 +162,7 @@ export default function DocumentScreen() {
       </View>
       
       {showComments && (
-        <CommentsSection documentId={document.id} />
+        <CommentsSection documentId={document.id} onCommentsCountChange={setCommentsCount} />
       )}
     </View>
   );
