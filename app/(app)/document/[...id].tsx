@@ -13,6 +13,7 @@ export default function DocumentScreen() {
   const { id } = useLocalSearchParams<{ id: string | string[] }>();
   // Build correct document ID from segments
   const documentId = Array.isArray(id) ? id.join('/') : id;
+  const [commentsCount, setCommentsCount] = useState<number>(0);
   const [document, setDocument] = useState<DocumentType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -130,7 +131,7 @@ export default function DocumentScreen() {
         >
           <MessageSquare size={20} color={showComments ? "#0C2340" : "#7A869A"} />
           <Text style={[styles.footerButtonText, showComments && styles.footerButtonTextActive]}>
-            Comments ({document.commentCount || 0})
+            Comments ({commentsCount})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.footerButton}>
@@ -139,7 +140,7 @@ export default function DocumentScreen() {
         </TouchableOpacity>
       </View>
       {showComments && (
-        <CommentsSection documentId={document.id} />
+        <CommentsSection documentId={document.id} onCommentsCountChange={setCommentsCount} />
       )}
     </View>
   );

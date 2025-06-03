@@ -2,25 +2,22 @@ import { Comment } from '@/types';
 import { getToken } from './authService';
 
 // Base URL for API requests
-const API_URL = 'http://192.168.1.7:3000';
+const API_URL = 'http://192.168.1.7:3000/user';
 
 // In a real app, these would be API calls to a backend server
 export const getComments = async (documentId: string): Promise<Comment[]> => {
   try {
-    // Using query parameters since GET requests typically don't have bodies
+    // Use GET with query param to fetch comments
     const response = await fetch(`${API_URL}/comments?documentId=${encodeURIComponent(documentId)}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
     });
-    
     const data = await response.json();
-    
     if (!response.ok) {
       throw new Error(data.error || 'Failed to fetch comments');
     }
-    
     // Transform backend response to match frontend expected format
     return data.comments.map((comment: any) => ({
       id: comment.id,
@@ -29,10 +26,10 @@ export const getComments = async (documentId: string): Promise<Comment[]> => {
       createdAt: comment.createdAt,
       author: {
         id: comment.userId,
-        name: 'User', // Backend doesn't return author name, you might need to fetch this separately
-        avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg' // Default avatar
+        name: comment.user?.fullname || 'User', // use fullname if included
+        avatar: comment.user?.avatarUrl || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg'
       },
-      replies: [] // Your backend doesn't support nested replies yet
+      replies: []
     }));
   } catch (error: any) {
     console.error('Error fetching comments:', error);

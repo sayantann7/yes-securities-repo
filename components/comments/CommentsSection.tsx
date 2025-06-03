@@ -33,6 +33,7 @@ export default function CommentsSection({ documentId }: CommentsSectionProps) {
   const fetchComments = async () => {
     try {
       setIsLoading(true);
+      // Fetch comments via GET
       const fetchedComments = await getComments(documentId);
       setComments(fetchedComments);
     } catch (error) {
@@ -157,4 +158,18 @@ export default function CommentsSection({ documentId }: CommentsSectionProps) {
   );
 }
 
-// Keep existing styles
+// Define styles for CommentsSection
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  header: { flexDirection: 'row', alignItems: 'center', padding: 10, borderBottomWidth: 1, borderBottomColor: '#E1E1E1' },
+  title: { flex: 1, fontSize: 16, fontWeight: '600', color: '#0C2340' },
+  count: { fontSize: 14, color: '#7A869A' },
+  loadingText: { padding: 10, textAlign: 'center', color: '#7A869A' },
+  commentsList: { flex: 1 },
+  commentsContent: { padding: 10 },
+  emptyText: { textAlign: 'center', color: '#7A869A', marginTop: 20 },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#E1E1E1', padding: 10, backgroundColor: '#FFFFFF' },
+  input: { flex: 1, borderWidth: 1, borderColor: '#E1E1E1', borderRadius: 20, paddingHorizontal: 15, paddingVertical: 8, marginRight: 10, fontSize: 14, color: '#333333' },
+  sendButton: { backgroundColor: '#0C2340', padding: 10, borderRadius: 20 },
+  sendButtonDisabled: { backgroundColor: '#A0AEC0' },
+});
