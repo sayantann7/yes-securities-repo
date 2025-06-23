@@ -9,6 +9,7 @@ import PDFViewer from '@/components/viewers/PDFViewer';
 import ImageViewer from '@/components/viewers/ImageViewer';
 import VideoViewer from '@/components/viewers/VideoViewer';
 import CommentsSection from '@/components/comments/CommentsSection';
+import { Colors } from '@/constants/Colors';
 
 export default function DocumentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -89,7 +90,7 @@ export default function DocumentScreen() {
               This file type cannot be previewed directly.
             </Text>
             <TouchableOpacity style={styles.downloadButton} onPress={handleDownload}>
-              <Download size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+              <Download size={20} color={Colors.primary} style={{ marginRight: 8 }} />
               <Text style={styles.downloadButtonText}>Download</Text>
             </TouchableOpacity>
           </View>
@@ -100,7 +101,7 @@ export default function DocumentScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0C2340" />
+        <ActivityIndicator size="large" color={Colors.primary} />
         <Text style={styles.loadingText}>Loading document...</Text>
       </View>
     );
@@ -118,29 +119,29 @@ export default function DocumentScreen() {
   }
   
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: '#F5F5F7' }]}>
+      <View style={[styles.header, { backgroundColor: '#FFFFFF', borderBottomColor: '#E1E1E1' }]}>
         <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-          <ChevronLeft size={24} color="#0C2340" />
+          <ChevronLeft size={24} color={Colors.primary} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
-          <Text style={styles.title} numberOfLines={1}>{document.name}</Text>
-          <Text style={styles.subtitle}>{document.size} • {document.createdAt}</Text>
+          <Text style={[styles.title, { color: Colors.primary }]} numberOfLines={1}>{document.name}</Text>
+          <Text style={[styles.subtitle, { color: Colors.textSecondary }]}>{document.size} • {document.createdAt}</Text>
         </View>
         <View style={styles.actionsContainer}>
           <TouchableOpacity style={styles.actionButton}>
-            <Star size={20} color="#0C2340" />
+            <Star size={20} color={Colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-            <Share2 size={20} color="#0C2340" />
+            <Share2 size={20} color={Colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={handleDownload}>
-            <Download size={20} color="#0C2340" />
+            <Download size={20} color={Colors.primary} />
           </TouchableOpacity>
         </View>
       </View>
       
-      <View style={styles.content}>
+      <View style={[styles.content, { backgroundColor: Colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
         {renderDocumentViewer()}
       </View>
       
@@ -149,14 +150,14 @@ export default function DocumentScreen() {
           style={[styles.footerButton, showComments && styles.footerButtonActive]}
           onPress={() => setShowComments(!showComments)}
         >
-          <MessageSquare size={20} color={showComments ? "#0C2340" : "#7A869A"} />
+          <MessageSquare size={20} color={showComments ? Colors.primary : Colors.textSecondary} />
           <Text style={[styles.footerButtonText, showComments && styles.footerButtonTextActive]}>
             Comments ({commentsCount})
           </Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.footerButton}>
-          <Bookmark size={20} color="#7A869A" />
+          <Bookmark size={20} color={Colors.textSecondary} />
           <Text style={styles.footerButtonText}>Save</Text>
         </TouchableOpacity>
       </View>
@@ -171,7 +172,6 @@ export default function DocumentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
   },
   header: {
     flexDirection: 'row',

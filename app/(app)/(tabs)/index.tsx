@@ -7,15 +7,12 @@ import { FileText, Clock, Star, Users, BarChart2, FilePlus } from 'lucide-react-
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
-import { RecentDocumentItem } from '@/components/document/RecentDocumentItem';
-import { useFetchDashboardData } from '@/hooks/useFetchDashboardData';
 import { Link } from 'expo-router';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const { theme } = useTheme();
   const colors = Colors[theme];
-  const { recentDocuments, popularDocuments, isLoading } = useFetchDashboardData();
   const [showUploadModal, setShowUploadModal] = useState(false);
 
   return (
@@ -27,7 +24,7 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true}
       >
-        <View style={[styles.header, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
           <View>
             <Text style={[styles.greeting, { color: colors.primary }]}>Hello, {user?.name}</Text>
             <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
@@ -50,8 +47,8 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={styles.statsContainer}>
-          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, marginTop: 8 }}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
             <View style={[styles.statIconContainer, { backgroundColor: 'rgba(66, 133, 244, 0.1)' }]}>
               <FileText size={20} color="#4285F4" />
             </View>
@@ -59,7 +56,7 @@ export default function HomeScreen() {
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Documents</Text>
           </View>
 
-          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
             <View style={[styles.statIconContainer, { backgroundColor: 'rgba(251, 188, 5, 0.1)' }]}>
               <Star size={20} color="#FBBC05" />
             </View>
@@ -67,33 +64,13 @@ export default function HomeScreen() {
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Starred</Text>
           </View>
 
-          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
             <View style={[styles.statIconContainer, { backgroundColor: 'rgba(52, 168, 83, 0.1)' }]}>
               <Users size={20} color="#34A853" />
             </View>
             <Text style={[styles.statValue, { color: colors.primary }]}>7</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Shared</Text>
           </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Recent Documents</Text>
-            <TouchableOpacity>
-              <Text style={[styles.seeAllButton, { color: colors.primary }]}><Link href="/documents">See all</Link></Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView 
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.recentDocumentsContainer}
-            nestedScrollEnabled={true}
-          >
-            {recentDocuments.map((doc) => (
-              <RecentDocumentItem key={doc.id} document={doc} />
-            ))}
-          </ScrollView>
         </View>
 
         <View style={styles.section}>
@@ -210,10 +187,6 @@ const styles = StyleSheet.create({
   seeAllButton: {
     fontSize: 14,
     fontWeight: '500',
-  },
-  recentDocumentsContainer: {
-    paddingRight: 20,
-    marginTop: 4,
   },
   activityCard: {
     borderRadius: 16,

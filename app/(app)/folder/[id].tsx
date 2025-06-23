@@ -9,6 +9,7 @@ import FolderItem from '@/components/document/FolderItem';
 import DocumentItem from '@/components/document/DocumentItem';
 import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
 import SortModal from '@/components/folder/SortModal';
+import { Colors } from '@/constants/Colors';
 
 export default function FolderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -138,14 +139,14 @@ export default function FolderScreen() {
   };
   
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: Colors.light.background }]}>
+      <View style={[styles.header, { backgroundColor: Colors.light.surface, borderBottomColor: Colors.light.border }]}>
         <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-          <ChevronLeft size={24} color="#0C2340" />
+          <ChevronLeft size={24} color={Colors.light.primary} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
-          <Text style={styles.title} numberOfLines={1}>{folder?.name || 'Loading...'}</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: Colors.light.primary }]} numberOfLines={1}>{folder?.name || 'Loading...'}</Text>
+          <Text style={[styles.subtitle, { color: Colors.light.textSecondary }]}>
             {subfolders.length} folders • {documents.length} documents
           </Text>
         </View>
@@ -154,18 +155,18 @@ export default function FolderScreen() {
             style={styles.actionButton}
             onPress={() => setShowSortModal(true)}
           >
-            <ArrowUpDown size={20} color="#0C2340" />
+            <ArrowUpDown size={20} color={Colors.light.primary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton}>
-            <Filter size={20} color="#0C2340" />
+            <Filter size={20} color={Colors.light.primary} />
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.actionButton}
             onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
           >
             {viewMode === 'grid' ? 
-              <List size={20} color="#0C2340" /> : 
-              <Grid size={20} color="#0C2340" />
+              <List size={20} color={Colors.light.primary} /> : 
+              <Grid size={20} color={Colors.light.primary} />
             }
           </TouchableOpacity>
         </View>
@@ -177,7 +178,7 @@ export default function FolderScreen() {
         onItemPress={navigateToFolder}
       />
       
-      <View style={styles.content}>
+      <View style={[styles.content, { backgroundColor: Colors.light.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
         {subfolders.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>Folders</Text>
@@ -234,7 +235,6 @@ export default function FolderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F7',
   },
   header: {
     flexDirection: 'row',
@@ -242,7 +242,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 60,
     paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
   },
   backBtn: {
     padding: 8,
@@ -254,11 +253,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0C2340',
   },
   subtitle: {
     fontSize: 12,
-    color: '#7A869A',
     marginTop: 2,
   },
   actionsContainer: {
@@ -276,7 +273,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0C2340',
     marginTop: 16,
     marginBottom: 8,
   },

@@ -125,7 +125,7 @@ export default function DocumentsScreen() {
         />
       )}
       
-      <View style={styles.content}>
+      <View style={[styles.content, { backgroundColor: colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
         <View style={styles.documentsContainer}>
           {currentFolderId ? (
             // Current folder view
@@ -172,20 +172,6 @@ export default function DocumentsScreen() {
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
                           <FolderItem folder={item} onPress={() => openFolder(item)} />
-                        )}
-                        scrollEnabled={false}
-                      />
-                    </View>
-                  );
-                } else {
-                  return (
-                    <View>
-                      {renderSectionHeader("Recent Documents")}
-                      <FlatList
-                        data={documents.slice(0, 5)}
-                        keyExtractor={(item) => item.id}
-                        renderItem={({ item }) => (
-                          <DocumentItem document={item} viewMode="list" />
                         )}
                         scrollEnabled={false}
                       />

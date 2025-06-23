@@ -10,6 +10,7 @@ import FolderItem from '@/components/document/FolderItem';
 import DocumentItem from '@/components/document/DocumentItem';
 import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
 import SortModal from '@/components/folder/SortModal';
+import { Colors } from '@/constants/Colors';
 
 export default function FolderScreen() {
   // id will be an array of path segments for nested folders
@@ -108,26 +109,26 @@ export default function FolderScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: Colors.light.background }]}>
+      <View style={[styles.header, { backgroundColor: Colors.light.surface, borderBottomColor: Colors.light.border }]}>
         <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-          <ChevronLeft size={24} color="#0C2340" />
+          <ChevronLeft size={24} color={Colors.light.primary} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
-          <Text style={styles.title} numberOfLines={1}>{folder?.name || 'Loading...'}</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: Colors.light.primary }]} numberOfLines={1}>{folder?.name || 'Loading...'}</Text>
+          <Text style={[styles.subtitle, { color: Colors.light.textSecondary }]}>
             {subfolders.length} folders • {documents.length} documents
           </Text>
         </View>
         <View style={styles.actionsContainer}>
           <TouchableOpacity onPress={() => setShowSortModal(true)} style={styles.actionButton}>
-            <ArrowUpDown size={20} color="#0C2340" />
+            <ArrowUpDown size={20} color={Colors.light.primary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton}>
-            <Filter size={20} color="#0C2340" />
+            <Filter size={20} color={Colors.light.primary} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')} style={styles.actionButton}>
-            {viewMode === 'grid' ? <List size={20} color="#0C2340" /> : <Grid size={20} color="#0C2340" />}
+            {viewMode === 'grid' ? <List size={20} color={Colors.light.primary} /> : <Grid size={20} color={Colors.light.primary} />}
           </TouchableOpacity>
         </View>
       </View>
@@ -136,7 +137,7 @@ export default function FolderScreen() {
         onHomePress={navigateToRoot}
         onItemPress={(folderId: string) => router.push(`/folder/${folderId}`)}
       />
-      <View style={styles.content}>
+      <View style={[styles.content, { backgroundColor: Colors.light.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
         {subfolders.length > 0 && (
           <>  
             <Text style={styles.sectionTitle}>Folders</Text>

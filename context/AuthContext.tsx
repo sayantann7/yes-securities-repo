@@ -20,6 +20,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (fullname: string, email: string) => Promise<void>;
 }
 
 // Create context with default values
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   login: async () => {},
   logout: async () => {},
+  updateProfile: async () => {},
 });
 
 // Storage key for the JWT token
@@ -129,12 +131,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
   
+  // Add updateProfile function
+  const updateProfile = async (fullname: string, email: string) => {
+    try {
+      setIsLoading(true);
+      const updatedUser = await authService.updateProfile(fullname, email);
+      setUser(updatedUser);
+    } catch (error) {
+      console.error('Update profile error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   const value = {
     user,
     isAuthenticated: !!user,
     isLoading,
     login,
     logout,
+    updateProfile,
   };
   
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
