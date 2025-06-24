@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Platform } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { ChevronRight, ChevronDown, FolderOpen, File, FilePlus } from 'lucide-react-native';
 import { useFetchFolders } from '@/hooks/useFetchFolders';
@@ -9,6 +9,7 @@ import { Folder } from '@/types';
 import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
 import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
+import { useAuth } from '@/context/AuthContext';
 
 // Define constants for bottom spacing
 const TAB_BAR_HEIGHT = 64;
@@ -22,7 +23,14 @@ export default function DocumentsScreen() {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const { folders, rootFolders, documents, isLoading } = useFetchFolders(currentFolderId);
+  const { user } = useAuth();
   
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      router.replace('/');
+    }
+  }, [user]);
+
   // All your existing functions remain the same
   const toggleExpanded = (folderId: string) => {
     setExpandedFolders(prev => {
@@ -43,16 +51,14 @@ export default function DocumentsScreen() {
   
   const getFolderPath = (): { id: string; name: string }[] => {
     if (!currentFolderId) return [];
-    
     const path: { id: string; name: string }[] = [];
     let currentFolder = folders.find(f => f.id === currentFolderId);
-    
     while (currentFolder) {
       path.unshift({ id: currentFolder.id, name: currentFolder.name });
       if (!currentFolder.parentId) break;
-      currentFolder = folders.find(f => f.id === currentFolder.parentId);
+      currentFolder = folders.find(f => f.id === currentFolder?.parentId);
+      if (!currentFolder) break;
     }
-    
     return path;
   };
   
@@ -178,6 +184,7 @@ export default function DocumentsScreen() {
                     </View>
                   );
                 }
+                return null;
               }}
               contentContainerStyle={{paddingBottom: TOTAL_BOTTOM_SPACING}}
             />

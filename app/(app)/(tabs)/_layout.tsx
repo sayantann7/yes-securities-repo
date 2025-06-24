@@ -4,10 +4,12 @@ import { BlurView } from 'expo-blur';
 import { Home as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
+import { useAuth } from '@/context/AuthContext';
 
 export default function TabLayout() {
   const { theme } = useTheme();
   const colors = Colors[theme];
+  const { user } = useAuth();
 
   return (
     <Tabs
@@ -28,15 +30,17 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="documents"
-        options={{
-          title: 'Documents',
-          tabBarIcon: ({ color, size }) => (
-            <FolderIcon color={color} size={size} />
-          ),
-        }}
-      />
+      {user?.role === 'admin' && (
+        <Tabs.Screen
+          name="documents"
+          options={{
+            title: 'Documents',
+            tabBarIcon: ({ color, size }) => (
+              <FolderIcon color={color} size={size} />
+            ),
+          }}
+        />
+      )}
       <Tabs.Screen
         name="search"
         options={{

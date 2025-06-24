@@ -1,19 +1,185 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useEffect, useState } from 'react';
 import UploadFileModal from '@/components/upload/UploadFileModal';
-import { FileText, Clock, Star, Users, BarChart2, FilePlus } from 'lucide-react-native';
+import { FileText, Clock, Star, Users, BarChart2, FilePlus, ChevronRight, ChevronDown, FolderOpen } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
+import { useFetchFolders } from '@/hooks/useFetchFolders';
+import FolderItem from '@/components/document/FolderItem';
+import DocumentItem from '@/components/document/DocumentItem';
+import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
+import { Folder } from '@/types';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const { theme } = useTheme();
   const colors = Colors[theme];
   const [showUploadModal, setShowUploadModal] = useState(false);
+
+  // --- Non-admin: Copy logic from documents page ---
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const { folders, rootFolders, documents, isLoading } = useFetchFolders(currentFolderId);
+
+  useEffect(() => {
+    if (user && user.role === 'admin') {
+      setCurrentFolderId(null); // Reset for admin
+    }
+  }, [user]);
+
+  const toggleExpanded = (folderId: string) => {
+    setExpandedFolders(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(folderId)) {
+        newSet.delete(folderId);
+      } else {
+        newSet.add(folderId);
+      }
+      return newSet;
+    });
+  };
+
+  const openFolder = (folder: Folder) => {
+    setCurrentFolderId(folder.id);
+    // For non-admin, do not push to router, just update state
+  };
+
+  const getFolderPath = (): { id: string; name: string }[] => {
+    if (!currentFolderId) return [];
+    const path: { id: string; name: string }[] = [];
+    let currentFolder = folders.find(f => f.id === currentFolderId);
+    while (currentFolder) {
+      path.unshift({ id: currentFolder.id, name: currentFolder.name });
+      if (!currentFolder.parentId) break;
+      currentFolder = folders.find(f => f.id === currentFolder?.parentId);
+      if (!currentFolder) break;
+    }
+    return path;
+  };
+
+  const navigateToRoot = () => {
+    setCurrentFolderId(null);
+  };
+
+  const navigateToFolder = (folderId: string) => {
+    setCurrentFolderId(folderId);
+  };
+
+  const renderSectionHeader = (title: string) => (
+    <Text style={[styles.sectionTitle, { color: colors.primary }]}>{title}</Text>
+  );
+
+  const renderEmptyComponent = (message: string) => (
+    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{message}</Text>
+  );
+
+  if (user?.role !== 'admin') {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>    
+        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}> 
+          <View>
+            <Text style={[styles.greeting, { color: colors.primary }]}>Hello, {user?.name}</Text>
+            <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity>
+              <Image 
+                source={{ uri: user?.avatar || '/avatar.jpg' }}
+                style={styles.avatar}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {currentFolderId && (
+          <BreadcrumbNav 
+            path={getFolderPath()} 
+            onHomePress={navigateToRoot}
+            onItemPress={navigateToFolder}
+          />
+        )}
+
+        <View style={[styles.content, { backgroundColor: colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}> 
+          <View style={styles.documentsContainer}>
+            {currentFolderId ? (
+              // Current folder view
+              <View style={{flex: 1}}>
+                {/* Folders in current folder */}
+                <View>
+                  {renderSectionHeader("Folders")}
+                  <FlatList
+                    data={folders.filter(f => f.parentId === currentFolderId)}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                      <FolderItem folder={item} onPress={() => openFolder(item)} />
+                    )}
+                    ListEmptyComponent={() => renderEmptyComponent("No folders")}
+                    scrollEnabled={false}
+                  />
+                </View>
+                {/* Documents in current folder */}
+                <View style={{marginBottom: 32, marginTop: 32}}>
+                  {renderSectionHeader("Documents")}
+                  <FlatList
+                    data={documents}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                      <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} />
+                    )}
+                    ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
+                  />
+                </View>
+              </View>
+            ) : (
+              // Root view
+              <FlatList
+                data={[{id: 'folders'}, {id: 'documents'}]}
+                keyExtractor={(item) => item.id}
+                renderItem={({item}) => {
+                  if (item.id === 'folders') {
+                    return (
+                      <View>
+                        {renderSectionHeader("All Folders")}
+                        <FlatList
+                          data={rootFolders}
+                          keyExtractor={(item) => item.id}
+                          renderItem={({ item }) => (
+                            <FolderItem folder={item} onPress={() => openFolder(item)} />
+                          )}
+                          scrollEnabled={false}
+                        />
+                      </View>
+                    );
+                  }
+                  if (item.id === 'documents') {
+                    return (
+                      <View style={{marginBottom: 32}}>
+                        <Text style={[styles.documentTitle, { color: colors.primary }]}>Documents</Text>
+                        <FlatList
+                          data={documents}
+                          keyExtractor={(item) => item.id}
+                          renderItem={({ item }) => (
+                            <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} />
+                          )}
+                          ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
+                        />
+                      </View>
+                    );
+                  }
+                  return null;
+                }}
+                contentContainerStyle={{paddingBottom: 32}}
+              />
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>    
@@ -184,6 +350,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  documentTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 32
+  },
   seeAllButton: {
     fontSize: 14,
     fontWeight: '500',
@@ -225,5 +396,17 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 20,
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  documentsContainer: {
+    flex: 1,
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
