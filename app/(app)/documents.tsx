@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
-import { ChevronRight, ChevronDown, FolderOpen, File, FilePlus } from 'lucide-react-native';
+import { ChevronRight, ChevronDown, FolderOpen } from 'lucide-react-native';
 import { useFetchFolders } from '@/hooks/useFetchFolders';
 import FolderItem from '@/components/document/FolderItem';
 import DocumentItem from '@/components/document/DocumentItem';
@@ -11,7 +11,6 @@ import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 
-// Define constants for bottom spacing
 const TAB_BAR_HEIGHT = 64;
 const BOTTOM_SPACING = Platform.OS === 'ios' ? 24 : 16;
 const SAFE_AREA_BOTTOM = 20;
@@ -24,14 +23,13 @@ export default function DocumentsScreen() {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const { folders, rootFolders, documents, isLoading } = useFetchFolders(currentFolderId);
   const { user } = useAuth();
-  
+
   useEffect(() => {
     if (user && user.role !== 'admin') {
       router.replace('/');
     }
   }, [user]);
 
-  // All your existing functions remain the same
   const toggleExpanded = (folderId: string) => {
     setExpandedFolders(prev => {
       const newSet = new Set(prev);
@@ -46,9 +44,9 @@ export default function DocumentsScreen() {
 
   const openFolder = (folder: Folder) => {
     setCurrentFolderId(folder.id);
-    router.push(`/folder/${folder.id}`);
+    // router.push(`/folder/${folder.id}`); // Removed to keep navigation within tab
   };
-  
+
   const getFolderPath = (): { id: string; name: string }[] => {
     if (!currentFolderId) return [];
     const path: { id: string; name: string }[] = [];
@@ -61,68 +59,31 @@ export default function DocumentsScreen() {
     }
     return path;
   };
-  
+
   const navigateToRoot = () => {
     setCurrentFolderId(null);
   };
-  
+
   const navigateToFolder = (folderId: string) => {
     setCurrentFolderId(folderId);
   };
 
-  const renderFolderTree = (parentId: string | null = null, level = 0) => {
-    const folderItems = folders.filter(f => f.parentId === parentId);
-    
-    return folderItems.map(folder => {
-      const isExpanded = expandedFolders.has(folder.id);
-      const hasChildren = folders.some(f => f.parentId === folder.id);
-      
-      return (
-        <View key={folder.id}>
-          <TouchableOpacity 
-            style={[styles.folderRow, { paddingLeft: 16 + level * 16 }]}
-            onPress={() => openFolder(folder)}
-            onLongPress={() => toggleExpanded(folder.id)}
-          >
-            {hasChildren && (
-              <TouchableOpacity 
-                onPress={() => toggleExpanded(folder.id)}
-                style={styles.expandButton}
-              >
-                {isExpanded ? 
-                  <ChevronDown size={16} color={colors.textSecondary} /> : 
-                  <ChevronRight size={16} color={colors.textSecondary} />
-                }
-              </TouchableOpacity>
-            )}
-            <FolderOpen size={20} color="#FBBC05" style={styles.folderIcon} />
-            <Text style={[styles.folderName, { color: colors.text }]}>{folder.name}</Text>
-          </TouchableOpacity>
-          
-          {isExpanded && renderFolderTree(folder.id, level + 1)}
-        </View>
-      );
-    });
-  };
-
-  // Render section headers
   const renderSectionHeader = (title: string) => (
     <Text style={[styles.sectionTitle, { color: colors.primary }]}>{title}</Text>
   );
 
-  // Render empty list component
   const renderEmptyComponent = (message: string) => (
     <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{message}</Text>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>    
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}> 
         <View style={styles.headerLeft}>
           <Text style={[styles.title, { color: colors.primary }]}>Documents</Text>
         </View>
       </View>
-      
+
       {currentFolderId && (
         <BreadcrumbNav 
           path={getFolderPath()} 
@@ -130,8 +91,8 @@ export default function DocumentsScreen() {
           onItemPress={navigateToFolder}
         />
       )}
-      
-      <View style={[styles.content, { backgroundColor: colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
+
+      <View style={[styles.content, { backgroundColor: colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}> 
         <View style={styles.documentsContainer}>
           {currentFolderId ? (
             // Current folder view
@@ -149,7 +110,6 @@ export default function DocumentsScreen() {
                   scrollEnabled={false}
                 />
               </View>
-              
               {/* Documents in current folder */}
               <View style={{marginBottom: TOTAL_BOTTOM_SPACING}}>
                 {renderSectionHeader("Documents")}
@@ -157,7 +117,7 @@ export default function DocumentsScreen() {
                   data={documents}
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
-                    <DocumentItem document={item} viewMode="list" />
+                    <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} />
                   )}
                   ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
                 />
@@ -180,6 +140,21 @@ export default function DocumentsScreen() {
                           <FolderItem folder={item} onPress={() => openFolder(item)} />
                         )}
                         scrollEnabled={false}
+                      />
+                    </View>
+                  );
+                }
+                if (item.id === 'documents') {
+                  return (
+                    <View style={{marginBottom: TOTAL_BOTTOM_SPACING}}>
+                      {renderSectionHeader("Documents")}
+                      <FlatList
+                        data={documents}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                          <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} />
+                        )}
+                        ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
                       />
                     </View>
                   );
@@ -252,4 +227,4 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginVertical: 12,
   },
-});
+}); 

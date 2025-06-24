@@ -1,90 +1,60 @@
-import { Tabs } from 'expo-router';
-import { useColorScheme, Platform, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
+import React from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useAuth } from '@/context/AuthContext';
 import { Home as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
-import { useAuth } from '@/context/AuthContext';
+
+const Tab = createBottomTabNavigator();
 
 export default function TabLayout() {
+  const { user } = useAuth();
   const { theme } = useTheme();
   const colors = Colors[theme];
-  const { user } = useAuth();
 
   return (
-    <Tabs
+    <Tab.Navigator
       screenOptions={{
-        tabBarStyle: [styles.tabBar, { backgroundColor: colors.surface, borderTopColor: colors.border }],
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
-        tabBarLabelStyle: [styles.tabBarLabel, { color: colors.text }],
         headerShown: false,
       }}
     >
-      <Tabs.Screen
+      <Tab.Screen
         name="index"
+        component={require('./index').default}
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <HomeIcon color={color} size={size} />
-          ),
+          tabBarIcon: ({ color, size }) => <HomeIcon color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="search"
+        component={require('./search').default}
+        options={{
+          title: 'Search',
+          tabBarIcon: ({ color, size }) => <SearchIcon color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="profile"
+        component={require('./profile').default}
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => <UserIcon color={color} size={size} />,
         }}
       />
       {user?.role === 'admin' && (
-        <Tabs.Screen
+        <Tab.Screen
           name="documents"
+          component={require('../documents').default}
           options={{
             title: 'Documents',
-            tabBarIcon: ({ color, size }) => (
-              <FolderIcon color={color} size={size} />
-            ),
+            tabBarIcon: ({ color, size }) => <FolderIcon color={color} size={size} />,
           }}
         />
       )}
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: 'Search',
-          tabBarIcon: ({ color, size }) => (
-            <SearchIcon color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <UserIcon color={color} size={size} />
-          ),
-        }}
-      />
-    </Tabs>
+    </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    position: 'absolute',
-    bottom: 25,
-    left: 20,
-    right: 20,
-    borderRadius: 20,
-    height: 70,
-    paddingBottom: 10,
-    paddingTop: 4,
-    marginHorizontal: 10,
-    marginBottom: 6,
-    borderTopWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  tabBarLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-});
