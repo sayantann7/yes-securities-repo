@@ -143,9 +143,9 @@ export default function ProfileScreen() {
             <Text style={[styles.userRole, { color: colors.textSecondary }]}>{user?.role || 'Sales Team'}</Text>
             <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email || 'user@example.com'}</Text>
           </View>
-          <TouchableOpacity onPress={openEditModal} style={styles.editButton}>
+          {/* <TouchableOpacity onPress={openEditModal} style={styles.editButton}>
             <Text style={{color: colors.primary}}>Edit</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
         
         {/* Admin-only Excel Import Section */}

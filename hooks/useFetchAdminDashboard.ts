@@ -15,6 +15,7 @@ export function useFetchAdminDashboard() {
         setError(null);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch admin dashboard data');
+        setDashboardData(null);
       } finally {
         setIsLoading(false);
       }
