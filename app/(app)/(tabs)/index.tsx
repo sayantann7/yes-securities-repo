@@ -166,7 +166,7 @@ export default function HomeScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>    
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}> 
         <View>
-          <Text style={[styles.greeting, { color: colors.primary }]}>Hi, {user?.name}</Text>
+          <Text style={[styles.greeting, { color: colors.primary, marginTop:50 }]}>Hi, {user?.name}</Text>
           <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>

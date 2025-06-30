@@ -7,6 +7,7 @@ import { useFonts } from 'expo-font';
 import { useEffect } from 'react';
 import { Text } from 'react-native';
 import { typography } from '@/constants/font';
+import { useTrackAppTime } from '@/hooks/useTrackAppTime';
 
 const customTextProps = {
   style: {
@@ -36,6 +37,8 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
+
+  useTrackAppTime();
 
   if (!fontsLoaded && !fontError) {
     return null;
