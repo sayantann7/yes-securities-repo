@@ -11,6 +11,11 @@
     "ios": {
       "supportsTablet": true
     },
+    "fonts": [
+      {
+        "asset": "assets/fonts/book-antiqua.ttf"
+      }
+    ],
     "web": {
       "bundler": "metro",
       "output": "single",

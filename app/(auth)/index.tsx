@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Image, 
-  ActivityIndicator, 
-  KeyboardAvoidingView, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
+  KeyboardAvoidingView,
   Platform
 } from 'react-native';
 import { router } from 'expo-router';
@@ -19,12 +19,12 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [error, setError] = useState('');
-  
+
   const { login, isLoading } = useAuth();
 
   const handleLogin = async () => {
     setError('');
-    
+
     if (!email.trim() || !password.trim()) {
       setError('Please enter both email and password');
       return;
@@ -48,19 +48,19 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.logoContainer}>
-        <Image 
-          source={{ uri: 'https://yesinvest.in/UploadImages/default-source/media/newlogo.png' }} 
+        <Image
+          source={{ uri: 'https://yesinvest.in/UploadImages/default-source/media/newlogo.png' }}
           style={styles.logoPlaceholder}
         />
-        <Text style={styles.title}>Sales Team Portal</Text>
+        {/* <Text style={styles.title}>Sales Team Portal</Text> */}
         {/* <Text style={styles.subtitle}></Text> */}
       </View>
 
       <View style={styles.formContainer}>
-        <Text style={styles.formTitle}>Sign In</Text>
-        
+        <Text style={styles.formTitle}>User Login</Text>
+
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        
+
         <View style={styles.inputContainer}>
           <Mail color="#5A5A5A" size={20} style={styles.inputIcon} />
           <TextInput
@@ -73,7 +73,7 @@ export default function LoginScreen() {
             onChangeText={setEmail}
           />
         </View>
-        
+
         <View style={styles.inputContainer}>
           <Lock color="#5A5A5A" size={20} style={styles.inputIcon} />
           <TextInput
@@ -85,19 +85,19 @@ export default function LoginScreen() {
             onChangeText={setPassword}
           />
           <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
-            {isPasswordVisible ? 
-              <EyeOff color="#5A5A5A" size={20} /> : 
+            {isPasswordVisible ?
+              <EyeOff color="#5A5A5A" size={20} /> :
               <Eye color="#5A5A5A" size={20} />
             }
           </TouchableOpacity>
         </View>
-        
+
         {/* <TouchableOpacity style={styles.forgotPassword}>
           <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
         </TouchableOpacity> */}
-        
-        <TouchableOpacity 
-          style={styles.loginButton} 
+
+        <TouchableOpacity
+          style={styles.loginButton}
           onPress={handleLogin}
           disabled={isLoading}
         >
@@ -121,19 +121,23 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 60,
+    marginTop: 115,
   },
   logoPlaceholder: {
     width: 360,
     height: 90,
     borderRadius: 0,
-    padding: 28, 
+    padding: 28,
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
     color: '#002EDC',
     marginTop: 12,
+    fontWeight: '900',
+    fontFamily: 'BookAntique',
+    textShadowColor: 'rgba(0, 46, 220, 0.3)',
+    textShadowOffset: { width: 0.5, height: 0.5 },
+    textShadowRadius: 0.5,
   },
   subtitle: {
     fontSize: 16,
@@ -154,9 +158,14 @@ const styles = StyleSheet.create({
   },
   formTitle: {
     fontSize: 20,
-    fontWeight: '600',
     color: '#002EDC',
     marginBottom: 20,
+    textAlign : 'center',
+    fontWeight: '900',
+    fontFamily: 'BookAntique',
+    textShadowColor: 'rgba(0, 46, 220, 0.3)',
+    textShadowOffset: { width: 0.5, height: 0.5 },
+    textShadowRadius: 0.5,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -198,7 +207,11 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '900',
+    fontFamily: 'BookAntique',
+    textShadowColor: 'rgba(0, 46, 220, 0.3)',
+    textShadowOffset: { width: 0.5, height: 0.5 },
+    textShadowRadius: 0.5,
   },
   errorText: {
     color: '#E53935',

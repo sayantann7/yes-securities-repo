@@ -1,7 +1,7 @@
 import { Document } from '@/types';
 
 // Base URL for API requests
-const API_URL = 'http://192.168.1.35:3000/api';
+const API_URL = 'http://192.168.1.103:3000/api';
 
 // Helper function to determine file type from key
 const getFileType = (key: string): string => {
