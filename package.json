@@ -37,6 +37,7 @@
     "expo-web-browser": "~14.1.5",
     "jwt-decode": "^4.0.0",
     "lucide-react-native": "^0.475.0",
+    "patch-package": "^8.0.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.1",
