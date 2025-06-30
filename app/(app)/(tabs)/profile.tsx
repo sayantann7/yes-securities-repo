@@ -134,58 +134,18 @@ export default function ProfileScreen() {
       
       <ScrollView>
         <View style={[styles.profileSection, { backgroundColor: colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
-          {/* <Image 
+          <Image 
             source={{ uri: user?.avatar || `https://avatar.iran.liara.run/username?username=${user?.name.split(' ')[0]}+${user?.name.split(' ')[1]}` }}
             style={styles.profileImage}
-          /> */}
+          />
           <View style={styles.profileInfo}>
             <Text style={[styles.userName, { color: colors.primary }]}>{user?.name || 'User Name'}</Text>
             <Text style={[styles.userRole, { color: colors.textSecondary }]}>{user?.role || 'Sales Team'}</Text>
             <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email || 'user@example.com'}</Text>
           </View>
-        </View>
-        
-        <View style={[styles.section, { backgroundColor: colors.surface }]}>  
-          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Account</Text>
-          
-          <TouchableOpacity style={[styles.menuItem, { borderBottomColor: colors.borderLight }]} onPress={openEditModal}>  
-            <View style={[styles.menuIconContainer, { backgroundColor: colors.surfaceVariant }]}>  
-              <User size={20} color={colors.primary} />
-            </View>
-            <Text style={[styles.menuItemText, { color: colors.text }]}>Edit Profile</Text>
-            <Text style={[styles.menuItemAction, { color: colors.textSecondary }]}>{'>'}</Text>
+          <TouchableOpacity onPress={openEditModal} style={styles.editButton}>
+            <Text style={{color: colors.primary}}>Edit</Text>
           </TouchableOpacity>
-          {/* Edit Profile Modal */}
-          <Modal visible={modalVisible} animationType="slide" transparent>
-            <View style={styles.modalContainer}>
-              <View style={[styles.modalContent, { backgroundColor: colors.surface }]}> 
-                <Text style={[styles.modalTitle, { color: colors.primary }]}>Edit Profile</Text>
-                <TextInput
-                  style={[styles.input, { color: colors.text, borderColor: colors.border }]}  
-                  placeholder="Full Name"
-                  placeholderTextColor={colors.textSecondary}
-                  value={newFullname}
-                  onChangeText={setNewFullname}
-                />
-                <TextInput
-                  style={[styles.input, { color: colors.text, borderColor: colors.border }]}  
-                  placeholder="Email"
-                  placeholderTextColor={colors.textSecondary}
-                  keyboardType="email-address"
-                  value={newEmail}
-                  onChangeText={setNewEmail}
-                />
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity style={[styles.button, { backgroundColor: colors.error }]} onPress={() => setModalVisible(false)}>
-                    <Text style={[styles.buttonText]}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={handleSave}>
-                    <Text style={[styles.buttonText, { color: '#fff' }]}>Save</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
         </View>
         
         {/* Admin-only Excel Import Section */}
@@ -294,34 +254,41 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   profileSection: {
-    padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 20,
+    marginTop: 20,
   },
   profileImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 70,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginRight: 20,
   },
   profileInfo: {
-    marginLeft: 20,
+    flex: 1,
   },
   userName: {
-    fontSize: 25,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
   },
   userRole: {
     fontSize: 16,
-    marginTop: 2,
+    marginTop: 4,
   },
   userEmail: {
     fontSize: 14,
     marginTop: 4,
   },
+  editButton: {
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc'
+  },
   section: {
-    marginTop: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    marginTop: 20,
+    padding: 20,
     borderRadius: 8,
     marginHorizontal: 16,
   },
