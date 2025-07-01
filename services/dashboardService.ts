@@ -32,7 +32,7 @@ export interface AdminDashboardData {
   sharedCount: number;
 }
 
-const API_URL = 'http://192.168.1.103:3000/user';
+const API_URL = 'http://10.24.64.229:3000/user';
 
 function getPercentageChange(current: number, previous: number): number {
   if (previous === 0) return current === 0 ? 0 : 100;

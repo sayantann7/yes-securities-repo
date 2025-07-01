@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import { FileText, Star, Users } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
@@ -12,6 +13,7 @@ import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
 import { Folder } from '@/types';
 import { useFetchAdminDashboard } from '@/hooks/useFetchAdminDashboard';
 import DashboardStat from '@/components/admin/DashboardStat';
+import * as DocumentPicker from 'expo-document-picker';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -64,6 +66,69 @@ export default function HomeScreen() {
   // --- Admin View ---
   if (user?.role === 'admin') {
     const { dashboardData, isLoading, error } = useFetchAdminDashboard();
+    const [excelFile, setExcelFile] = useState<any>(null);
+    const [uploading, setUploading] = useState(false);
+    const [uploadResult, setUploadResult] = useState<any>(null);
+
+    // Pick Excel file
+    const handlePickExcel = async () => {
+      try {
+        const result = await (Platform.OS === 'web'
+          ? new Promise<any>((resolve) => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = '.xlsx';
+              input.onchange = (e: any) => {
+                const file = e.target.files[0];
+                resolve({ name: file.name, fileObj: file });
+              };
+              input.click();
+            })
+          : DocumentPicker.getDocumentAsync({ type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        );
+        if (result && (result.fileObj || (result.assets && result.assets[0]))) {
+          setExcelFile(result.fileObj || result.assets[0]);
+          setUploadResult(null);
+        }
+      } catch (err: unknown) {
+        Alert.alert('Error', 'Failed to pick file');
+      }
+    };
+
+    // Upload Excel file
+    const handleUploadExcel = async () => {
+      if (!excelFile) return;
+      setUploading(true);
+      setUploadResult(null);
+      try {
+        const formData = new FormData();
+        if (Platform.OS === 'web') {
+          formData.append('file', excelFile, excelFile.name);
+        } else {
+          formData.append('file', {
+            uri: excelFile.uri,
+            name: excelFile.name,
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          } as any);
+        }
+        const response = await fetch('http://192.168.1.103:3000/admin/users/import', {
+          method: 'POST',
+          body: formData,
+          headers: Platform.OS === 'web' ? {} : { 'Content-Type': 'multipart/form-data' },
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          setUploadResult({ error: data.error || 'Upload failed', errors: [] });
+        } else {
+          setUploadResult(data.results || data);
+          setExcelFile(null);
+        }
+      } catch (err: any) {
+        setUploadResult({ error: err.message || 'Upload failed', errors: [] });
+      } finally {
+        setUploading(false);
+      }
+    };
 
     if (isLoading) {
       return (
@@ -126,6 +191,56 @@ export default function HomeScreen() {
               />
                <View style={{flex: 1, marginHorizontal: 8}} />
             </View>
+          </View>
+
+          {/* Admin Excel Upload Section */}
+          <View style={[styles.section, { backgroundColor: colors.surface, borderRadius: 12, marginHorizontal: 16, marginTop: 8, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>  
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Upload Employee List</Text>
+            <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
+              Upload an Excel file (.xlsx) with columns <Text style={{ fontWeight: 'bold' }}>fullname</Text> and <Text style={{ fontWeight: 'bold' }}>email</Text>.
+              {'\n'}Employees not in the new list will be revoked, and new ones will be granted access automatically.
+            </Text>
+            <TouchableOpacity
+              style={[styles.uploadBtn, { backgroundColor: colors.primary, marginBottom: 8 }]}
+              onPress={handlePickExcel}
+              disabled={uploading}
+            >
+              <Text style={{ color: '#fff', fontWeight: '600' }}>{excelFile ? excelFile.name : 'Select Excel File'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.uploadBtn, { backgroundColor: colors.primary }]} 
+              onPress={handleUploadExcel}
+              disabled={!excelFile || uploading}
+            >
+              <Text style={{ color: '#fff', fontWeight: '600' }}>{uploading ? 'Uploading...' : 'Upload'}</Text>
+            </TouchableOpacity>
+            {uploadResult && (
+              <View style={{ marginTop: 10 }}>
+                {uploadResult.error ? (
+                  <Text style={{ color: colors.error, fontWeight: '600' }}>{uploadResult.error}</Text>
+                ) : (
+                  <>
+                    <Text style={{ color: colors.success || '#34A853', fontWeight: '600' }}>
+                      New Employees Added: {uploadResult.newEmployeesAdded || 0}
+                    </Text>
+                    <Text style={{ color: colors.error, fontWeight: '600' }}>
+                      Former Employees Removed: {uploadResult.formerEmployeesRemoved || 0}
+                    </Text>
+                    <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>
+                      Unchanged Employees: {uploadResult.unchangedEmployees || 0}
+                    </Text>
+                    {uploadResult.errors && uploadResult.errors.length > 0 && (
+                      <View style={{ marginTop: 4 }}>
+                        <Text style={{ color: colors.error, fontWeight: '600' }}>Errors:</Text>
+                        {uploadResult.errors.map((err: string, idx: number) => (
+                          <Text key={idx} style={{ color: colors.error, fontSize: 12 }}>{err}</Text>
+                        ))}
+                      </View>
+                    )}
+                  </>
+                )}
+              </View>
+            )}
           </View>
           
           <View style={styles.section}>
@@ -336,5 +451,10 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: 'center',
     marginTop: 20,
+  },
+  uploadBtn: {
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
   },
 });

@@ -20,7 +20,6 @@ export default function ProfileScreen() {
   const [newEmail, setNewEmail] = useState(user?.email || '');
 
   // Admin Excel import state
-  const [selectedAction, setSelectedAction] = useState<'joiners' | 'leavers'>('joiners');
   const [excelFile, setExcelFile] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<any>(null);
@@ -106,8 +105,7 @@ export default function ProfileScreen() {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         } as any);
       }
-      formData.append('actionType', selectedAction);
-      const response = await fetch('http://192.168.1.35:3000/api/users/import', {
+      const response = await fetch('http://192.168.1.103:3000/admin/users/import', {
         method: 'POST',
         body: formData,
         headers: Platform.OS === 'web' ? {} : { 'Content-Type': 'multipart/form-data' },
@@ -116,7 +114,7 @@ export default function ProfileScreen() {
       if (!response.ok) {
         setUploadResult({ error: data.error || 'Upload failed', errors: [] });
       } else {
-        setUploadResult(data);
+        setUploadResult(data.results || data);
         setExcelFile(null);
       }
     } catch (err: any) {
@@ -147,58 +145,6 @@ export default function ProfileScreen() {
             <Text style={{color: colors.primary}}>Edit</Text>
           </TouchableOpacity> */}
         </View>
-        
-        {/* Admin-only Excel Import Section */}
-        {user?.role === 'admin' && (
-          <View style={[styles.section, { backgroundColor: colors.surface }]}>  
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Bulk User Import</Text>
-            <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
-              Upload an Excel file (.xlsx) with columns <Text style={{ fontWeight: 'bold' }}>fullname</Text> and <Text style={{ fontWeight: 'bold' }}>email</Text>.
-            </Text>
-            <View style={{ flexDirection: 'row', marginBottom: 12 }}>
-              <TouchableOpacity
-                style={[styles.actionButton, selectedAction === 'joiners' && { backgroundColor: colors.primary }]}
-                onPress={() => setSelectedAction('joiners')}
-              >
-                <Text style={{ color: selectedAction === 'joiners' ? '#fff' : colors.primary, fontWeight: '600' }}>New Joiners</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, selectedAction === 'leavers' && { backgroundColor: colors.primary }]}
-                onPress={() => setSelectedAction('leavers')}
-              >
-                <Text style={{ color: selectedAction === 'leavers' ? '#fff' : colors.primary, fontWeight: '600' }}>Terminations</Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity
-              style={[styles.uploadBtn, { backgroundColor: colors.primary, marginBottom: 8 }]}
-              onPress={handlePickExcel}
-              disabled={uploading}
-            >
-              <Text style={{ color: '#fff', fontWeight: '600' }}>{excelFile ? excelFile.name : 'Select Excel File'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.uploadBtn, { backgroundColor: colors.primary }]} 
-              onPress={handleUploadExcel}
-              disabled={!excelFile || uploading}
-            >
-              <Text style={{ color: '#fff', fontWeight: '600' }}>{uploading ? 'Uploading...' : 'Upload'}</Text>
-            </TouchableOpacity>
-            {uploadResult && (
-              <View style={{ marginTop: 10 }}>
-                <Text style={{ color: uploadResult.success ? (colors.success || '#34A853') : colors.error, fontWeight: '600' }}>
-                  {uploadResult.success ? `Success: ${uploadResult.success}, Failed: ${uploadResult.failed}` : uploadResult.error}
-                </Text>
-                {uploadResult.errors && uploadResult.errors.length > 0 && (
-                  <View style={{ marginTop: 4 }}>
-                    {uploadResult.errors.map((err: string, idx: number) => (
-                      <Text key={idx} style={{ color: colors.error, fontSize: 12 }}>{err}</Text>
-                    ))}
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-        )}
         
         {/* <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <Text style={[styles.sectionTitle, { color: colors.primary }]}>Preferences</Text>
@@ -426,16 +372,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: '600',
-  },
-  actionButton: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#4285F4',
-    marginRight: 8,
-    alignItems: 'center',
-    backgroundColor: '#fff',
   },
   uploadBtn: {
     padding: 12,
