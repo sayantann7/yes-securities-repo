@@ -153,12 +153,14 @@ export default function HomeScreen() {
               <Text style={[styles.greeting, { color: colors.primary, marginTop:50 }]}>Admin Dashboard</Text>
               <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>Welcome, {user?.name}</Text>
             </View>
-            <TouchableOpacity>
-              <Image 
-                source={{ uri: user?.avatar || '/avatar.jpg' }}
-                style={styles.avatar}
-              />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TouchableOpacity>
+                <Image 
+                  source={{ uri: user?.avatar || '/avatar.jpg' }}
+                  style={styles.avatar}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.section}>

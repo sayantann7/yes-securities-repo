@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
-import { ChevronRight, ChevronDown, FolderOpen } from 'lucide-react-native';
+import { ChevronRight, ChevronDown, FolderOpen, Plus } from 'lucide-react-native';
 import { useFetchFolders } from '@/hooks/useFetchFolders';
 import FolderItem from '@/components/document/FolderItem';
 import DocumentItem from '@/components/document/DocumentItem';
@@ -9,6 +9,7 @@ import { Folder } from '@/types';
 import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
+import UploadFileModal from '@/components/upload/UploadFileModal';
 
 const TAB_BAR_HEIGHT = 64;
 const BOTTOM_SPACING = Platform.OS === 'ios' ? 24 : 16;
@@ -18,6 +19,7 @@ const TOTAL_BOTTOM_SPACING = TAB_BAR_HEIGHT + BOTTOM_SPACING + SAFE_AREA_BOTTOM;
 export default function DocumentsScreen() {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const { folders, rootFolders, documents, isLoading } = useFetchFolders(currentFolderId);
   const { user } = useAuth();
 
@@ -79,6 +81,12 @@ export default function DocumentsScreen() {
         <View style={styles.headerLeft}>
           <Text style={[styles.title, { color: Colors.primary }]}>Documents</Text>
         </View>
+        <TouchableOpacity 
+          style={{ backgroundColor: Colors.primary, borderRadius: 20, width: 40, height: 40, justifyContent: 'center', alignItems: 'center' }}
+          onPress={() => setShowUploadModal(true)}
+        >
+          <Plus size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       {currentFolderId && (
@@ -163,6 +171,11 @@ export default function DocumentsScreen() {
           )}
         </View>
       </View>
+      
+      <UploadFileModal 
+        visible={showUploadModal} 
+        onClose={() => setShowUploadModal(false)} 
+      />
     </View>
   );
 }
