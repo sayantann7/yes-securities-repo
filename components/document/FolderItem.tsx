@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Folder as FolderIcon, MoreHorizontal } from 'lucide-react-native';
 import { Folder } from '@/types';
-import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 
 interface FolderItemProps {
@@ -10,29 +9,26 @@ interface FolderItemProps {
 }
 
 export default function FolderItem({ folder, onPress }: FolderItemProps) {
-  const { theme } = useTheme();
-  const colors = Colors[theme];
-
   return (
     <TouchableOpacity 
-      style={[styles.container, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}
+      style={[styles.container, { backgroundColor: Colors.surface, borderBottomColor: Colors.borderLight }]}
       onPress={onPress}
     >
-      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceVariant }]}>
+      <View style={[styles.iconContainer, { backgroundColor: Colors.surfaceVariant }]}>
         <FolderIcon size={24} color="#6B73FF" />
       </View>
       
       <View style={styles.folderInfo}>
-        <Text style={[styles.folderName, { color: colors.text }]} numberOfLines={1}>
+        <Text style={[styles.folderName, { color: Colors.text }]} numberOfLines={1}>
           {folder.name}
         </Text>
-        <Text style={[styles.folderCount, { color: colors.textSecondary }]}>
+        <Text style={[styles.folderCount, { color: Colors.textSecondary }]}>
           {folder.itemCount || 0} items
         </Text>
       </View>
       
       <TouchableOpacity style={styles.moreButton}>
-        <MoreHorizontal size={20} color={colors.textSecondary} />
+        <MoreHorizontal size={20} color={Colors.textSecondary} />
       </TouchableOpacity>
     </TouchableOpacity>
   );

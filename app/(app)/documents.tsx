@@ -7,7 +7,6 @@ import FolderItem from '@/components/document/FolderItem';
 import DocumentItem from '@/components/document/DocumentItem';
 import { Folder } from '@/types';
 import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
-import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 
@@ -17,8 +16,6 @@ const SAFE_AREA_BOTTOM = 20;
 const TOTAL_BOTTOM_SPACING = TAB_BAR_HEIGHT + BOTTOM_SPACING + SAFE_AREA_BOTTOM;
 
 export default function DocumentsScreen() {
-  const { theme } = useTheme();
-  const colors = Colors[theme];
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const { folders, rootFolders, documents, isLoading } = useFetchFolders(currentFolderId);
@@ -69,18 +66,18 @@ export default function DocumentsScreen() {
   };
 
   const renderSectionHeader = (title: string) => (
-    <Text style={[styles.sectionTitle, { color: colors.primary }]}>{title}</Text>
+    <Text style={[styles.sectionTitle, { color: Colors.primary }]}>{title}</Text>
   );
 
   const renderEmptyComponent = (message: string) => (
-    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{message}</Text>
+    <Text style={[styles.emptyText, { color: Colors.textSecondary }]}>{message}</Text>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>    
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}> 
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>    
+      <View style={[styles.header, { backgroundColor: Colors.surface, borderBottomColor: Colors.border }]}> 
         <View style={styles.headerLeft}>
-          <Text style={[styles.title, { color: colors.primary }]}>Documents</Text>
+          <Text style={[styles.title, { color: Colors.primary }]}>Documents</Text>
         </View>
       </View>
 
@@ -92,7 +89,7 @@ export default function DocumentsScreen() {
         />
       )}
 
-      <View style={[styles.content, { backgroundColor: colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}> 
+      <View style={[styles.content, { backgroundColor: Colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}> 
         <View style={styles.documentsContainer}>
           {currentFolderId ? (
             // Current folder view

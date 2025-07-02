@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FileText, Download, Share, MoreHorizontal } from 'lucide-react-native';
 import { Document } from '@/types';
-import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 
 interface DocumentItemProps {
@@ -11,12 +10,10 @@ interface DocumentItemProps {
 }
 
 export default function DocumentItem({ document, viewMode, onPress }: DocumentItemProps) {
-  const { theme } = useTheme();
-  const colors = Colors[theme];
 
   const getFileIcon = (type: string) => {
     // Return appropriate icon based on file type
-    return <FileText size={20} color={colors.primary} />;
+    return <FileText size={20} color={Colors.primary} />;
   };
 
   const formatFileSize = (bytes: number) => {
@@ -30,16 +27,16 @@ export default function DocumentItem({ document, viewMode, onPress }: DocumentIt
   if (viewMode === 'grid') {
     return (
       <TouchableOpacity 
-        style={[styles.gridItem, { backgroundColor: colors.surface }]} 
+        style={[styles.gridItem, { backgroundColor: Colors.surface }]} 
         onPress={onPress}
       >
-        <View style={[styles.gridIconContainer, { backgroundColor: colors.surfaceVariant }]}>
+        <View style={[styles.gridIconContainer, { backgroundColor: Colors.surfaceVariant }]}>
           {getFileIcon(document.type)}
         </View>
-        <Text style={[styles.gridTitle, { color: colors.text }]} numberOfLines={2}>
+        <Text style={[styles.gridTitle, { color: Colors.text }]} numberOfLines={2}>
           {document.name}
         </Text>
-        <Text style={[styles.gridSubtitle, { color: colors.textSecondary }]}>
+        <Text style={[styles.gridSubtitle, { color: Colors.textSecondary }]}>
           {formatFileSize(Number(document.size))}
         </Text>
       </TouchableOpacity>
@@ -48,29 +45,29 @@ export default function DocumentItem({ document, viewMode, onPress }: DocumentIt
 
   return (
     <TouchableOpacity 
-      style={[styles.listItem, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]} 
+      style={[styles.listItem, { backgroundColor: Colors.surface, borderBottomColor: Colors.borderLight }]} 
       onPress={onPress}
     >
-      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceVariant }]}>
+      <View style={[styles.iconContainer, { backgroundColor: Colors.surfaceVariant }]}>
         {getFileIcon(document.type)}
       </View>
       
       <View style={styles.documentInfo}>
-        <Text style={[styles.documentName, { color: colors.text }]} numberOfLines={1}>
+        <Text style={[styles.documentName, { color: Colors.text }]} numberOfLines={1}>
           {document.name}
         </Text>
         <View style={styles.documentMeta}>
-          <Text style={[styles.documentSize, { color: colors.textSecondary }]}>
+          <Text style={[styles.documentSize, { color: Colors.textSecondary }]}>
             {document.size}
           </Text>
-          <Text style={[styles.documentDate, { color: colors.textSecondary }]}>
+          <Text style={[styles.documentDate, { color: Colors.textSecondary }]}>
             {new Date(document.createdAt).toLocaleDateString()}
           </Text>
         </View>
       </View>
       
       <TouchableOpacity style={styles.moreButton}>
-        <MoreHorizontal size={20} color={colors.textSecondary} />
+        <MoreHorizontal size={20} color={Colors.textSecondary} />
       </TouchableOpacity>
     </TouchableOpacity>
   );

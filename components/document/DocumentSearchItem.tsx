@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FileText, Calendar, User } from 'lucide-react-native';
 import { Document } from '@/types';
-import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 
 interface DocumentSearchItemProps {
@@ -11,8 +10,6 @@ interface DocumentSearchItemProps {
 }
 
 export default function DocumentSearchItem({ document, searchTerm, onPress }: DocumentSearchItemProps) {
-  const { theme } = useTheme();
-  const colors = Colors[theme];
 
   const highlightSearchTerm = (text: string, term: string) => {
     if (!term) return text;
@@ -21,7 +18,7 @@ export default function DocumentSearchItem({ document, searchTerm, onPress }: Do
     return parts.map((part, index) => (
       <Text
         key={index}
-        style={part.toLowerCase() === term.toLowerCase() ? { backgroundColor: colors.warning } : {}}
+        style={part.toLowerCase() === term.toLowerCase() ? { backgroundColor: Colors.warning } : {}}
       >
         {part}
       </Text>
@@ -30,36 +27,36 @@ export default function DocumentSearchItem({ document, searchTerm, onPress }: Do
 
   return (
     <TouchableOpacity 
-      style={[styles.container, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}
+      style={[styles.container, { backgroundColor: Colors.surface, borderBottomColor: Colors.borderLight }]}
       onPress={onPress}
     >
-      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceVariant }]}>
-        <FileText size={20} color={colors.primary} />
+      <View style={[styles.iconContainer, { backgroundColor: Colors.surfaceVariant }]}>
+        <FileText size={20} color={Colors.primary} />
       </View>
       
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.text }]}>
+        <Text style={[styles.title, { color: Colors.text }]}>
           {highlightSearchTerm(document.name, searchTerm)}
         </Text>
         
         <View style={styles.metadata}>
           <View style={styles.metaItem}>
-            <User size={12} color={colors.textSecondary} />
-            <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+            <User size={12} color={Colors.textSecondary} />
+            <Text style={[styles.metaText, { color: Colors.textSecondary }]}>
               {document.author || 'Unknown'}
             </Text>
           </View>
           
           <View style={styles.metaItem}>
-            <Calendar size={12} color={colors.textSecondary} />
-            <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+            <Calendar size={12} color={Colors.textSecondary} />
+            <Text style={[styles.metaText, { color: Colors.textSecondary }]}>
               {new Date(document.createdAt).toLocaleDateString()}
             </Text>
           </View>
         </View>
         
         {document.content && (
-          <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={2}>
+          <Text style={[styles.preview, { color: Colors.textSecondary }]} numberOfLines={2}>
             {highlightSearchTerm(document.content, searchTerm)}
           </Text>
         )}

@@ -2,12 +2,8 @@ import { Tabs } from 'expo-router';
 import { PhoneIncoming as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon } from 'lucide-react-native';
 import { Text, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useColorScheme } from 'react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
   return (
     <Tabs
       screenOptions={{
@@ -19,7 +15,7 @@ export default function TabLayout() {
         tabBarBackground: () => (
           Platform.OS === 'ios' ? 
             <BlurView 
-              tint={isDark ? 'dark' : 'light'} 
+              tint="light" 
               intensity={80} 
               style={StyleSheet.absoluteFill} 
             /> : null

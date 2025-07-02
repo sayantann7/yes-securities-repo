@@ -2,7 +2,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { FileText, FileImage, FileVideo, FileAudio, File } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Document } from '@/types';
-import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 
 interface RecentDocumentItemProps {
@@ -10,8 +9,6 @@ interface RecentDocumentItemProps {
 }
 
 export function RecentDocumentItem({ document }: RecentDocumentItemProps) {
-  const { theme } = useTheme();
-  const colors = Colors[theme];
 
   const handlePress = () => {
     router.push(`/document/${document.id}`);
@@ -28,23 +25,23 @@ export function RecentDocumentItem({ document }: RecentDocumentItemProps) {
       case 'audio':
         return <FileAudio size={24} color="#FBBC05" />;
       default:
-        return <File size={24} color={colors.textSecondary} />;
+        return <File size={24} color={Colors.textSecondary} />;
     }
   };
   
   return (
-    <TouchableOpacity style={[styles.container, { backgroundColor: colors.surface }]} onPress={handlePress}>
-      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceVariant }]}>
+    <TouchableOpacity style={[styles.container, { backgroundColor: Colors.surface }]} onPress={handlePress}>
+      <View style={[styles.iconContainer, { backgroundColor: Colors.surfaceVariant }]}>
         {document.type === 'image' && document.thumbnailUrl ? (
           <Image source={{ uri: document.thumbnailUrl }} style={styles.thumbnail} />
         ) : (
           getDocumentIcon()
         )}
       </View>
-      <Text style={[styles.name, { color: colors.text }]} numberOfLines={2}>
+      <Text style={[styles.name, { color: Colors.text }]} numberOfLines={2}>
         {document.name}
       </Text>
-      <Text style={[styles.date, { color: colors.textSecondary }]}>
+      <Text style={[styles.date, { color: Colors.textSecondary }]}>
         {document.createdAt}
       </Text>
     </TouchableOpacity>

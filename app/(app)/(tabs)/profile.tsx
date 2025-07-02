@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Switch, ScrollView, Alert, Platform, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, Platform, Modal, TextInput } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
-import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 import { 
   User, LogOut, Settings, Bell, Moon, Key, Shield, Download, 
@@ -11,8 +10,7 @@ import * as DocumentPicker from 'expo-document-picker';
 
 export default function ProfileScreen() {
   const { user, logout, updateProfile } = useAuth();
-  const { isDarkMode, toggleTheme, theme } = useTheme();
-  const colors = Colors[theme];
+  const colors = Colors;
   
   // Modal state and form
   const [modalVisible, setModalVisible] = useState(false);

@@ -2,7 +2,6 @@ import { Stack, SplashScreen } from 'expo-router';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
 import { AuthProvider } from '@/context/AuthContext';
-import { ThemeProvider } from '@/context/ThemeContext';
 import { useFonts } from 'expo-font';
 import { useEffect } from 'react';
 import { Text } from 'react-native';
@@ -46,12 +45,10 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <AuthProvider>
-        <ThemeProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(app)" options={{ headerShown: false }} />
-          </Stack>
-        </ThemeProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(app)" options={{ headerShown: false }} />
+        </Stack>
       </AuthProvider>
     </Provider>
   );

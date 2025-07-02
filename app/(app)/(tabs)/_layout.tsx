@@ -2,15 +2,13 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '@/context/AuthContext';
 import { Home as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon } from 'lucide-react-native';
-import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 
 const Tab = createBottomTabNavigator();
 
 export default function TabLayout() {
   const { user } = useAuth();
-  const { theme } = useTheme();
-  const colors = Colors[theme];
+  const colors = Colors;
 
   return (
     <Tab.Navigator

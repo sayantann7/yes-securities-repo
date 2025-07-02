@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { ArrowUp, ArrowDown } from 'lucide-react-native';
-import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 
 interface DashboardStatProps {
@@ -21,22 +20,20 @@ const DashboardStat: React.FC<DashboardStatProps> = ({
   unit = '',
   isLoading,
 }) => {
-  const { theme } = useTheme();
-  const colors = Colors[theme];
   const isPositive = percentageChange >= 0;
 
   if (isLoading) {
     return (
-      <View style={[styles.card, { backgroundColor: colors.surface }]}>
-        <ActivityIndicator color={colors.primary} />
+      <View style={[styles.card, { backgroundColor: Colors.surface }]}>
+        <ActivityIndicator color={Colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: '#000' }]}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
-      <Text style={[styles.value, { color: colors.primary }]}>
+    <View style={[styles.card, { backgroundColor: Colors.surface, shadowColor: '#000' }]}>
+      <Text style={[styles.label, { color: Colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.value, { color: Colors.primary }]}>
         {value.toLocaleString()}
         {unit}
       </Text>
@@ -51,7 +48,7 @@ const DashboardStat: React.FC<DashboardStatProps> = ({
             {Math.abs(percentageChange).toFixed(1)}%
           </Text>
         </View>
-        <Text style={[styles.comparisonText, { color: colors.textSecondary }]}>
+        <Text style={[styles.comparisonText, { color: Colors.textSecondary }]}>
           vs {comparisonValue.toLocaleString()} last week
         </Text>
       </View>

@@ -3,7 +3,6 @@ import { Modal, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndi
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { ChevronLeft, FilePlus } from 'lucide-react-native';
-import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 import { useFetchFolders } from '@/hooks/useFetchFolders';
 import { createFolder } from '@/services/folderService';
@@ -20,8 +19,6 @@ interface UploadFileModalProps {
 }
 
 export default function UploadFileModal({ visible, onClose }: UploadFileModalProps) {
-  const { theme } = useTheme();
-  const colors = Colors[theme];
 
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   // include fileObj for web file blobs
@@ -130,30 +127,30 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={[styles.container, { backgroundColor: colors.surface }]}>        
+      <View style={[styles.container, { backgroundColor: Colors.surface }]}>        
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <ChevronLeft size={24} color={colors.primary} />
+            <ChevronLeft size={24} color={Colors.primary} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.primary }]}>Upload File</Text>
+          <Text style={[styles.headerTitle, { color: Colors.primary }]}>Upload File</Text>
         </View>
 
         {/* Create Folder Input */}
         {creatingFolder && (
-          <View style={[styles.createFolderContainer, { backgroundColor: colors.surface }]}>            
+          <View style={[styles.createFolderContainer, { backgroundColor: Colors.surface }]}>            
             <TextInput
               placeholder="Folder Name"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={Colors.textSecondary}
               value={newFolderName}
               onChangeText={setNewFolderName}
-              style={[styles.input, { borderColor: colors.textSecondary, color: colors.textSecondary }]}
+              style={[styles.input, { borderColor: Colors.textSecondary, color: Colors.textSecondary }]}
             />
             <View style={styles.createActions}>
               <TouchableOpacity onPress={() => setCreatingFolder(false)}>
-                <Text style={[styles.createActionText, { color: colors.primary }]}>Cancel</Text>
+                <Text style={[styles.createActionText, { color: Colors.primary }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleCreateFolder} disabled={!newFolderName.trim()}>
-                <Text style={[styles.createActionText, { color: colors.primary }]}>Create</Text>
+                <Text style={[styles.createActionText, { color: Colors.primary }]}>Create</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -171,13 +168,13 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
         <View style={styles.listContainer}>
           {/* Folders Section */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Folders</Text>
+            <Text style={[styles.sectionTitle, { color: Colors.primary }]}>Folders</Text>
             <TouchableOpacity onPress={() => { setCreatingFolder(true); setNewFolderName(''); }}>
-              <Text style={{ fontSize: 14, fontWeight: '500', color: colors.primary }}>New Folder</Text>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: Colors.primary }}>New Folder</Text>
             </TouchableOpacity>
           </View>
           {isLoading ? (
-            <ActivityIndicator size="small" color={colors.primary} />
+            <ActivityIndicator size="small" color={Colors.primary} />
           ) : rootFolders.length > 0 ? (
             <FlatList
               data={rootFolders}
@@ -188,12 +185,12 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
               scrollEnabled={false}
             />
           ) : (
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No folders</Text>
+            <Text style={[styles.emptyText, { color: Colors.textSecondary }]}>No folders</Text>
           )}
           {/* Documents Section */}
-          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Documents</Text>
+          <Text style={[styles.sectionTitle, { color: Colors.primary }]}>Documents</Text>
           {isLoading ? (
-            <ActivityIndicator size="small" color={colors.primary} />
+            <ActivityIndicator size="small" color={Colors.primary} />
           ) : documents.length > 0 ? (
             <FlatList
               data={documents}
@@ -203,21 +200,21 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
               )}
             />
           ) : (
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No documents</Text>
+            <Text style={[styles.emptyText, { color: Colors.textSecondary }]}>No documents</Text>
           )}
          </View>
 
          <View style={styles.actions}>
           {/* File/Folder upload actions */}
-           <TouchableOpacity onPress={handleFolderPick} style={[styles.pickBtn, { backgroundColor: colors.primary }]}>            
+           <TouchableOpacity onPress={handleFolderPick} style={[styles.pickBtn, { backgroundColor: Colors.primary }]}>            
              <FilePlus size={20} color="#fff" />
              <Text style={styles.pickText}>Select Folder</Text>
            </TouchableOpacity>
-           <TouchableOpacity onPress={handleFilePick} style={[styles.pickBtn, { backgroundColor: colors.primary }]}>            
+           <TouchableOpacity onPress={handleFilePick} style={[styles.pickBtn, { backgroundColor: Colors.primary }]}>            
              <FilePlus size={20} color="#fff" />
              <Text style={styles.pickText}>{selectedFiles.length > 0 ? `${selectedFiles.length} file(s)` : 'Select File(s)'}</Text>
            </TouchableOpacity>
-           <TouchableOpacity onPress={handleUpload} disabled={selectedFiles.length === 0 || uploading} style={[styles.uploadBtn, { backgroundColor: colors.primary }]}>          
+           <TouchableOpacity onPress={handleUpload} disabled={selectedFiles.length === 0 || uploading} style={[styles.uploadBtn, { backgroundColor: Colors.primary }]}>          
              {uploading ? <ActivityIndicator color="#fff" /> : <Text style={styles.uploadText}>Upload</Text>}
            </TouchableOpacity>
          </View>

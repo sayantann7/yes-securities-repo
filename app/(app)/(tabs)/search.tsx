@@ -14,13 +14,11 @@ import DocumentSearchItem from '@/components/document/DocumentSearchItem';
 import { searchDocuments } from '@/services/documentService';
 import { Document } from '@/types';
 import FilterModal from '@/components/search/FilterModal';
-import { useTheme } from '@/context/ThemeContext';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/Colors';
 
 export default function SearchScreen() {
-  const { theme } = useTheme();
-  const colors = Colors[theme];
+  const colors = Colors;
   
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<Document[]>([]);

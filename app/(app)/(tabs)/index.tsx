@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, 
 import { useEffect, useState } from 'react';
 import { FileText, Star, Users } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
-import { useTheme } from '@/context/ThemeContext';
 import { Colors } from '@/constants/Colors';
 import { router } from 'expo-router';
 import { useFetchFolders } from '@/hooks/useFetchFolders';
@@ -17,8 +16,7 @@ import * as DocumentPicker from 'expo-document-picker';
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { theme } = useTheme();
-  const colors = Colors[theme];
+  const colors = Colors;
 
   // --- Non-admin state ---
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
