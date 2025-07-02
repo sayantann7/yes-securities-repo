@@ -51,7 +51,8 @@
     "react-native-web": "^0.20.0",
     "react-native-webview": "13.13.5",
     "react-redux": "^9.0.4",
-    "yes-securities-app": "file:"
+    "yes-securities-app": "file:",
+    "expo-dev-client": "~5.2.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

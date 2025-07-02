@@ -11,9 +11,10 @@ interface FolderItemProps {
   folder: Folder;
   onPress: () => void;
   onUpdate?: () => void; // Callback to refresh folder list after rename/delete
+  viewMode?: 'list' | 'grid';
 }
 
-export default function FolderItem({ folder, onPress, onUpdate }: FolderItemProps) {
+export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list' }: FolderItemProps) {
   const { user } = useAuth();
   const [showActionModal, setShowActionModal] = useState(false);
 
@@ -33,6 +34,41 @@ export default function FolderItem({ folder, onPress, onUpdate }: FolderItemProp
     await deleteFolder(folder.id);
     onUpdate?.();
   };
+
+  if (viewMode === 'grid') {
+    return (
+      <>
+        <TouchableOpacity 
+          style={[styles.gridItem, { backgroundColor: Colors.surface }]} 
+          onPress={onPress}
+        >
+          <View style={[styles.gridIconContainer, { backgroundColor: Colors.surfaceVariant }]}>
+            <FolderIcon size={32} color="#6B73FF" />
+          </View>
+          <Text style={[styles.gridTitle, { color: Colors.text }]} numberOfLines={2}>
+            {folder.name}
+          </Text>
+          <Text style={[styles.gridSubtitle, { color: Colors.textSecondary }]}>
+            {folder.itemCount || 0} items
+          </Text>
+          {user?.role === 'admin' && (
+            <TouchableOpacity style={styles.gridMoreButton} onPress={handleMorePress}>
+              <MoreHorizontal size={16} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </TouchableOpacity>
+
+        <FileActionModal
+          visible={showActionModal}
+          onClose={() => setShowActionModal(false)}
+          itemName={folder.name}
+          itemType="folder"
+          onRename={handleRename}
+          onDelete={handleDelete}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -102,5 +138,47 @@ const styles = StyleSheet.create({
   },
   moreButton: {
     padding: 8,
+  },
+  // Grid view styles
+  gridItem: {
+    width: '48%',
+    padding: 16,
+    margin: 4,
+    borderRadius: 12,
+    alignItems: 'center',
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    marginBottom: 12,
+  },
+  gridIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  gridTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 4,
+    minHeight: 32,
+  },
+  gridSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  gridMoreButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    padding: 4,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
 });

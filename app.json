@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "bolt-expo-nativewind",
-    "slug": "bolt-expo-nativewind",
+    "slug": "yes-securities-sales-repository",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -31,6 +31,13 @@
     },
     "android": {
       "package": "com.anonymous.boltexponativewind"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "97bb5503-4bcc-47af-8547-b4bb6f349f86"
+      }
+    },
+    "owner": "sayantann7"
   }
 }

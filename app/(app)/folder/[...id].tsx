@@ -164,8 +164,9 @@ export default function FolderScreen() {
             <FlatList
               data={subfolders}
               keyExtractor={item => item.id}
-              renderItem={({ item }) => <FolderItem folder={item} onPress={() => navigateToFolder(item)} onUpdate={handleRefresh} />}
-              horizontal={viewMode === 'grid'}
+              renderItem={({ item }) => <FolderItem folder={item} onPress={() => navigateToFolder(item)} onUpdate={handleRefresh} viewMode={viewMode} />}
+              numColumns={viewMode === 'grid' ? 2 : 1}
+              key={`folders-${viewMode}`}
               style={styles.list}
             />
           </>
@@ -177,7 +178,8 @@ export default function FolderScreen() {
               data={documents}
               keyExtractor={item => item.id}
               renderItem={({ item }) => <DocumentItem document={item} viewMode={viewMode} onPress={() => handleOpenDocument(item)} onUpdate={handleRefresh} />}              
-              horizontal={viewMode === 'grid'}
+              numColumns={viewMode === 'grid' ? 2 : 1}
+              key={`documents-${viewMode}`}
               style={styles.list}
             />
           </>

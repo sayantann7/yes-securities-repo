@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
-import { ChevronRight, ChevronDown, FolderOpen, Plus } from 'lucide-react-native';
+import { ChevronRight, ChevronDown, FolderOpen, Plus, Grid, List } from 'lucide-react-native';
 import { useFetchFolders } from '@/hooks/useFetchFolders';
 import FolderItem from '@/components/document/FolderItem';
 import DocumentItem from '@/components/document/DocumentItem';
@@ -20,6 +20,7 @@ export default function DocumentsScreen() {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const { folders, rootFolders, documents, isLoading, reload } = useFetchFolders(currentFolderId);
   const { user } = useAuth();
 
@@ -85,12 +86,23 @@ export default function DocumentsScreen() {
         <View style={styles.headerLeft}>
           <Text style={[styles.title, { color: Colors.primary }]}>Documents</Text>
         </View>
-        <TouchableOpacity 
-          style={{ backgroundColor: Colors.primary, borderRadius: 20, width: 40, height: 40, justifyContent: 'center', alignItems: 'center' }}
-          onPress={() => setShowUploadModal(true)}
-        >
-          <Plus size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            style={styles.viewToggleButton}
+            onPress={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+          >
+            {viewMode === 'list' ? 
+              <Grid size={20} color={Colors.primary} /> : 
+              <List size={20} color={Colors.primary} />
+            }
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={{ backgroundColor: Colors.primary, borderRadius: 20, width: 40, height: 40, justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}
+            onPress={() => setShowUploadModal(true)}
+          >
+            <Plus size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {currentFolderId && (
@@ -113,10 +125,12 @@ export default function DocumentsScreen() {
                   data={folders.filter(f => f.parentId === currentFolderId)}
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
-                    <FolderItem folder={item} onPress={() => openFolder(item)} onUpdate={handleRefresh} />
+                    <FolderItem folder={item} onPress={() => openFolder(item)} onUpdate={handleRefresh} viewMode={viewMode} />
                   )}
                   ListEmptyComponent={() => renderEmptyComponent("No folders")}
                   scrollEnabled={false}
+                  numColumns={viewMode === 'grid' ? 2 : 1}
+                  key={viewMode} // Force re-render when view mode changes
                 />
               </View>
               {/* Documents in current folder */}
@@ -126,9 +140,11 @@ export default function DocumentsScreen() {
                   data={documents}
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
-                    <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} onUpdate={handleRefresh} />
+                    <DocumentItem document={item} viewMode={viewMode} onPress={() => router.push(`/document/${item.id}`)} onUpdate={handleRefresh} />
                   )}
                   ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
+                  numColumns={viewMode === 'grid' ? 2 : 1}
+                  key={`documents-${viewMode}`} // Force re-render when view mode changes
                 />
               </View>
             </View>
@@ -146,9 +162,11 @@ export default function DocumentsScreen() {
                         data={rootFolders}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
-                          <FolderItem folder={item} onPress={() => openFolder(item)} onUpdate={handleRefresh} />
+                          <FolderItem folder={item} onPress={() => openFolder(item)} onUpdate={handleRefresh} viewMode={viewMode} />
                         )}
                         scrollEnabled={false}
+                        numColumns={viewMode === 'grid' ? 2 : 1}
+                        key={`folders-${viewMode}`} // Force re-render when view mode changes
                       />
                     </View>
                   );
@@ -161,9 +179,11 @@ export default function DocumentsScreen() {
                         data={documents}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
-                          <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} onUpdate={handleRefresh} />
+                          <DocumentItem document={item} viewMode={viewMode} onPress={() => router.push(`/document/${item.id}`)} onUpdate={handleRefresh} />
                         )}
                         ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
+                        numColumns={viewMode === 'grid' ? 2 : 1}
+                        key={`root-documents-${viewMode}`} // Force re-render when view mode changes
                       />
                     </View>
                   );
@@ -200,6 +220,18 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewToggleButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F0F4F8',
   },
   title: {
     fontSize: 24,

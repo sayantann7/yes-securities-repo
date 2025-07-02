@@ -214,10 +214,10 @@ export default function FolderScreen() {
               data={subfolders}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <FolderItem folder={item} onPress={() => handleOpenFolder(item)} onUpdate={handleRefresh} />
+                <FolderItem folder={item} onPress={() => handleOpenFolder(item)} onUpdate={handleRefresh} viewMode={viewMode} />
               )}
-              horizontal={viewMode === 'grid'}
-              numColumns={viewMode === 'grid' ? 1 : undefined}
+              numColumns={viewMode === 'grid' ? 2 : 1}
+              key={`folders-${viewMode}`}
               style={styles.list}
             />
           </>
@@ -237,8 +237,8 @@ export default function FolderScreen() {
                   onUpdate={handleRefresh}
                 />
               )}
-              horizontal={viewMode === 'grid'}
-              numColumns={viewMode === 'grid' ? 1 : undefined}
+              numColumns={viewMode === 'grid' ? 2 : 1}
+              key={`documents-${viewMode}`}
               style={styles.list}
             />
           </>
