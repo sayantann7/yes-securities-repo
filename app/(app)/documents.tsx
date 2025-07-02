@@ -20,7 +20,7 @@ export default function DocumentsScreen() {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const { folders, rootFolders, documents, isLoading } = useFetchFolders(currentFolderId);
+  const { folders, rootFolders, documents, isLoading, reload } = useFetchFolders(currentFolderId);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -67,6 +67,10 @@ export default function DocumentsScreen() {
     setCurrentFolderId(folderId);
   };
 
+  const handleRefresh = () => {
+    reload();
+  };
+
   const renderSectionHeader = (title: string) => (
     <Text style={[styles.sectionTitle, { color: Colors.primary }]}>{title}</Text>
   );
@@ -109,7 +113,7 @@ export default function DocumentsScreen() {
                   data={folders.filter(f => f.parentId === currentFolderId)}
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
-                    <FolderItem folder={item} onPress={() => openFolder(item)} />
+                    <FolderItem folder={item} onPress={() => openFolder(item)} onUpdate={handleRefresh} />
                   )}
                   ListEmptyComponent={() => renderEmptyComponent("No folders")}
                   scrollEnabled={false}
@@ -122,7 +126,7 @@ export default function DocumentsScreen() {
                   data={documents}
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
-                    <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} />
+                    <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} onUpdate={handleRefresh} />
                   )}
                   ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
                 />
@@ -142,7 +146,7 @@ export default function DocumentsScreen() {
                         data={rootFolders}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
-                          <FolderItem folder={item} onPress={() => openFolder(item)} />
+                          <FolderItem folder={item} onPress={() => openFolder(item)} onUpdate={handleRefresh} />
                         )}
                         scrollEnabled={false}
                       />
@@ -157,7 +161,7 @@ export default function DocumentsScreen() {
                         data={documents}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
-                          <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} />
+                          <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} onUpdate={handleRefresh} />
                         )}
                         ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
                       />

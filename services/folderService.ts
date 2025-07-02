@@ -139,6 +139,53 @@ export const createFolder = async (parentId: string | null, name: string): Promi
   }
 };
 
+/**
+ * Rename a folder
+ * oldPath: current folder path/prefix
+ * newName: new folder name
+ */
+export const renameFolder = async (oldPath: string, newName: string): Promise<void> => {
+  try {
+    const response = await fetch(`${API_URL}/folders/rename`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldPath, newName }),
+    });
+    
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('renameFolder response error:', response.status, errorBody);
+      throw new Error('Failed to rename folder');
+    }
+  } catch (error) {
+    console.error('Error renaming folder:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a folder and all its contents
+ * folderPath: folder path/prefix to delete
+ */
+export const deleteFolder = async (folderPath: string): Promise<void> => {
+  try {
+    const response = await fetch(`${API_URL}/folders/delete`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folderPath }),
+    });
+    
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('deleteFolder response error:', response.status, errorBody);
+      throw new Error('Failed to delete folder');
+    }
+  } catch (error) {
+    console.error('Error deleting folder:', error);
+    throw error;
+  }
+};
+
 function formatPrefix(prefix : string): string {
   // 1. Strip off any trailing slash (if present)
   const noSlash = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;

@@ -1,15 +1,46 @@
+import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FileText, Download, Share, MoreHorizontal } from 'lucide-react-native';
 import { Document } from '@/types';
 import { Colors } from '@/constants/Colors';
+import { useAuth } from '@/context/AuthContext';
+import { renameDocument, deleteDocument } from '@/services/documentService';
+import FileActionModal from './FileActionModal';
 
 interface DocumentItemProps {
   document: Document;
   viewMode: 'list' | 'grid';
   onPress?: () => void;
+  onUpdate?: () => void; // Callback to refresh document list after rename/delete
 }
 
-export default function DocumentItem({ document, viewMode, onPress }: DocumentItemProps) {
+export default function DocumentItem({ document, viewMode, onPress, onUpdate }: DocumentItemProps) {
+  const { user } = useAuth();
+  const [showActionModal, setShowActionModal] = useState(false);
+
+  const handleMorePress = (e: any) => {
+    e.stopPropagation(); // Prevent triggering document view
+    if (user?.role === 'admin') {
+      setShowActionModal(true);
+    }
+  };
+
+  const handleRename = async (newName: string) => {
+    // Ensure the new name includes the original file extension if not provided
+    const originalExtension = document.name.split('.').pop();
+    const newNameParts = newName.split('.');
+    const finalName = newNameParts.length === 1 && originalExtension 
+      ? `${newName}.${originalExtension}` 
+      : newName;
+    
+    await renameDocument(document.id, finalName);
+    onUpdate?.();
+  };
+
+  const handleDelete = async () => {
+    await deleteDocument(document.id);
+    onUpdate?.();
+  };
 
   const getFileIcon = (type: string) => {
     // Return appropriate icon based on file type
@@ -26,50 +57,79 @@ export default function DocumentItem({ document, viewMode, onPress }: DocumentIt
 
   if (viewMode === 'grid') {
     return (
-      <TouchableOpacity 
-        style={[styles.gridItem, { backgroundColor: Colors.surface }]} 
-        onPress={onPress}
-      >
-        <View style={[styles.gridIconContainer, { backgroundColor: Colors.surfaceVariant }]}>
-          {getFileIcon(document.type)}
-        </View>
-        <Text style={[styles.gridTitle, { color: Colors.text }]} numberOfLines={2}>
-          {document.name}
-        </Text>
-        <Text style={[styles.gridSubtitle, { color: Colors.textSecondary }]}>
-          {formatFileSize(Number(document.size))}
-        </Text>
-      </TouchableOpacity>
+      <>
+        <TouchableOpacity 
+          style={[styles.gridItem, { backgroundColor: Colors.surface }]} 
+          onPress={onPress}
+        >
+          <View style={[styles.gridIconContainer, { backgroundColor: Colors.surfaceVariant }]}>
+            {getFileIcon(document.type)}
+          </View>
+          <Text style={[styles.gridTitle, { color: Colors.text }]} numberOfLines={2}>
+            {document.name}
+          </Text>
+          <Text style={[styles.gridSubtitle, { color: Colors.textSecondary }]}>
+            {formatFileSize(Number(document.size))}
+          </Text>
+          {user?.role === 'admin' && (
+            <TouchableOpacity style={styles.gridMoreButton} onPress={handleMorePress}>
+              <MoreHorizontal size={16} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </TouchableOpacity>
+
+        <FileActionModal
+          visible={showActionModal}
+          onClose={() => setShowActionModal(false)}
+          itemName={document.name}
+          itemType="file"
+          onRename={handleRename}
+          onDelete={handleDelete}
+        />
+      </>
     );
   }
 
   return (
-    <TouchableOpacity 
-      style={[styles.listItem, { backgroundColor: Colors.surface, borderBottomColor: Colors.borderLight }]} 
-      onPress={onPress}
-    >
-      <View style={[styles.iconContainer, { backgroundColor: Colors.surfaceVariant }]}>
-        {getFileIcon(document.type)}
-      </View>
-      
-      <View style={styles.documentInfo}>
-        <Text style={[styles.documentName, { color: Colors.text }]} numberOfLines={1}>
-          {document.name}
-        </Text>
-        <View style={styles.documentMeta}>
-          <Text style={[styles.documentSize, { color: Colors.textSecondary }]}>
-            {document.size}
-          </Text>
-          <Text style={[styles.documentDate, { color: Colors.textSecondary }]}>
-            {new Date(document.createdAt).toLocaleDateString()}
-          </Text>
+    <>
+      <TouchableOpacity 
+        style={[styles.listItem, { backgroundColor: Colors.surface, borderBottomColor: Colors.borderLight }]} 
+        onPress={onPress}
+      >
+        <View style={[styles.iconContainer, { backgroundColor: Colors.surfaceVariant }]}>
+          {getFileIcon(document.type)}
         </View>
-      </View>
-      
-      <TouchableOpacity style={styles.moreButton}>
-        <MoreHorizontal size={20} color={Colors.textSecondary} />
+        
+        <View style={styles.documentInfo}>
+          <Text style={[styles.documentName, { color: Colors.text }]} numberOfLines={1}>
+            {document.name}
+          </Text>
+          <View style={styles.documentMeta}>
+            <Text style={[styles.documentSize, { color: Colors.textSecondary }]}>
+              {document.size}
+            </Text>
+            <Text style={[styles.documentDate, { color: Colors.textSecondary }]}>
+              {new Date(document.createdAt).toLocaleDateString()}
+            </Text>
+          </View>
+        </View>
+        
+        {user?.role === 'admin' && (
+          <TouchableOpacity style={styles.moreButton} onPress={handleMorePress}>
+            <MoreHorizontal size={20} color={Colors.textSecondary} />
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
-    </TouchableOpacity>
+
+      <FileActionModal
+        visible={showActionModal}
+        onClose={() => setShowActionModal(false)}
+        itemName={document.name}
+        itemType="file"
+        onRename={handleRename}
+        onDelete={handleDelete}
+      />
+    </>
   );
 }
 
@@ -136,5 +196,11 @@ const styles = StyleSheet.create({
   gridSubtitle: {
     fontSize: 12,
     textAlign: 'center',
+  },
+  gridMoreButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    padding: 4,
   },
 });

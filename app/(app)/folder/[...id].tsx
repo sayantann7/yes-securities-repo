@@ -108,27 +108,47 @@ export default function FolderScreen() {
     setSubfolders(sortedFolders);
   };
 
+  const handleRefresh = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Refetch folder data
+      const folderData = await getFolderData(folderId);
+      setFolder(folderData);
+
+      // Fetch subfolders and documents in this folder
+      const subs = await getFolders(folderId);
+      const docs = await getDocuments(folderId);
+      setSubfolders(subs);
+      setDocuments(docs);
+    } catch (error) {
+      console.error('Error refreshing folder data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: Colors.light.background }]}>
-      <View style={[styles.header, { backgroundColor: Colors.light.surface, borderBottomColor: Colors.light.border }]}>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+      <View style={[styles.header, { backgroundColor: Colors.surface, borderBottomColor: Colors.border }]}>
         <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-          <ChevronLeft size={24} color={Colors.light.primary} />
+          <ChevronLeft size={24} color={Colors.primary} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
-          <Text style={[styles.title, { color: Colors.light.primary }]} numberOfLines={1}>{folder?.name || 'Loading...'}</Text>
-          <Text style={[styles.subtitle, { color: Colors.light.textSecondary }]}>
+          <Text style={[styles.title, { color: Colors.primary }]} numberOfLines={1}>{folder?.name || 'Loading...'}</Text>
+          <Text style={[styles.subtitle, { color: Colors.textSecondary }]}>
             {subfolders.length} folders • {documents.length} documents
           </Text>
         </View>
         <View style={styles.actionsContainer}>
           <TouchableOpacity onPress={() => setShowSortModal(true)} style={styles.actionButton}>
-            <ArrowUpDown size={20} color={Colors.light.primary} />
+            <ArrowUpDown size={20} color={Colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton}>
-            <Filter size={20} color={Colors.light.primary} />
+            <Filter size={20} color={Colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')} style={styles.actionButton}>
-            {viewMode === 'grid' ? <List size={20} color={Colors.light.primary} /> : <Grid size={20} color={Colors.light.primary} />}
+            {viewMode === 'grid' ? <List size={20} color={Colors.primary} /> : <Grid size={20} color={Colors.primary} />}
           </TouchableOpacity>
         </View>
       </View>
@@ -137,14 +157,14 @@ export default function FolderScreen() {
         onHomePress={navigateToRoot}
         onItemPress={(folderId: string) => router.push(`/folder/${folderId}`)}
       />
-      <View style={[styles.content, { backgroundColor: Colors.light.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
+      <View style={[styles.content, { backgroundColor: Colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
         {subfolders.length > 0 && (
           <>  
             <Text style={styles.sectionTitle}>Folders</Text>
             <FlatList
               data={subfolders}
               keyExtractor={item => item.id}
-              renderItem={({ item }) => <FolderItem folder={item} onPress={() => navigateToFolder(item)} />}
+              renderItem={({ item }) => <FolderItem folder={item} onPress={() => navigateToFolder(item)} onUpdate={handleRefresh} />}
               horizontal={viewMode === 'grid'}
               style={styles.list}
             />
@@ -156,7 +176,7 @@ export default function FolderScreen() {
             <FlatList
               data={documents}
               keyExtractor={item => item.id}
-              renderItem={({ item }) => <DocumentItem document={item} viewMode={viewMode} onPress={() => handleOpenDocument(item)} />}              
+              renderItem={({ item }) => <DocumentItem document={item} viewMode={viewMode} onPress={() => handleOpenDocument(item)} onUpdate={handleRefresh} />}              
               horizontal={viewMode === 'grid'}
               style={styles.list}
             />

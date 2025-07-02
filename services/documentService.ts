@@ -267,3 +267,50 @@ export const searchDocuments = async (
     throw error;
   }
 };
+
+/**  
+ * Rename a document/file
+ * oldPath: current file path/key
+ * newName: new file name (should include extension)
+ */
+export const renameDocument = async (oldPath: string, newName: string): Promise<void> => {
+  try {
+    const response = await fetch(`${API_URL}/files/rename`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldPath, newName }),
+    });
+    
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('renameDocument response error:', response.status, errorBody);
+      throw new Error('Failed to rename file');
+    }
+  } catch (error) {
+    console.error('Error renaming document:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a document/file
+ * filePath: file path/key to delete
+ */
+export const deleteDocument = async (filePath: string): Promise<void> => {
+  try {
+    const response = await fetch(`${API_URL}/files/delete`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filePath }),
+    });
+    
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('deleteDocument response error:', response.status, errorBody);
+      throw new Error('Failed to delete file');
+    }
+  } catch (error) {
+    console.error('Error deleting document:', error);
+    throw error;
+  }
+};

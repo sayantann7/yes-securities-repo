@@ -137,16 +137,44 @@ export default function FolderScreen() {
     setDocuments(sortedDocuments);
     setSubfolders(sortedFolders);
   };
+
+  const handleRefresh = async () => {
+    if (!id) return;
+    
+    try {
+      setIsLoading(true);
+      
+      // Fetch the current folder details
+      const folderData = await getFolderData(id);
+      setFolder(folderData);
+      
+      // Fetch subfolders in this folder
+      const subfoldersList = await getFolders(id);
+      setSubfolders(subfoldersList);
+      
+      // Fetch documents in this folder
+      const documentsList = await getDocuments(id);
+      setDocuments(documentsList);
+      
+      // Build folder path
+      const path = await buildFolderPath(id);
+      setFolderPath(path);
+    } catch (error) {
+      console.error('Error refreshing folder data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   return (
-    <View style={[styles.container, { backgroundColor: Colors.light.background }]}>
-      <View style={[styles.header, { backgroundColor: Colors.light.surface, borderBottomColor: Colors.light.border }]}>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+      <View style={[styles.header, { backgroundColor: Colors.surface, borderBottomColor: Colors.border }]}>
         <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
-          <ChevronLeft size={24} color={Colors.light.primary} />
+          <ChevronLeft size={24} color={Colors.primary} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
-          <Text style={[styles.title, { color: Colors.light.primary }]} numberOfLines={1}>{folder?.name || 'Loading...'}</Text>
-          <Text style={[styles.subtitle, { color: Colors.light.textSecondary }]}>
+          <Text style={[styles.title, { color: Colors.primary }]} numberOfLines={1}>{folder?.name || 'Loading...'}</Text>
+          <Text style={[styles.subtitle, { color: Colors.textSecondary }]}>
             {subfolders.length} folders • {documents.length} documents
           </Text>
         </View>
@@ -155,18 +183,18 @@ export default function FolderScreen() {
             style={styles.actionButton}
             onPress={() => setShowSortModal(true)}
           >
-            <ArrowUpDown size={20} color={Colors.light.primary} />
+            <ArrowUpDown size={20} color={Colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton}>
-            <Filter size={20} color={Colors.light.primary} />
+            <Filter size={20} color={Colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.actionButton}
             onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
           >
             {viewMode === 'grid' ? 
-              <List size={20} color={Colors.light.primary} /> : 
-              <Grid size={20} color={Colors.light.primary} />
+              <List size={20} color={Colors.primary} /> : 
+              <Grid size={20} color={Colors.primary} />
             }
           </TouchableOpacity>
         </View>
@@ -178,7 +206,7 @@ export default function FolderScreen() {
         onItemPress={navigateToFolder}
       />
       
-      <View style={[styles.content, { backgroundColor: Colors.light.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
+      <View style={[styles.content, { backgroundColor: Colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
         {subfolders.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>Folders</Text>
@@ -186,7 +214,7 @@ export default function FolderScreen() {
               data={subfolders}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <FolderItem folder={item} onPress={() => handleOpenFolder(item)} />
+                <FolderItem folder={item} onPress={() => handleOpenFolder(item)} onUpdate={handleRefresh} />
               )}
               horizontal={viewMode === 'grid'}
               numColumns={viewMode === 'grid' ? 1 : undefined}
@@ -206,6 +234,7 @@ export default function FolderScreen() {
                   document={item} 
                   viewMode={viewMode} 
                   onPress={() => handleOpenDocument(item)}
+                  onUpdate={handleRefresh}
                 />
               )}
               horizontal={viewMode === 'grid'}
