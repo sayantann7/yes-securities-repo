@@ -34,12 +34,17 @@ export default function FolderScreen() {
         // Fetch subfolders in this folder
         const subfoldersList = await getFolders(id);
         console.log('Fetched subfolders:', subfoldersList);
-        setSubfolders(subfoldersList);
         
         // Fetch documents in this folder
         const documentsList = await getDocuments(id);
         console.log('Fetched documents:', documentsList);
-        setDocuments(documentsList);
+        
+        // Apply default alphabetical sorting
+        const sortedSubfolders = subfoldersList.sort((a, b) => a.name.localeCompare(b.name));
+        const sortedDocuments = documentsList.sort((a, b) => a.name.localeCompare(b.name));
+        
+        setSubfolders(sortedSubfolders);
+        setDocuments(sortedDocuments);
         
         // Build folder path
         const path = await buildFolderPath(id);

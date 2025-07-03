@@ -18,15 +18,21 @@ export function useFetchFolders(folderId: string | null = null) {
         
         // Fetch all folders to build the folder structure
         const allFolders = await getFolders(null);
-        setFolders(allFolders);
+        // Sort all folders alphabetically by name
+        const sortedAllFolders = allFolders.sort((a, b) => a.name.localeCompare(b.name));
+        setFolders(sortedAllFolders);
         
         // Fetch root folders or subfolders based on the folderId
         const foldersList = await getFolders(folderId);
-        setRootFolders(foldersList);
+        // Sort folders alphabetically by name
+        const sortedFolders = foldersList.sort((a, b) => a.name.localeCompare(b.name));
+        setRootFolders(sortedFolders);
         
         // Fetch documents for the current folder
         const documentsList = await getDocuments(folderId);
-        setDocuments(documentsList);
+        // Sort documents alphabetically by name
+        const sortedDocuments = documentsList.sort((a, b) => a.name.localeCompare(b.name));
+        setDocuments(sortedDocuments);
         
       } catch (err) {
         console.error('Error fetching folders:', err);

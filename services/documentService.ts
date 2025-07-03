@@ -134,7 +134,8 @@ export const getDocuments = async (folderId: string | null = null): Promise<Docu
       console.log(`No files found in folder ${prefix || 'root'}, only folders`);
     }
     
-    return documents;
+    // Sort documents alphabetically by name before returning
+    return documents.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error('Error fetching documents:', error);
     throw error;

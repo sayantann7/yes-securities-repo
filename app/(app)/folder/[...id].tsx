@@ -38,8 +38,13 @@ export default function FolderScreen() {
         // Fetch subfolders and documents in this folder
         const subs = await getFolders(folderId);
         const docs = await getDocuments(folderId);
-        setSubfolders(subs);
-        setDocuments(docs);
+        
+        // Apply default alphabetical sorting
+        const sortedSubs = subs.sort((a, b) => a.name.localeCompare(b.name));
+        const sortedDocs = docs.sort((a, b) => a.name.localeCompare(b.name));
+        
+        setSubfolders(sortedSubs);
+        setDocuments(sortedDocs);
 
         // Build breadcrumb path
         const path = await buildFolderPath(folderId);
@@ -119,8 +124,13 @@ export default function FolderScreen() {
       // Fetch subfolders and documents in this folder
       const subs = await getFolders(folderId);
       const docs = await getDocuments(folderId);
-      setSubfolders(subs);
-      setDocuments(docs);
+      
+      // Apply default alphabetical sorting
+      const sortedSubs = subs.sort((a, b) => a.name.localeCompare(b.name));
+      const sortedDocs = docs.sort((a, b) => a.name.localeCompare(b.name));
+      
+      setSubfolders(sortedSubs);
+      setDocuments(sortedDocs);
     } catch (error) {
       console.error('Error refreshing folder data:', error);
     } finally {

@@ -57,7 +57,8 @@ export const getFolders = async (parentId: string | null = null): Promise<Folder
       }));
     }
     
-    return folders;
+    // Sort folders alphabetically by name before returning
+    return folders.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error('Error fetching folders:', error);
     throw error;
