@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform, TextInput, Image } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Platform, TextInput, Image, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { ChevronLeft, FilePlus, ImageIcon } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useFetchFolders } from '@/hooks/useFetchFolders';
 import { createFolder } from '@/services/folderService';
+import { notificationService } from '@/services/notificationService';
+import { useAuth } from '@/context/AuthContext';
 import DocumentItem from '@/components/document/DocumentItem';
 import FolderItem from '@/components/document/FolderItem';
 import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
@@ -20,6 +22,7 @@ interface UploadFileModalProps {
 }
 
 export default function UploadFileModal({ visible, onClose }: UploadFileModalProps) {
+  const { user } = useAuth();
 
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   // include fileObj for web file blobs
@@ -152,6 +155,25 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
         }
       }
       setSelectedFiles([]);
+      
+      // Send notification if admin uploaded files
+      if (user?.role === 'admin' && selectedFiles.length > 0) {
+        try {
+          const folderPath = currentFolderId || 'Root';
+          const fileNames = selectedFiles.map(f => f.name).join(', ');
+          await notificationService.sendUploadNotification(fileNames, folderPath);
+          console.log('Upload notification sent successfully');
+        } catch (notificationError) {
+          console.error('Failed to send upload notification:', notificationError);
+          // Don't fail the upload if notification fails, but show a warning
+          Alert.alert(
+            'Upload Complete', 
+            'Files uploaded successfully, but failed to send notifications to users.',
+            [{ text: 'OK' }]
+          );
+        }
+      }
+      
       onClose();
     } catch (err) {
       console.error('Upload failed:', err);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '@/context/AuthContext';
-import { Home as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon } from 'lucide-react-native';
+import { Home as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon, Settings as AdminIcon } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 
 const Tab = createBottomTabNavigator();
@@ -43,6 +43,16 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <UserIcon color={color} size={size} />,
         }}
       />
+      {user?.role === 'admin' && (
+        <Tab.Screen
+          name="admin"
+          component={require('./admin').default}
+          options={{
+            title: 'Admin',
+            tabBarIcon: ({ color, size }) => <AdminIcon color={color} size={size} />,
+          }}
+        />
+      )}
       {user?.role === 'admin' && (
         <Tab.Screen
           name="documents"

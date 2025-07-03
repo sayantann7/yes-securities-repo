@@ -37,3 +37,68 @@ export interface Comment {
   parentId?: string;
   replies: Comment[];
 }
+
+export interface Notification {
+  id: string;
+  type: 'comment' | 'upload' | 'ping' | 'alert';
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+  userId: string;
+  documentId?: string;
+  senderId?: string;
+  sender?: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+}
+
+export interface AdminCommentView {
+  documentId: string;
+  documentName: string;
+  comments: Comment[];
+}
+
+export interface InactiveUser {
+  id: string;
+  name: string;
+  email: string;
+  lastSignIn: string;
+  daysInactive: number;
+}
+
+export interface UserMetrics {
+  id: string;
+  fullname: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  lastSignIn: string | null;
+  numberOfSignIns: number;
+  documentsViewed: number;
+  timeSpent: number; // in minutes
+  recentDocs: string[];
+  daysInactive?: number;
+}
+
+export interface UserOverallMetrics {
+  totalUsers: number;
+  activeUsers: number;
+  inactiveUsers: number;
+  averageTimeSpent: number;
+  totalDocumentViews: number;
+  averageSignIns: number;
+  newUsersThisWeek: number;
+  mostActiveUser: {
+    name: string;
+    timeSpent: number;
+  };
+}
+
+export interface UserActivityStatus {
+  status: 'active' | 'inactive' | 'new';
+  color: string;
+  description: string;
+}

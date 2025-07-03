@@ -1,5 +1,6 @@
 import { Comment } from '@/types';
 import { getToken } from './authService';
+import { notificationService } from './notificationService';
 
 // Base URL for API requests
 const API_URL = 'http://10.24.64.229:3000/user';
@@ -68,7 +69,7 @@ export const addComment = async (comment: Comment): Promise<Comment> => {
     }
     
     // Transform backend response to match frontend expected format
-    return {
+    const transformedComment = {
       id: data.comment.id,
       documentId: data.comment.documentId,
       text: data.comment.content,
@@ -80,6 +81,8 @@ export const addComment = async (comment: Comment): Promise<Comment> => {
       },
       replies: []
     };
+
+    return transformedComment;
   } catch (error: any) {
     console.error('Error adding comment:', error);
     throw new Error(error.message || 'Failed to add comment');
