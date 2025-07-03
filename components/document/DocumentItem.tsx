@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { FileText, Download, Share, MoreHorizontal } from 'lucide-react-native';
 import { Document } from '@/types';
 import { Colors } from '@/constants/Colors';
+import { typography } from '@/constants/font';
 import { useAuth } from '@/context/AuthContext';
 import { renameDocument, deleteDocument } from '@/services/documentService';
 import FileActionModal from './FileActionModal';
@@ -63,7 +64,15 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
           onPress={onPress}
         >
           <View style={[styles.gridIconContainer, { backgroundColor: Colors.surfaceVariant }]}>
-            {getFileIcon(document.type)}
+            {document.iconUrl ? (
+              <Image 
+                source={{ uri: document.iconUrl }} 
+                style={styles.gridCustomIcon}
+                resizeMode="cover"
+              />
+            ) : (
+              getFileIcon(document.type)
+            )}
           </View>
           <Text style={[styles.gridTitle, { color: Colors.text }]} numberOfLines={2}>
             {document.name}
@@ -97,7 +106,15 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
         onPress={onPress}
       >
         <View style={[styles.iconContainer, { backgroundColor: Colors.surfaceVariant }]}>
-          {getFileIcon(document.type)}
+          {document.iconUrl ? (
+            <Image 
+              source={{ uri: document.iconUrl }} 
+              style={styles.customIcon}
+              resizeMode="cover"
+            />
+          ) : (
+            getFileIcon(document.type)
+          )}
         </View>
         
         <View style={styles.documentInfo}>
@@ -157,6 +174,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
+  customIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+  },
   gridIconContainer: {
     width: 48,
     height: 48,
@@ -172,6 +194,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 4,
+    fontFamily: typography.medium,
   },
   documentMeta: {
     flexDirection: 'row',
@@ -180,9 +203,11 @@ const styles = StyleSheet.create({
   documentSize: {
     fontSize: 12,
     marginRight: 8,
+    fontFamily: typography.primary,
   },
   documentDate: {
     fontSize: 12,
+    fontFamily: typography.primary,
   },
   moreButton: {
     padding: 8,
@@ -192,15 +217,22 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     marginBottom: 4,
+    fontFamily: typography.medium,
   },
   gridSubtitle: {
     fontSize: 12,
     textAlign: 'center',
+    fontFamily: typography.primary,
   },
   gridMoreButton: {
     position: 'absolute',
     top: 8,
     right: 8,
     padding: 4,
+  },
+  gridCustomIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
   },
 });

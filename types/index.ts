@@ -4,6 +4,7 @@ export interface Folder {
   parentId: string | null;
   createdAt: string;
   itemCount?: number;
+  iconUrl?: string;
 }
 
 export interface Document {
@@ -18,6 +19,7 @@ export interface Document {
   folderId: string | null;
   content?: string;
   commentCount?: number;
+  iconUrl?: string;
 }
 
 export interface Comment {

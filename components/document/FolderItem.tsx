@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Folder as FolderIcon, MoreHorizontal } from 'lucide-react-native';
 import { Folder } from '@/types';
 import { Colors } from '@/constants/Colors';
+import { typography } from '@/constants/font';
 import { useAuth } from '@/context/AuthContext';
 import { renameFolder, deleteFolder } from '@/services/folderService';
 import FileActionModal from './FileActionModal';
@@ -17,6 +18,14 @@ interface FolderItemProps {
 export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list' }: FolderItemProps) {
   const { user } = useAuth();
   const [showActionModal, setShowActionModal] = useState(false);
+
+  // Debug logging to check if iconUrl is being received
+  console.log('FolderItem Debug - Folder:', {
+    name: folder.name,
+    id: folder.id,
+    iconUrl: folder.iconUrl,
+    hasIconUrl: !!folder.iconUrl
+  });
 
   const handleMorePress = (e: any) => {
     e.stopPropagation(); // Prevent triggering folder navigation
@@ -43,7 +52,15 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
           onPress={onPress}
         >
           <View style={[styles.gridIconContainer, { backgroundColor: Colors.surfaceVariant }]}>
-            <FolderIcon size={32} color="#6B73FF" />
+            {folder.iconUrl ? (
+              <Image 
+                source={{ uri: folder.iconUrl }} 
+                style={styles.gridCustomIcon}
+                resizeMode="cover"
+              />
+            ) : (
+              <FolderIcon size={32} color="#6B73FF" />
+            )}
           </View>
           <Text style={[styles.gridTitle, { color: Colors.text }]} numberOfLines={2}>
             {folder.name}
@@ -77,7 +94,15 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
         onPress={onPress}
       >
         <View style={[styles.iconContainer, { backgroundColor: Colors.surfaceVariant }]}>
-          <FolderIcon size={24} color="#6B73FF" />
+          {folder.iconUrl ? (
+            <Image 
+              source={{ uri: folder.iconUrl }} 
+              style={styles.customIcon}
+              resizeMode="cover"
+            />
+          ) : (
+            <FolderIcon size={24} color="#6B73FF" />
+          )}
         </View>
         
         <View style={styles.folderInfo}>
@@ -125,6 +150,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
+  customIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+  },
   folderInfo: {
     flex: 1,
   },
@@ -132,9 +162,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 2,
+    fontFamily: typography.medium,
   },
   folderCount: {
     fontSize: 12,
+    fontFamily: typography.primary,
   },
   moreButton: {
     padding: 8,
@@ -168,10 +200,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 4,
     minHeight: 32,
+    fontFamily: typography.medium,
   },
   gridSubtitle: {
     fontSize: 12,
     textAlign: 'center',
+    fontFamily: typography.primary,
   },
   gridMoreButton: {
     position: 'absolute',
@@ -180,5 +214,10 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  gridCustomIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
   },
 });

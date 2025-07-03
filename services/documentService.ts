@@ -58,7 +58,7 @@ export const getDocuments = async (folderId: string | null = null): Promise<Docu
   try {
     // Ensure API prefix ends with slash if a folderId is provided
     let prefix = '';
-    if (folderId) {
+    if (folderId && typeof folderId === 'string' && folderId.trim() !== '') {
       prefix = folderId.endsWith('/') ? folderId : `${folderId}/`;
     }
 
@@ -84,22 +84,19 @@ export const getDocuments = async (folderId: string | null = null): Promise<Docu
     // Transform the files from S3 into Document objects
     const documents: Document[] = [];
     
-    // Check if files exists and is an array - FIXED THIS CONDITION
+    // Check if files exists and is an array - Updated for new response format
     if (data.files && Array.isArray(data.files)) {
       console.log(`Processing ${data.files.length} files in folder ${prefix || 'root'}`);
       
-      for (const item of data.files) {
-        // Determine S3 key (string or object), skip invalid/folders
-        const key = typeof item === 'string' ? item : item.Key;
+      for (const fileObj of data.files) {
+        // Handle new response format: { key: string, iconUrl?: string }
+        const key = fileObj.key;
         if (!key || key.endsWith('/')) {
           continue;
         }
         const keyParts = key.split('/');
         const fileName = keyParts[keyParts.length - 1];
-        // Extract size and lastModified if present
-        const sizeBytes = typeof item === 'object' && item.Size ? item.Size : 0;
-        const lastModified = typeof item === 'object' && item.LastModified ? item.LastModified : Date.now();
-         
+        
          try {
            // Fetch document URL directly without circular dependency
            const urlResponse = await fetch(`${API_URL}/files/fetch`, {
@@ -111,7 +108,7 @@ export const getDocuments = async (folderId: string | null = null): Promise<Docu
            });
           
           if (!urlResponse.ok) {
-            console.error(`Failed to get URL for ${item.Key}, status:`, urlResponse.status);
+            console.error(`Failed to get URL for ${key}, status:`, urlResponse.status);
             continue;
           }
           
@@ -121,15 +118,16 @@ export const getDocuments = async (folderId: string | null = null): Promise<Docu
             id: key,
             name: fileName,
             type: getFileType(fileName),
-            size: formatFileSize(sizeBytes),
-            url: urlData.url, // Use URL directly from response
-            createdAt: new Date(lastModified).toISOString(),
+            size: 'Unknown', // Size is not available in the new format, could be fetched separately if needed
+            url: urlData.url,
+            createdAt: new Date().toISOString(), // Current time as fallback
             author: 'Unknown',
             folderId: folderId,
-            commentCount: 0
+            commentCount: 0,
+            iconUrl: fileObj.iconUrl, // Include the custom icon URL
           });
         } catch (err) {
-          console.error(`Error processing file ${item.Key}:`, err);
+          console.error(`Error processing file ${key}:`, err);
         }
       }
     } else {

@@ -13,6 +13,7 @@ import {
 import { router } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react-native';
+import { typography } from '@/constants/font';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     color: '#002EDC',
     marginTop: 12,
     fontWeight: '900',
-    fontFamily: 'BookAntique',
+    fontFamily: typography.primary,
     textShadowColor: 'rgba(0, 46, 220, 0.3)',
     textShadowOffset: { width: 0.5, height: 0.5 },
     textShadowRadius: 0.5,
@@ -143,6 +144,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginTop: 4,
+    fontFamily: typography.primary,
   },
   formContainer: {
     backgroundColor: '#FFFFFF',
@@ -162,7 +164,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign : 'center',
     fontWeight: '900',
-    fontFamily: 'BookAntique',
+    fontFamily: typography.primary,
     textShadowColor: 'rgba(0, 46, 220, 0.3)',
     textShadowOffset: { width: 0.5, height: 0.5 },
     textShadowRadius: 0.5,
@@ -185,6 +187,7 @@ const styles = StyleSheet.create({
     height: 50,
     color: '#333',
     fontSize: 16,
+    fontFamily: typography.primary,
   },
   eyeIcon: {
     padding: 10,
@@ -196,6 +199,7 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     color: '#0C2340',
     fontSize: 14,
+    fontFamily: typography.primary,
   },
   loginButton: {
     backgroundColor: '#002EDC',
@@ -208,7 +212,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '900',
-    fontFamily: 'BookAntique',
+    fontFamily: typography.primary,
     textShadowColor: 'rgba(0, 46, 220, 0.3)',
     textShadowOffset: { width: 0.5, height: 0.5 },
     textShadowRadius: 0.5,
@@ -217,5 +221,6 @@ const styles = StyleSheet.create({
     color: '#E53935',
     marginBottom: 12,
     textAlign: 'center',
+    fontFamily: typography.primary,
   },
 });

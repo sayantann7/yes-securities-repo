@@ -69,8 +69,7 @@ const styles = StyleSheet.create({
   webFrame: {
     width: '100%',
     height: '100%',
-    border: 'none',
-  },
+  } as any,
   loadingContainer: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',

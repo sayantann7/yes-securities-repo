@@ -8,7 +8,7 @@ export const getFolders = async (parentId: string | null = null): Promise<Folder
   try {
     // Normalize prefix: ensure trailing slash if parentId provided
     let prefix = '';
-    if (parentId) {
+    if (parentId && typeof parentId === 'string' && parentId.trim() !== '') {
       prefix = parentId.endsWith('/') ? parentId : `${parentId}/`;
     }
 
@@ -30,10 +30,18 @@ export const getFolders = async (parentId: string | null = null): Promise<Folder
     // Transform the response into the Folder format expected by the frontend
     const folders: Folder[] = [];
     
-    // Check if CommonPrefixes exists and is an array
+    // Check if folders array exists and is an array
     if (data.folders && Array.isArray(data.folders)) {
       // Use Promise.all to fetch document counts concurrently
-      await Promise.all(data.folders.map(async (folderPrefix: any) => {
+      await Promise.all(data.folders.map(async (folderObj: { key: string, iconUrl?: string }) => {
+        const folderPrefix = folderObj.key;
+        
+        // Ensure folderPrefix is a valid string
+        if (!folderPrefix || typeof folderPrefix !== 'string') {
+          console.warn('Invalid folder prefix:', folderPrefix);
+          return;
+        }
+        
         const name = formatPrefix(folderPrefix);
         // Fetch documents for the current folder to get the itemCount
         const documents = await getDocuments(folderPrefix);
@@ -43,7 +51,8 @@ export const getFolders = async (parentId: string | null = null): Promise<Folder
           name: name,
           parentId: parentId,
           createdAt: new Date().toISOString(),
-          itemCount: documents.length, // Set itemCount to the number of documents
+          itemCount: documents.length,
+          iconUrl: folderObj.iconUrl, // Include the custom icon URL
         });
       }));
     }
@@ -58,7 +67,7 @@ export const getFolders = async (parentId: string | null = null): Promise<Folder
 export const getFolderData = async (folderId: string | null = null): Promise<Folder> => {
   try {
     let prefix = '';
-    if (folderId) {
+    if (folderId && typeof folderId === 'string' && folderId.trim() !== '') {
       prefix = folderId;
     }
 
@@ -114,27 +123,72 @@ export const getFolderById = getFolderData;
  * Create a new folder in the storage.
  * parentId: current folder prefix or null for root
  * name: new folder name
+ * iconUri: optional custom icon URI
  */
-export const createFolder = async (parentId: string | null, name: string): Promise<void> => {
+export const createFolder = async (parentId: string | null, name: string, iconUri?: string): Promise<void> => {
   try {
     // Determine prefix path
     let prefix = '';
-    if (parentId) {
+    if (parentId && typeof parentId === 'string' && parentId.trim() !== '') {
       prefix = parentId.endsWith('/') ? parentId : `${parentId}/`;
     }
-    // Call API to create folder at its own endpoint
+    
+    // First create the folder
     const response = await fetch(`${API_URL}/folders/create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prefix, name }),
     });
+    
     if (!response.ok) {
       const errorBody = await response.text();
       console.error('createFolder response error:', response.status, errorBody);
       throw new Error('Failed to create folder');
     }
+
+    // If custom icon is provided, upload it
+    if (iconUri) {
+      const folderKey = `${prefix}${name}/`;
+      await uploadCustomIcon(folderKey, iconUri);
+    }
   } catch (error) {
     console.error('Error creating folder:', error);
+    throw error;
+  }
+};
+
+/**
+ * Upload a custom icon for a folder or file
+ */
+export const uploadCustomIcon = async (itemPath: string, iconUri: string): Promise<string> => {
+  try {
+    // Get the file extension from the URI
+    const extension = iconUri.split('.').pop()?.toLowerCase() || 'png';
+    
+    // Get signed upload URL
+    const response = await fetch(`${API_URL}/icons/upload`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemPath, iconType: extension }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to get upload URL');
+    }
+    
+    const { iconUrl } = await response.json();
+    
+    // Upload the icon
+    const iconBlob = await fetch(iconUri).then(r => r.blob());
+    await fetch(iconUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': `image/${extension}` },
+      body: iconBlob,
+    });
+    
+    return iconUrl;
+  } catch (error) {
+    console.error('Error uploading custom icon:', error);
     throw error;
   }
 };
@@ -187,8 +241,23 @@ export const deleteFolder = async (folderPath: string): Promise<void> => {
 };
 
 function formatPrefix(prefix : string): string {
+  // Handle null, undefined, or empty prefix
+  if (!prefix || typeof prefix !== 'string') {
+    return 'Root';
+  }
+
+  // Handle empty or just slash
+  if (prefix.trim() === '' || prefix.trim() === '/') {
+    return 'Root';
+  }
+
   // 1. Strip off any trailing slash (if present)
   const noSlash = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
+
+  // Handle case where after removing slash, string is empty
+  if (noSlash.trim() === '') {
+    return 'Root';
+  }
 
   // 2. Split on hyphens
   const parts = noSlash.split('-');
@@ -200,5 +269,8 @@ function formatPrefix(prefix : string): string {
   });
 
   // 4. Filter out any accidental empty segments and join
-  return words.filter(w => w !== '').join(' ');
+  const result = words.filter(w => w !== '').join(' ');
+  
+  // Return 'Root' if result is empty after processing
+  return result || 'Root';
 }

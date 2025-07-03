@@ -2,20 +2,23 @@ import { Stack, SplashScreen } from 'expo-router';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
 import { AuthProvider } from '@/context/AuthContext';
-import { useFonts } from 'expo-font';
 import { useEffect } from 'react';
 import { Text } from 'react-native';
 import { typography } from '@/constants/font';
 import { useTrackAppTime } from '@/hooks/useTrackAppTime';
+import {
+  useFonts,
+  Roboto_300Light,
+  Roboto_400Regular,
+  Roboto_500Medium,
+  Roboto_700Bold,
+} from '@expo-google-fonts/roboto';
 
 const customTextProps = {
   style: {
-    fontWeight: '900',
+    fontWeight: '400',
     fontFamily: typography.primary,
     color: '#002EDC',
-    textShadowColor: 'rgba(0, 46, 220, 0.3)',
-    textShadowOffset: { width: 0.5, height: 0.5 },
-    textShadowRadius: 0.5
   }
 };
 
@@ -28,20 +31,25 @@ const originalRender = (Text as any).render;
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
-    [typography.primary]: require('../assets/fonts/book-antiqua.ttf'),
+  const [fontsLoaded] = useFonts({
+    Roboto_300Light,
+    Roboto_400Regular,
+    Roboto_500Medium,
+    Roboto_700Bold,
   });
+  
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontsLoaded]);
 
   useTrackAppTime();
 
-  if (!fontsLoaded && !fontError) {
+  if (!fontsLoaded) {
     return null;
   }
+
   return (
     <Provider store={store}>
       <AuthProvider>
