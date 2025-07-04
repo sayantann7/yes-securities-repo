@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Folder as FolderIcon, MoreHorizontal } from 'lucide-react-native';
 import { Folder } from '@/types';
@@ -6,6 +6,7 @@ import { Colors } from '@/constants/Colors';
 import { typography } from '@/constants/font';
 import { useAuth } from '@/context/AuthContext';
 import { renameFolder, deleteFolder } from '@/services/folderService';
+import { toggleBookmark, checkIfBookmarked } from '@/services/bookmarkService';
 import FileActionModal from './FileActionModal';
 
 interface FolderItemProps {
@@ -18,6 +19,20 @@ interface FolderItemProps {
 export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list' }: FolderItemProps) {
   const { user } = useAuth();
   const [showActionModal, setShowActionModal] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  useEffect(() => {
+    const checkBookmarkStatus = async () => {
+      try {
+        const bookmarked = await checkIfBookmarked(folder.id);
+        setIsBookmarked(bookmarked);
+      } catch (error) {
+        console.error('Error checking bookmark status:', error);
+      }
+    };
+
+    checkBookmarkStatus();
+  }, [folder.id]);
 
   // Debug logging to check if iconUrl is being received
   console.log('FolderItem Debug - Folder:', {
@@ -29,9 +44,7 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
 
   const handleMorePress = (e: any) => {
     e.stopPropagation(); // Prevent triggering folder navigation
-    if (user?.role === 'admin') {
-      setShowActionModal(true);
-    }
+    setShowActionModal(true);
   };
 
   const handleRename = async (newName: string) => {
@@ -42,6 +55,15 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
   const handleDelete = async () => {
     await deleteFolder(folder.id);
     onUpdate?.();
+  };
+
+  const handleBookmark = async () => {
+    try {
+      const result = await toggleBookmark(folder.id, 'folder', folder.name);
+      setIsBookmarked(result.isBookmarked);
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    }
   };
 
   if (viewMode === 'grid') {
@@ -68,11 +90,10 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
           <Text style={[styles.gridSubtitle, { color: Colors.textSecondary }]}>
             {folder.itemCount || 0} items
           </Text>
-          {user?.role === 'admin' && (
-            <TouchableOpacity style={styles.gridMoreButton} onPress={handleMorePress}>
-              <MoreHorizontal size={16} color={Colors.textSecondary} />
-            </TouchableOpacity>
-          )}
+          {/* Show more button for all users */}
+          <TouchableOpacity style={styles.gridMoreButton} onPress={handleMorePress}>
+            <MoreHorizontal size={16} color={Colors.textSecondary} />
+          </TouchableOpacity>
         </TouchableOpacity>
 
         <FileActionModal
@@ -80,8 +101,11 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
           onClose={() => setShowActionModal(false)}
           itemName={folder.name}
           itemType="folder"
+          itemId={folder.id}
+          isBookmarked={isBookmarked}
           onRename={handleRename}
           onDelete={handleDelete}
+          onBookmark={handleBookmark}
         />
       </>
     );
@@ -114,11 +138,10 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
           </Text>
         </View>
         
-        {user?.role === 'admin' && (
-          <TouchableOpacity style={styles.moreButton} onPress={handleMorePress}>
-            <MoreHorizontal size={20} color={Colors.textSecondary} />
-          </TouchableOpacity>
-        )}
+        {/* Show more button for all users */}
+        <TouchableOpacity style={styles.moreButton} onPress={handleMorePress}>
+          <MoreHorizontal size={20} color={Colors.textSecondary} />
+        </TouchableOpacity>
       </TouchableOpacity>
 
       <FileActionModal
@@ -126,8 +149,11 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
         onClose={() => setShowActionModal(false)}
         itemName={folder.name}
         itemType="folder"
+        itemId={folder.id}
+        isBookmarked={isBookmarked}
         onRename={handleRename}
         onDelete={handleDelete}
+        onBookmark={handleBookmark}
       />
     </>
   );

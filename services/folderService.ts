@@ -1,5 +1,6 @@
 import { Folder, Document } from '@/types';
 import { getDocuments } from './documentService';
+import { getToken } from './authService';
 
 // Keep your existing API URL or update to localhost if testing locally
 const API_URL = 'http://10.24.64.229:3000/api';
@@ -12,12 +13,20 @@ export const getFolders = async (parentId: string | null = null): Promise<Folder
       prefix = parentId.endsWith('/') ? parentId : `${parentId}/`;
     }
 
+    // Get authentication token
+    const token = await getToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     // Changed from GET to POST
     const response = await fetch(`${API_URL}/folders`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({ prefix }),
     });
 
@@ -33,7 +42,7 @@ export const getFolders = async (parentId: string | null = null): Promise<Folder
     // Check if folders array exists and is an array
     if (data.folders && Array.isArray(data.folders)) {
       // Use Promise.all to fetch document counts concurrently
-      await Promise.all(data.folders.map(async (folderObj: { key: string, iconUrl?: string }) => {
+      await Promise.all(data.folders.map(async (folderObj: { key: string, iconUrl?: string, isBookmarked?: boolean }) => {
         const folderPrefix = folderObj.key;
         
         // Ensure folderPrefix is a valid string
@@ -53,6 +62,7 @@ export const getFolders = async (parentId: string | null = null): Promise<Folder
           createdAt: new Date().toISOString(),
           itemCount: documents.length,
           iconUrl: folderObj.iconUrl, // Include the custom icon URL
+          isBookmarked: folderObj.isBookmarked || false, // Include bookmark status
         });
       }));
     }

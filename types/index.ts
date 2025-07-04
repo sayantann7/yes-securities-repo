@@ -5,6 +5,7 @@ export interface Folder {
   createdAt: string;
   itemCount?: number;
   iconUrl?: string;
+  isBookmarked?: boolean;
 }
 
 export interface Document {
@@ -20,6 +21,7 @@ export interface Document {
   content?: string;
   commentCount?: number;
   iconUrl?: string;
+  isBookmarked?: boolean;
 }
 
 export interface Comment {
@@ -101,4 +103,13 @@ export interface UserActivityStatus {
   status: 'active' | 'inactive' | 'new';
   color: string;
   description: string;
+}
+
+export interface Bookmark {
+  id: string;
+  userId: string;
+  itemId: string;
+  itemType: 'document' | 'folder';
+  itemName: string;
+  createdAt: string;
 }

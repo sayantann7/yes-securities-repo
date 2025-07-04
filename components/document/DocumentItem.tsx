@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { FileText, Download, Share, MoreHorizontal } from 'lucide-react-native';
 import { Document } from '@/types';
@@ -6,6 +6,7 @@ import { Colors } from '@/constants/Colors';
 import { typography } from '@/constants/font';
 import { useAuth } from '@/context/AuthContext';
 import { renameDocument, deleteDocument } from '@/services/documentService';
+import { toggleBookmark, checkIfBookmarked } from '@/services/bookmarkService';
 import FileActionModal from './FileActionModal';
 
 interface DocumentItemProps {
@@ -18,12 +19,24 @@ interface DocumentItemProps {
 export default function DocumentItem({ document, viewMode, onPress, onUpdate }: DocumentItemProps) {
   const { user } = useAuth();
   const [showActionModal, setShowActionModal] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+
+  useEffect(() => {
+    const checkBookmarkStatus = async () => {
+      try {
+        const bookmarked = await checkIfBookmarked(document.id);
+        setIsBookmarked(bookmarked);
+      } catch (error) {
+        console.error('Error checking bookmark status:', error);
+      }
+    };
+
+    checkBookmarkStatus();
+  }, [document.id]);
 
   const handleMorePress = (e: any) => {
     e.stopPropagation(); // Prevent triggering document view
-    if (user?.role === 'admin') {
-      setShowActionModal(true);
-    }
+    setShowActionModal(true);
   };
 
   const handleRename = async (newName: string) => {
@@ -41,6 +54,15 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
   const handleDelete = async () => {
     await deleteDocument(document.id);
     onUpdate?.();
+  };
+
+  const handleBookmark = async () => {
+    try {
+      const result = await toggleBookmark(document.id, 'document', document.name);
+      setIsBookmarked(result.isBookmarked);
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    }
   };
 
   const getFileIcon = (type: string) => {
@@ -80,11 +102,10 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
           <Text style={[styles.gridSubtitle, { color: Colors.textSecondary }]}>
             {formatFileSize(Number(document.size))}
           </Text>
-          {user?.role === 'admin' && (
-            <TouchableOpacity style={styles.gridMoreButton} onPress={handleMorePress}>
-              <MoreHorizontal size={16} color={Colors.textSecondary} />
-            </TouchableOpacity>
-          )}
+          {/* Show more button for all users */}
+          <TouchableOpacity style={styles.gridMoreButton} onPress={handleMorePress}>
+            <MoreHorizontal size={16} color={Colors.textSecondary} />
+          </TouchableOpacity>
         </TouchableOpacity>
 
         <FileActionModal
@@ -92,8 +113,11 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
           onClose={() => setShowActionModal(false)}
           itemName={document.name}
           itemType="file"
+          itemId={document.id}
+          isBookmarked={isBookmarked}
           onRename={handleRename}
           onDelete={handleDelete}
+          onBookmark={handleBookmark}
         />
       </>
     );
@@ -131,11 +155,10 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
           </View>
         </View>
         
-        {user?.role === 'admin' && (
-          <TouchableOpacity style={styles.moreButton} onPress={handleMorePress}>
-            <MoreHorizontal size={20} color={Colors.textSecondary} />
-          </TouchableOpacity>
-        )}
+        {/* Show more button for all users */}
+        <TouchableOpacity style={styles.moreButton} onPress={handleMorePress}>
+          <MoreHorizontal size={20} color={Colors.textSecondary} />
+        </TouchableOpacity>
       </TouchableOpacity>
 
       <FileActionModal
@@ -143,8 +166,11 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
         onClose={() => setShowActionModal(false)}
         itemName={document.name}
         itemType="file"
+        itemId={document.id}
+        isBookmarked={isBookmarked}
         onRename={handleRename}
         onDelete={handleDelete}
+        onBookmark={handleBookmark}
       />
     </>
   );

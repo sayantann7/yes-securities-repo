@@ -1,4 +1,5 @@
 import { Document } from '@/types';
+import { getToken } from './authService';
 
 // Base URL for API requests
 const API_URL = 'http://10.24.64.229:3000/api';
@@ -62,12 +63,20 @@ export const getDocuments = async (folderId: string | null = null): Promise<Docu
       prefix = folderId.endsWith('/') ? folderId : `${folderId}/`;
     }
 
+    // Get authentication token
+    const token = await getToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     // Changed from GET to POST
     const response = await fetch(`${API_URL}/folders`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({ prefix }),
     });
 
@@ -89,7 +98,7 @@ export const getDocuments = async (folderId: string | null = null): Promise<Docu
       console.log(`Processing ${data.files.length} files in folder ${prefix || 'root'}`);
       
       for (const fileObj of data.files) {
-        // Handle new response format: { key: string, iconUrl?: string }
+        // Handle new response format: { key: string, iconUrl?: string, isBookmarked?: boolean }
         const key = fileObj.key;
         if (!key || key.endsWith('/')) {
           continue;
@@ -125,6 +134,7 @@ export const getDocuments = async (folderId: string | null = null): Promise<Docu
             folderId: folderId,
             commentCount: 0,
             iconUrl: fileObj.iconUrl, // Include the custom icon URL
+            isBookmarked: fileObj.isBookmarked || false, // Include bookmark status
           });
         } catch (err) {
           console.error(`Error processing file ${key}:`, err);

@@ -9,16 +9,20 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { X, Edit2, Trash2 } from 'lucide-react-native';
+import { X, Edit2, Trash2, Bookmark, BookmarkCheck } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
+import { useAuth } from '@/context/AuthContext';
 
 interface FileActionModalProps {
   visible: boolean;
   onClose: () => void;
   itemName: string;
   itemType: 'folder' | 'file';
+  itemId: string;
+  isBookmarked?: boolean;
   onRename: (newName: string) => Promise<void>;
   onDelete: () => Promise<void>;
+  onBookmark: () => Promise<void>;
 }
 
 export default function FileActionModal({
@@ -26,9 +30,13 @@ export default function FileActionModal({
   onClose,
   itemName,
   itemType,
+  itemId,
+  isBookmarked = false,
   onRename,
   onDelete,
+  onBookmark,
 }: FileActionModalProps) {
+  const { user } = useAuth();
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(itemName);
   const [isLoading, setIsLoading] = useState(false);
@@ -155,25 +163,44 @@ export default function FileActionModal({
             <View style={styles.actionsContainer}>
               <TouchableOpacity
                 style={styles.actionItem}
-                onPress={handleRename}
+                onPress={onBookmark}
                 disabled={isLoading}
               >
-                <Edit2 size={20} color={Colors.primary} />
+                {isBookmarked ? (
+                  <BookmarkCheck size={20} color={Colors.primary} />
+                ) : (
+                  <Bookmark size={20} color={Colors.primary} />
+                )}
                 <Text style={[styles.actionText, { color: Colors.text }]}>
-                  Rename {itemType}
+                  {isBookmarked ? 'Remove bookmark' : 'Bookmark'} {itemType}
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.actionItem}
-                onPress={handleDelete}
-                disabled={isLoading}
-              >
-                <Trash2 size={20} color="#FF6B6B" />
-                <Text style={[styles.actionText, { color: '#FF6B6B' }]}>
-                  Delete {itemType}
-                </Text>
-              </TouchableOpacity>
+              {user?.role === 'admin' && (
+                <>
+                  <TouchableOpacity
+                    style={styles.actionItem}
+                    onPress={handleRename}
+                    disabled={isLoading}
+                  >
+                    <Edit2 size={20} color={Colors.primary} />
+                    <Text style={[styles.actionText, { color: Colors.text }]}>
+                      Rename {itemType}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.actionItem}
+                    onPress={handleDelete}
+                    disabled={isLoading}
+                  >
+                    <Trash2 size={20} color="#FF6B6B" />
+                    <Text style={[styles.actionText, { color: '#FF6B6B' }]}>
+                      Delete {itemType}
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           )}
         </View>

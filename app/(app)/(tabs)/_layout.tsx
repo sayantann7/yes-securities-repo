@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '@/context/AuthContext';
-import { Home as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon, Settings as AdminIcon } from 'lucide-react-native';
+import { Home as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon, Settings as AdminIcon, Bookmark as BookmarkIcon } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 
 const Tab = createBottomTabNavigator();
@@ -33,6 +33,14 @@ export default function TabLayout() {
         options={{
           title: 'Search',
           tabBarIcon: ({ color, size }) => <SearchIcon color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="bookmarks"
+        component={require('./bookmarks').default}
+        options={{
+          title: 'Bookmarks',
+          tabBarIcon: ({ color, size }) => <BookmarkIcon color={color} size={size} />,
         }}
       />
       <Tab.Screen
