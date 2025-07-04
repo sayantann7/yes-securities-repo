@@ -11,7 +11,6 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
-    "@expo-google-fonts/roboto": "^0.4.0",
     "@expo/vector-icons": "^14.1.0",
     "@lucide/lab": "^0.1.2",
     "@react-native-async-storage/async-storage": "^2.1.2",

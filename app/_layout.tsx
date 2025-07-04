@@ -3,49 +3,55 @@ import { Provider } from 'react-redux';
 import { store } from '@/store';
 import { AuthProvider } from '@/context/AuthContext';
 import { useEffect } from 'react';
-import { Text } from 'react-native';
+import { Text, TextInput } from 'react-native';
+import { useFonts } from 'expo-font';
 import { typography } from '@/constants/font';
 import { useTrackAppTime } from '@/hooks/useTrackAppTime';
-import {
-  useFonts,
-  Roboto_300Light,
-  Roboto_400Regular,
-  Roboto_500Medium,
-  Roboto_700Bold,
-} from '@expo-google-fonts/roboto';
 
+// Global Text component override to apply Nexa font consistently
 const customTextProps = {
   style: {
-    fontWeight: '400',
     fontFamily: typography.primary,
-    color: '#002EDC',
   }
 };
 
-const originalRender = (Text as any).render;
+const originalTextRender = (Text as any).render;
 (Text as any).render = function render(props: any) {
   const mergedProps = { ...props, style: [customTextProps.style, props.style] };
-  return originalRender.apply(this, [mergedProps]);
+  return originalTextRender.apply(this, [mergedProps]);
+};
+
+// Global TextInput component override to apply Nexa font consistently
+const customTextInputProps = {
+  style: {
+    fontFamily: typography.primary,
+  }
+};
+
+const originalTextInputRender = (TextInput as any).render;
+(TextInput as any).render = function render(props: any) {
+  const mergedProps = { ...props, style: [customTextInputProps.style, props.style] };
+  return originalTextInputRender.apply(this, [mergedProps]);
 };
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  // Load custom Nexa fonts
   const [fontsLoaded] = useFonts({
-    Roboto_300Light,
-    Roboto_400Regular,
-    Roboto_500Medium,
-    Roboto_700Bold,
+    NexaExtraLight: require('../assets/fonts/nexa-extra-light.ttf'),
+    NexaHeavy: require('../assets/fonts/nexa-heavy.ttf'),
   });
-  
+
+  useTrackAppTime();
+
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
 
-  useTrackAppTime();
-
+  // Don't render the app until fonts are loaded
   if (!fontsLoaded) {
     return null;
   }

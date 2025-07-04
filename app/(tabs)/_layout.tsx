@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { PhoneIncoming as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon } from 'lucide-react-native';
 import { Text, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { typography } from '@/constants/font';
 
 export default function TabLayout() {
   return (
@@ -88,5 +89,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     marginTop: 2,
+    fontFamily: typography.primary,
   },
 });

@@ -1,6 +1,11 @@
 export const typography = {
-  primary: 'Roboto_400Regular',
-  bold: 'Roboto_700Bold',
-  light: 'Roboto_300Light',
-  medium: 'Roboto_500Medium',
+  primary: 'NexaHeavy',
+  bold: 'NexaHeavy',
+  light: 'NexaHeavy',
+  medium: 'NexaHeavy',
+  // Additional Nexa font variants for consistency
+  regular: 'NexaHeavy',
+  semibold: 'NexaHeavy',
+  heavy: 'NexaHeavy',
+  extraLight: 'NexaHeavy',
 }; 

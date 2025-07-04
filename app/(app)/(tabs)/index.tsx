@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { FileText, Star, Users } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { Colors } from '@/constants/Colors';
+import { typography } from '@/constants/font';
 import { router } from 'expo-router';
 import { useFetchFolders } from '@/hooks/useFetchFolders';
 import FolderItem from '@/components/document/FolderItem';
@@ -197,7 +198,7 @@ export default function HomeScreen() {
           <View style={[styles.section, { backgroundColor: colors.surface, borderRadius: 12, marginHorizontal: 16, marginTop: 8, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>  
             <Text style={[styles.sectionTitle, { color: colors.primary }]}>Upload Employee List</Text>
             <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
-              Upload an Excel file (.xlsx) with columns <Text style={{ fontWeight: 'bold' }}>fullname</Text> and <Text style={{ fontWeight: 'bold' }}>email</Text>.
+              Upload an Excel file (.xlsx) with columns <Text style={{ fontWeight: 'bold', fontFamily: typography.bold }}>fullname</Text> and <Text style={{ fontWeight: 'bold', fontFamily: typography.bold }}>email</Text>.
               {'\n'}Employees not in the new list will be revoked, and new ones will be granted access automatically.
             </Text>
             <TouchableOpacity
@@ -390,10 +391,12 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 24,
     fontWeight: 'bold',
+    fontFamily: typography.bold,
   },
   subGreeting: {
     fontSize: 14,
     marginTop: 4,
+    fontFamily: typography.primary,
   },
   avatar: {
     width: 40,
@@ -417,10 +420,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
+    fontFamily: typography.bold,
   },
   statLabel: {
     fontSize: 12,
     marginTop: 2,
+    fontFamily: typography.primary,
   },
   section: {
     marginTop: 24,
@@ -435,6 +440,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    fontFamily: typography.bold,
   },
   content: {
     flex: 1,
