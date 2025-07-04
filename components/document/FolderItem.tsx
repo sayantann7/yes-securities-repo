@@ -19,28 +19,12 @@ interface FolderItemProps {
 export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list' }: FolderItemProps) {
   const { user } = useAuth();
   const [showActionModal, setShowActionModal] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(folder.isBookmarked || false);
 
   useEffect(() => {
-    const checkBookmarkStatus = async () => {
-      try {
-        const bookmarked = await checkIfBookmarked(folder.id);
-        setIsBookmarked(bookmarked);
-      } catch (error) {
-        console.error('Error checking bookmark status:', error);
-      }
-    };
-
-    checkBookmarkStatus();
-  }, [folder.id]);
-
-  // Debug logging to check if iconUrl is being received
-  console.log('FolderItem Debug - Folder:', {
-    name: folder.name,
-    id: folder.id,
-    iconUrl: folder.iconUrl,
-    hasIconUrl: !!folder.iconUrl
-  });
+    console.log('🔄 FolderItem useEffect - setting initial bookmark status:', folder.isBookmarked);
+    setIsBookmarked(folder.isBookmarked || false);
+  }, [folder.isBookmarked, folder.id]);
 
   const handleMorePress = (e: any) => {
     e.stopPropagation(); // Prevent triggering folder navigation
@@ -59,10 +43,17 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
 
   const handleBookmark = async () => {
     try {
+      console.log('🔖 FolderItem handleBookmark called for:', { id: folder.id, name: folder.name });
       const result = await toggleBookmark(folder.id, 'folder', folder.name);
+      console.log('📋 toggleBookmark result:', result);
       setIsBookmarked(result.isBookmarked);
+      console.log('🎯 isBookmarked state updated to:', result.isBookmarked);
+      
+      // Also trigger a data refresh if the callback is available
+      onUpdate?.();
+      console.log('🔄 onUpdate called');
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
+      console.error('💥 Error toggling bookmark:', error);
     }
   };
 

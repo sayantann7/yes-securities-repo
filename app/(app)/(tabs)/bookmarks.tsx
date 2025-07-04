@@ -8,7 +8,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { BookmarkCheck, Folder as FolderIcon, FileText, Trash2, Grid, List, RefreshCw } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { Bookmark } from '@/types';
@@ -99,11 +99,14 @@ export default function BookmarksScreen() {
 
   const fetchBookmarks = async () => {
     try {
+      console.log('📚 fetchBookmarks called in BookmarksScreen');
       setIsLoading(true);
       const data = await getBookmarks();
+      console.log('📦 fetchBookmarks received data:', data);
+      console.log('📊 Setting bookmarks state with:', data.length, 'items');
       setBookmarks(data);
     } catch (error) {
-      console.error('Error fetching bookmarks:', error);
+      console.error('💥 Error fetching bookmarks:', error);
       Alert.alert('Error', 'Failed to load bookmarks');
     } finally {
       setIsLoading(false);
@@ -120,6 +123,14 @@ export default function BookmarksScreen() {
     fetchBookmarks();
   }, []);
 
+  // Refresh bookmarks when the tab comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('🎯 Bookmarks tab focused - refreshing bookmarks');
+      fetchBookmarks();
+    }, [])
+  );
+
   const handleBookmarkPress = (bookmark: Bookmark) => {
     if (bookmark.itemType === 'folder') {
       router.push(`/folder/${bookmark.itemId}`);
@@ -130,8 +141,10 @@ export default function BookmarksScreen() {
 
   const handleRemoveBookmark = async (bookmarkId: string) => {
     try {
+      console.log('handleRemoveBookmark called for:', bookmarkId);
       await removeBookmark(bookmarkId);
       setBookmarks(prev => prev.filter(b => b.itemId !== bookmarkId));
+      console.log('Bookmark removed and state updated');
     } catch (error) {
       console.error('Error removing bookmark:', error);
       Alert.alert('Error', 'Failed to remove bookmark');

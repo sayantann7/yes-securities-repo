@@ -19,20 +19,12 @@ interface DocumentItemProps {
 export default function DocumentItem({ document, viewMode, onPress, onUpdate }: DocumentItemProps) {
   const { user } = useAuth();
   const [showActionModal, setShowActionModal] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(document.isBookmarked || false);
 
   useEffect(() => {
-    const checkBookmarkStatus = async () => {
-      try {
-        const bookmarked = await checkIfBookmarked(document.id);
-        setIsBookmarked(bookmarked);
-      } catch (error) {
-        console.error('Error checking bookmark status:', error);
-      }
-    };
-
-    checkBookmarkStatus();
-  }, [document.id]);
+    console.log('🔄 DocumentItem useEffect - setting initial bookmark status:', document.isBookmarked);
+    setIsBookmarked(document.isBookmarked || false);
+  }, [document.isBookmarked, document.id]);
 
   const handleMorePress = (e: any) => {
     e.stopPropagation(); // Prevent triggering document view
@@ -58,10 +50,17 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
 
   const handleBookmark = async () => {
     try {
+      console.log('🔖 DocumentItem handleBookmark called for:', { id: document.id, name: document.name });
       const result = await toggleBookmark(document.id, 'document', document.name);
+      console.log('📋 toggleBookmark result:', result);
       setIsBookmarked(result.isBookmarked);
+      console.log('🎯 isBookmarked state updated to:', result.isBookmarked);
+      
+      // Also trigger a data refresh if the callback is available
+      onUpdate?.();
+      console.log('🔄 onUpdate called');
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
+      console.error('💥 Error toggling bookmark:', error);
     }
   };
 
