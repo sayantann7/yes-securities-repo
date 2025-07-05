@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Platform, RefreshControl, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { ChevronRight, ChevronDown, FolderOpen, Plus, Grid, List } from 'lucide-react-native';
@@ -10,6 +10,8 @@ import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 import UploadFileModal from '@/components/upload/UploadFileModal';
+import DocumentsPageSkeleton from '@/components/skeleton/DocumentsPageSkeleton';
+import RefreshLoader from '@/components/skeleton/RefreshLoader';
 
 const TAB_BAR_HEIGHT = 64;
 const BOTTOM_SPACING = Platform.OS === 'ios' ? 24 : 16;
@@ -21,6 +23,8 @@ export default function DocumentsScreen() {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [refreshing, setRefreshing] = useState(false);
+  const [bottomRefreshing, setBottomRefreshing] = useState(false);
   const { folders, rootFolders, documents, isLoading, reload } = useFetchFolders(currentFolderId);
   const { user } = useAuth();
 
@@ -68,8 +72,23 @@ export default function DocumentsScreen() {
     setCurrentFolderId(folderId);
   };
 
-  const handleRefresh = () => {
-    reload();
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await reload();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleBottomRefresh = async () => {
+    if (isLoading || bottomRefreshing) return; // Prevent multiple simultaneous refreshes
+    setBottomRefreshing(true);
+    try {
+      await reload();
+    } finally {
+      setBottomRefreshing(false);
+    }
   };
 
   const renderSectionHeader = (title: string) => (
@@ -79,6 +98,10 @@ export default function DocumentsScreen() {
   const renderEmptyComponent = (message: string) => (
     <Text style={[styles.emptyText, { color: Colors.textSecondary }]}>{message}</Text>
   );
+
+  const renderFooter = () => {
+    return null;
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>    
@@ -96,6 +119,7 @@ export default function DocumentsScreen() {
               <List size={20} color={Colors.primary} />
             }
           </TouchableOpacity>
+          
           <TouchableOpacity 
             style={{ backgroundColor: Colors.primary, borderRadius: 20, width: 40, height: 40, justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}
             onPress={() => setShowUploadModal(true)}
@@ -115,44 +139,73 @@ export default function DocumentsScreen() {
 
       <View style={[styles.content, { backgroundColor: Colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}> 
         <View style={styles.documentsContainer}>
-          {currentFolderId ? (
+          {isLoading ? (
+            <DocumentsPageSkeleton viewMode={viewMode} />
+          ) : currentFolderId ? (
             // Current folder view
-            <View style={{flex: 1}}>
-              {/* Folders in current folder */}
-              <View>
-                {renderSectionHeader("Folders")}
-                <FlatList
-                  data={folders.filter(f => f.parentId === currentFolderId)}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <FolderItem folder={item} onPress={() => openFolder(item)} onUpdate={handleRefresh} viewMode={viewMode} />
-                  )}
-                  ListEmptyComponent={() => renderEmptyComponent("No folders")}
-                  scrollEnabled={false}
-                  numColumns={viewMode === 'grid' ? 2 : 1}
-                  key={viewMode} // Force re-render when view mode changes
-                />
-              </View>
-              {/* Documents in current folder */}
-              <View style={{marginBottom: TOTAL_BOTTOM_SPACING}}>
-                {renderSectionHeader("Documents")}
-                <FlatList
-                  data={documents}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <DocumentItem document={item} viewMode={viewMode} onPress={() => router.push(`/document/${item.id}`)} onUpdate={handleRefresh} />
-                  )}
-                  ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
-                  numColumns={viewMode === 'grid' ? 2 : 1}
-                  key={`documents-${viewMode}`} // Force re-render when view mode changes
-                />
-              </View>
-            </View>
+            <FlatList
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              }
+              showsVerticalScrollIndicator={false}
+              data={[{id: 'folders'}, {id: 'documents'}]}
+              keyExtractor={(item) => item.id}
+              onEndReached={handleBottomRefresh}
+              onEndReachedThreshold={0.1}
+              ListFooterComponent={renderFooter}
+              renderItem={({item}) => {
+                if (item.id === 'folders') {
+                  return (
+                    <View>
+                      {renderSectionHeader("Folders")}
+                      <FlatList
+                        data={folders.filter(f => f.parentId === currentFolderId)}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                          <FolderItem folder={item} onPress={() => openFolder(item)} onUpdate={handleRefresh} viewMode={viewMode} />
+                        )}
+                        ListEmptyComponent={() => renderEmptyComponent("No folders")}
+                        scrollEnabled={false}
+                        numColumns={viewMode === 'grid' ? 2 : 1}
+                        key={viewMode} // Force re-render when view mode changes
+                      />
+                    </View>
+                  );
+                }
+                if (item.id === 'documents') {
+                  return (
+                    <View style={{marginBottom: TOTAL_BOTTOM_SPACING}}>
+                      {renderSectionHeader("Documents")}
+                      <FlatList
+                        data={documents}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                          <DocumentItem document={item} viewMode={viewMode} onPress={() => router.push(`/document/${item.id}`)} onUpdate={handleRefresh} />
+                        )}
+                        ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
+                        numColumns={viewMode === 'grid' ? 2 : 1}
+                        key={`documents-${viewMode}`} // Force re-render when view mode changes
+                        scrollEnabled={false}
+                      />
+                    </View>
+                  );
+                }
+                return null;
+              }}
+              contentContainerStyle={{paddingBottom: TOTAL_BOTTOM_SPACING}}
+            />
           ) : (
             // Root view
             <FlatList
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              }
+              showsVerticalScrollIndicator={false}
               data={[{id: 'folders'}, {id: 'documents'}]}
               keyExtractor={(item) => item.id}
+              onEndReached={handleBottomRefresh}
+              onEndReachedThreshold={0.1}
+              ListFooterComponent={renderFooter}
               renderItem={({item}) => {
                 if (item.id === 'folders') {
                   return (
@@ -184,6 +237,7 @@ export default function DocumentsScreen() {
                         ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
                         numColumns={viewMode === 'grid' ? 2 : 1}
                         key={`root-documents-${viewMode}`} // Force re-render when view mode changes
+                        scrollEnabled={false}
                       />
                     </View>
                   );

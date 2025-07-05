@@ -16,6 +16,10 @@ export function useFetchFolders(folderId: string | null = null) {
       try {
         setIsLoading(true);
         
+        // Add minimum loading time to ensure skeleton is visible
+        const startTime = Date.now();
+        const minLoadingTime = 800; // 800ms minimum loading time
+        
         // Fetch all folders to build the folder structure
         const allFolders = await getFolders(null);
         // Sort all folders alphabetically by name
@@ -34,6 +38,14 @@ export function useFetchFolders(folderId: string | null = null) {
         const sortedDocuments = documentsList.sort((a, b) => a.name.localeCompare(b.name));
         setDocuments(sortedDocuments);
         
+        // Ensure minimum loading time
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
+        
+        if (remainingTime > 0) {
+          await new Promise(resolve => setTimeout(resolve, remainingTime));
+        }
+        
       } catch (err) {
         console.error('Error fetching folders:', err);
         setError('Failed to load folders');
@@ -47,7 +59,33 @@ export function useFetchFolders(folderId: string | null = null) {
   
   /**
    * Call to reload folders and documents.
+   * This function does not set isLoading to true since it's meant for refresh operations
+   * where the UI should show refresh indicators instead of the skeleton loader.
    */
-  const reload = () => setTrigger(prev => prev + 1);
+  const reload = async () => {
+    try {
+      // Fetch all folders to build the folder structure
+      const allFolders = await getFolders(null);
+      // Sort all folders alphabetically by name
+      const sortedAllFolders = allFolders.sort((a, b) => a.name.localeCompare(b.name));
+      setFolders(sortedAllFolders);
+      
+      // Fetch root folders or subfolders based on the folderId
+      const foldersList = await getFolders(folderId);
+      // Sort folders alphabetically by name
+      const sortedFolders = foldersList.sort((a, b) => a.name.localeCompare(b.name));
+      setRootFolders(sortedFolders);
+      
+      // Fetch documents for the current folder
+      const documentsList = await getDocuments(folderId);
+      // Sort documents alphabetically by name
+      const sortedDocuments = documentsList.sort((a, b) => a.name.localeCompare(b.name));
+      setDocuments(sortedDocuments);
+      
+    } catch (err) {
+      console.error('Error reloading folders:', err);
+      setError('Failed to reload folders');
+    }
+  };
   return { folders, rootFolders, documents, isLoading, error, reload };
 }

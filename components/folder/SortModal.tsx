@@ -7,6 +7,7 @@ import {
   TouchableWithoutFeedback 
 } from 'react-native';
 import { Check } from 'lucide-react-native';
+import { Colors } from '@/constants/Colors';
 
 interface SortModalProps {
   visible: boolean;
@@ -32,9 +33,8 @@ export default function SortModal({ visible, onClose, onSelect, currentSort }: S
       transparent={true}
     >
       <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.title}>Sort By</Text>
+        <View style={styles.overlay}>        <View style={[styles.modalContainer, { backgroundColor: Colors.surface }]}>
+          <Text style={[styles.title, { color: Colors.primary }]}>Sort By</Text>
             
             {sortOptions.map(option => (
               <TouchableOpacity 
@@ -42,8 +42,8 @@ export default function SortModal({ visible, onClose, onSelect, currentSort }: S
                 style={styles.option}
                 onPress={() => onSelect(option.id)}
               >
-                <Text style={styles.optionText}>{option.label}</Text>
-                {currentSort === option.id && <Check size={20} color="#0C2340" />}
+                <Text style={[styles.optionText, { color: Colors.text }]}>{option.label}</Text>
+                {currentSort === option.id && <Check size={20} color={Colors.primary} />}
               </TouchableOpacity>
             ))}
           </View>
@@ -61,7 +61,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     width: '80%',
@@ -70,7 +69,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0C2340',
     marginBottom: 16,
   },
   option: {
@@ -79,10 +77,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: Colors.borderLight,
   },
   optionText: {
     fontSize: 16,
-    color: '#333333',
   },
 });
