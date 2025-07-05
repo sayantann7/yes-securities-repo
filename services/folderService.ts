@@ -64,6 +64,18 @@ export const getFolders = async (parentId: string | null = null): Promise<Folder
           iconUrl: folderObj.iconUrl, // Include the custom icon URL
           isBookmarked: folderObj.isBookmarked || false, // Include bookmark status
         });
+        
+        // Debug log for icon URLs
+        if (folderObj.iconUrl) {
+          console.log('🖼️ Folder icon URL received:', { 
+            folderName: name, 
+            iconUrl: folderObj.iconUrl,
+            isSignedUrl: folderObj.iconUrl.includes('X-Amz-'),
+            urlDomain: new URL(folderObj.iconUrl).hostname
+          });
+        } else {
+          console.log('❌ No icon URL for folder:', name);
+        }
       }));
     }
     
@@ -187,16 +199,29 @@ export const uploadCustomIcon = async (itemPath: string, iconUri: string): Promi
       throw new Error('Failed to get upload URL');
     }
     
-    const { iconUrl } = await response.json();
+    const { uploadUrl } = await response.json();
     
     // Upload the icon
     const iconBlob = await fetch(iconUri).then(r => r.blob());
-    await fetch(iconUrl, {
+    await fetch(uploadUrl, {
       method: 'PUT',
       headers: { 'Content-Type': `image/${extension}` },
       body: iconBlob,
     });
     
+    // Wait a moment for S3 to process the upload
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // After successful upload, get the view URL
+    const encodedPath = encodeURIComponent(itemPath);
+    const iconResponse = await fetch(`${API_URL}/icons/${encodedPath}`);
+    
+    if (!iconResponse.ok) {
+      throw new Error('Failed to get icon URL after upload');
+    }
+    
+    const { iconUrl } = await iconResponse.json();
+    console.log('✅ Icon uploaded and URL retrieved:', iconUrl);
     return iconUrl;
   } catch (error) {
     console.error('Error uploading custom icon:', error);

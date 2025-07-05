@@ -20,11 +20,15 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
   const { user } = useAuth();
   const [showActionModal, setShowActionModal] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(folder.isBookmarked || false);
+  const [iconError, setIconError] = useState(false);
 
   useEffect(() => {
     console.log('🔄 FolderItem useEffect - setting initial bookmark status:', folder.isBookmarked);
+    console.log('🖼️ Folder icon URL for', folder.name, ':', folder.iconUrl);
     setIsBookmarked(folder.isBookmarked || false);
-  }, [folder.isBookmarked, folder.id]);
+    // Reset icon error when folder changes
+    setIconError(false);
+  }, [folder.isBookmarked, folder.id, folder.iconUrl]);
 
   const handleMorePress = (e: any) => {
     e.stopPropagation(); // Prevent triggering folder navigation
@@ -63,18 +67,23 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
         <TouchableOpacity 
           style={[styles.gridItem, { backgroundColor: Colors.surface }]} 
           onPress={onPress}
-        >
-          <View style={[styles.gridIconContainer, { backgroundColor: Colors.surfaceVariant }]}>
-            {folder.iconUrl ? (
-              <Image 
-                source={{ uri: folder.iconUrl }} 
-                style={styles.gridCustomIcon}
-                resizeMode="cover"
-              />
-            ) : (
-              <FolderIcon size={32} color="#6B73FF" />
-            )}
-          </View>
+        >        <View style={[styles.gridIconContainer, { backgroundColor: Colors.surfaceVariant }]}>
+          {folder.iconUrl && !iconError ? (
+            <Image 
+              source={{ uri: folder.iconUrl }} 
+              style={styles.gridCustomIcon}
+              resizeMode="cover"
+              onError={(error) => {
+                console.log('🚫 Grid icon failed to load for folder:', folder.name);
+                console.log('🚫 Error details:', error.nativeEvent);
+                console.log('🚫 Icon URL was:', folder.iconUrl);
+                setIconError(true);
+              }}
+            />
+          ) : (
+            <FolderIcon size={32} color="#6B73FF" />
+          )}
+        </View>
           <Text style={[styles.gridTitle, { color: Colors.text }]} numberOfLines={2}>
             {folder.name}
           </Text>
@@ -109,11 +118,17 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
         onPress={onPress}
       >
         <View style={[styles.iconContainer, { backgroundColor: Colors.surfaceVariant }]}>
-          {folder.iconUrl ? (
+          {folder.iconUrl && !iconError ? (
             <Image 
               source={{ uri: folder.iconUrl }} 
               style={styles.customIcon}
               resizeMode="cover"
+              onError={(error) => {
+                console.log('🚫 List icon failed to load for folder:', folder.name);
+                console.log('🚫 Error details:', error.nativeEvent);
+                console.log('🚫 Icon URL was:', folder.iconUrl);
+                setIconError(true);
+              }}
             />
           ) : (
             <FolderIcon size={24} color="#6B73FF" />

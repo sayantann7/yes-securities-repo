@@ -20,11 +20,15 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
   const { user } = useAuth();
   const [showActionModal, setShowActionModal] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(document.isBookmarked || false);
+  const [iconError, setIconError] = useState(false);
 
   useEffect(() => {
     console.log('🔄 DocumentItem useEffect - setting initial bookmark status:', document.isBookmarked);
+    console.log('🖼️ Document icon URL for', document.name, ':', document.iconUrl);
     setIsBookmarked(document.isBookmarked || false);
-  }, [document.isBookmarked, document.id]);
+    // Reset icon error when document changes
+    setIconError(false);
+  }, [document.isBookmarked, document.id, document.iconUrl]);
 
   const handleMorePress = (e: any) => {
     e.stopPropagation(); // Prevent triggering document view
@@ -85,11 +89,17 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
           onPress={onPress}
         >
           <View style={[styles.gridIconContainer, { backgroundColor: Colors.surfaceVariant }]}>
-            {document.iconUrl ? (
+            {document.iconUrl && !iconError ? (
               <Image 
                 source={{ uri: document.iconUrl }} 
                 style={styles.gridCustomIcon}
                 resizeMode="cover"
+                onError={(error) => {
+                  console.log('🚫 Grid icon failed to load for document:', document.name);
+                  console.log('🚫 Error details:', error.nativeEvent);
+                  console.log('🚫 Icon URL was:', document.iconUrl);
+                  setIconError(true);
+                }}
               />
             ) : (
               getFileIcon(document.type)
@@ -129,11 +139,17 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
         onPress={onPress}
       >
         <View style={[styles.iconContainer, { backgroundColor: Colors.surfaceVariant }]}>
-          {document.iconUrl ? (
+          {document.iconUrl && !iconError ? (
             <Image 
               source={{ uri: document.iconUrl }} 
               style={styles.customIcon}
               resizeMode="cover"
+              onError={(error) => {
+                console.log('🚫 List icon failed to load for document:', document.name);
+                console.log('🚫 Error details:', error.nativeEvent);
+                console.log('🚫 Icon URL was:', document.iconUrl);
+                setIconError(true);
+              }}
             />
           ) : (
             getFileIcon(document.type)

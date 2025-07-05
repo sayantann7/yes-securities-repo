@@ -137,6 +137,14 @@ export const getDocuments = async (folderId: string | null = null): Promise<Docu
             iconUrl: fileObj.iconUrl, // Include the custom icon URL
             isBookmarked: fileObj.isBookmarked || false, // Include bookmark status
           });
+          
+          // Debug log for icon URLs
+          if (fileObj.iconUrl) {
+            console.log('🖼️ Document icon URL received:', { 
+              fileName: fileName, 
+              iconUrl: fileObj.iconUrl 
+            });
+          }
         } catch (err) {
           console.error(`Error processing file ${key}:`, err);
         }

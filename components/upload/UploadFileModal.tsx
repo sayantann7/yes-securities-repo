@@ -139,15 +139,17 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ itemPath: key, iconType: extension }),
             });
-            const { iconUrl } = await iconResp.json();
+            const { uploadUrl } = await iconResp.json();
 
             // Upload the icon image
             const iconBlob = await fetch(file.customIcon).then(r => r.blob());
-            await fetch(iconUrl, { 
+            await fetch(uploadUrl, { 
               method: 'PUT', 
               headers: { 'Content-Type': `image/${extension}` }, 
               body: iconBlob 
             });
+            
+            console.log('✅ File icon uploaded successfully for:', file.name);
           } catch (iconError) {
             console.error('Failed to upload icon for file:', file.name, iconError);
             // Continue with file upload even if icon fails
