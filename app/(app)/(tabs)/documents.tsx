@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Platform, RefreshControl, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { ChevronRight, ChevronDown, FolderOpen, Plus, Grid, List } from 'lucide-react-native';
 import { useFetchFolders } from '@/hooks/useFetchFolders';
 import FolderItem from '@/components/document/FolderItem';
@@ -18,6 +18,13 @@ const SAFE_AREA_BOTTOM = 20;
 const TOTAL_BOTTOM_SPACING = TAB_BAR_HEIGHT + BOTTOM_SPACING + SAFE_AREA_BOTTOM;
 
 export default function DocumentsScreen() {
+  const { user } = useAuth();
+
+  // Redirect non-admin users to home page
+  if (user?.role !== 'admin') {
+    return <Redirect href="/(app)/(tabs)" />;
+  }
+
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -25,7 +32,6 @@ export default function DocumentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [bottomRefreshing, setBottomRefreshing] = useState(false);
   const { folders, rootFolders, documents, isLoading, reload } = useFetchFolders(currentFolderId);
-  const { user } = useAuth();
 
 
 

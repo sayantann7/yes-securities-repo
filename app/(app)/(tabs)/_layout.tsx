@@ -81,13 +81,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <HomeIcon color={color} size={size} />,
         }}
       />
-      {/* <Tabs.Screen
-          name="documents"
-          options={{
-            title: 'Documents',
-            tabBarIcon: ({ color, size }) => <FolderIcon color={color} size={size} />,
-          }}
-        /> */}
       <Tabs.Screen
         name="search"
         options={{
@@ -107,6 +100,19 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size }) => <UserIcon color={color} size={size} />,
+        }}
+      />
+      {/* Admin-only screens - hidden for non-admin users */}
+      <Tabs.Screen
+        name="admin"
+        options={{
+          href: null, // This completely hides the tab from non-admin users
+        }}
+      />
+      <Tabs.Screen
+        name="documents"
+        options={{
+          href: null, // This completely hides the tab from non-admin users
         }}
       />
     </Tabs>
