@@ -136,7 +136,7 @@ export default function DocumentScreen() {
           <Text style={[styles.title, { color: Colors.primary }]} numberOfLines={1}>{document.name}</Text>
           <Text style={[styles.subtitle, { color: Colors.textSecondary }]}>{document.size} • {document.createdAt}</Text>
         </View>
-        <View style={styles.actionsContainer}>
+        {/* <View style={styles.actionsContainer}>
           <TouchableOpacity style={styles.actionButton}>
             <Star size={20} color={Colors.primary} />
           </TouchableOpacity>
@@ -146,7 +146,7 @@ export default function DocumentScreen() {
           <TouchableOpacity style={styles.actionButton} onPress={handleDownload}>
             <Download size={20} color={Colors.primary} />
           </TouchableOpacity>
-        </View>
+        </View> */}
       </View>
       
       <View style={[styles.content, { backgroundColor: Colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>

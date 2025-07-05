@@ -10,7 +10,6 @@ import DocumentItem from '@/components/document/DocumentItem';
 import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
 import SortModal from '@/components/folder/SortModal';
 import DocumentsPageSkeleton from '@/components/skeleton/DocumentsPageSkeleton';
-import RefreshLoader from '@/components/skeleton/RefreshLoader';
 import { Colors } from '@/constants/Colors';
 
 export default function FolderScreen() {

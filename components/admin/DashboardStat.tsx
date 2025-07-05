@@ -49,7 +49,7 @@ const DashboardStat: React.FC<DashboardStatProps> = ({
           </Text>
         </View>
         <Text style={[styles.comparisonText, { color: Colors.textSecondary }]}>
-          vs {comparisonValue.toLocaleString()} last week
+          vs last week
         </Text>
       </View>
     </View>

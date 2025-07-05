@@ -79,7 +79,8 @@ export default function AdminDashboard({
         return <NotificationManagement />;
       case 'overview':
       default:
-        return renderOverviewTab();
+        setActiveTab('users');
+        return <UserManagement />;
     }
   };
 
@@ -283,7 +284,7 @@ export default function AdminDashboard({
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       {/* Tab Navigation */}
       <View style={[styles.tabContainer, { backgroundColor: Colors.surface, borderBottomColor: Colors.border }]}>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[
             styles.tab,
             activeTab === 'overview' && { backgroundColor: Colors.primary }
@@ -297,7 +298,7 @@ export default function AdminDashboard({
           ]}>
             Overview
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={[
@@ -306,13 +307,13 @@ export default function AdminDashboard({
           ]}
           onPress={() => setActiveTab('comments')}
         >
-          <MessageCircle size={20} color={activeTab === 'comments' ? '#FFFFFF' : Colors.textSecondary} />
-          <Text style={[
+          <MessageCircle size={25} color={activeTab === 'comments' ? '#FFFFFF' : '#000000'} />
+          {/* <Text style={[
             styles.tabText,
             { color: activeTab === 'comments' ? '#FFFFFF' : Colors.textSecondary }
           ]}>
             Comments
-          </Text>
+          </Text> */}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -322,13 +323,13 @@ export default function AdminDashboard({
           ]}
           onPress={() => setActiveTab('users')}
         >
-          <Users size={20} color={activeTab === 'users' ? '#FFFFFF' : Colors.textSecondary} />
-          <Text style={[
+          <Users size={25} color={activeTab === 'users' ? '#FFFFFF' : '#000000'} />
+          {/* <Text style={[
             styles.tabText,
             { color: activeTab === 'users' ? '#FFFFFF' : Colors.textSecondary }
           ]}>
             Users
-          </Text>
+          </Text> */}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -338,13 +339,13 @@ export default function AdminDashboard({
           ]}
           onPress={() => setActiveTab('notifications')}
         >
-          <Bell size={20} color={activeTab === 'notifications' ? '#FFFFFF' : Colors.textSecondary} />
-          <Text style={[
+          <Bell size={25} color={activeTab === 'notifications' ? '#FFFFFF' : '#000000'} />
+          {/* <Text style={[
             styles.tabText,
             { color: activeTab === 'notifications' ? '#FFFFFF' : Colors.textSecondary }
           ]}>
             Notifications
-          </Text>
+          </Text> */}
         </TouchableOpacity>
       </View>
 

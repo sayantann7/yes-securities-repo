@@ -565,7 +565,7 @@ export default function UserManagement() {
             </TouchableOpacity>
           </ScrollView>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortButtons}>
+          {/* <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortButtons}>
             {[
               { key: 'name', label: 'Name' },
               { key: 'timeSpent', label: 'Time Spent' },
@@ -588,7 +588,7 @@ export default function UserManagement() {
                 </Text>
               </TouchableOpacity>
             ))}
-          </ScrollView>
+          </ScrollView> */}
         </View>
 
         {/* Export Buttons */}

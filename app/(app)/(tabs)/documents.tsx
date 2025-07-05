@@ -11,7 +11,6 @@ import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 import UploadFileModal from '@/components/upload/UploadFileModal';
 import DocumentsPageSkeleton from '@/components/skeleton/DocumentsPageSkeleton';
-import RefreshLoader from '@/components/skeleton/RefreshLoader';
 
 const TAB_BAR_HEIGHT = 64;
 const BOTTOM_SPACING = Platform.OS === 'ios' ? 24 : 16;
@@ -28,11 +27,7 @@ export default function DocumentsScreen() {
   const { folders, rootFolders, documents, isLoading, reload } = useFetchFolders(currentFolderId);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user && user.role !== 'admin') {
-      router.replace('/');
-    }
-  }, [user]);
+
 
   const toggleExpanded = (folderId: string) => {
     setExpandedFolders(prev => {

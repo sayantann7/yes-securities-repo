@@ -19,6 +19,8 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const colors = Colors;
 
+  const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
   // --- Non-admin state ---
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const { folders, rootFolders, documents } = useFetchFolders(currentFolderId);
@@ -110,7 +112,7 @@ export default function HomeScreen() {
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           } as any);
         }
-        const response = await fetch('http://192.168.1.103:3000/admin/users/import', {
+        const response = await fetch(`${API_BASE_URL}/admin/users/import`, {
           method: 'POST',
           body: formData,
           headers: Platform.OS === 'web' ? {} : { 'Content-Type': 'multipart/form-data' },
@@ -165,7 +167,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.primary, marginLeft: 16, marginBottom: 8 }]}>User Activity Overview</Text>
+            <Text style={[styles.sectionTitle, { color: colors.primary, marginTop: 15, marginLeft: 16, marginBottom: 8 }]}>User Activity Overview</Text>
             <View style={{ flexDirection: 'row', paddingHorizontal: 8 }}>
               <DashboardStat
                 label="Active Users"
@@ -195,9 +197,9 @@ export default function HomeScreen() {
           </View>
 
           {/* Admin Excel Upload Section */}
-          <View style={[styles.section, { backgroundColor: colors.surface, borderRadius: 12, marginHorizontal: 16, marginTop: 8, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>  
+          <View style={[styles.uploadSection, { backgroundColor: colors.surface, borderRadius: 12, marginHorizontal: 16, marginTop: 30, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>  
             <Text style={[styles.sectionTitle, { color: colors.primary }]}>Upload Employee List</Text>
-            <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
+            <Text style={{ color: colors.textSecondary, marginBottom: 15, marginTop: 10 }}>
               Upload an Excel file (.xlsx) with columns <Text style={{ fontWeight: 'bold', fontFamily: typography.bold }}>fullname</Text> and <Text style={{ fontWeight: 'bold', fontFamily: typography.bold }}>email</Text>.
               {'\n'}Employees not in the new list will be revoked, and new ones will be granted access automatically.
             </Text>
@@ -242,35 +244,6 @@ export default function HomeScreen() {
                 )}
               </View>
             )}
-          </View>
-          
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.primary, marginLeft: 16, marginBottom: 8 }]}>Content Overview</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, marginTop: 8 }}>
-              <View style={[styles.statCard, { backgroundColor: colors.surface, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
-                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(66, 133, 244, 0.1)' }]}>
-                  <FileText size={20} color="#4285F4" />
-                </View>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{dashboardData.documentsCount}</Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Documents</Text>
-              </View>
-
-              <View style={[styles.statCard, { backgroundColor: colors.surface, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
-                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(251, 188, 5, 0.1)' }]}>
-                  <Star size={20} color="#FBBC05" />
-                </View>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{dashboardData.starredCount}</Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Starred</Text>
-              </View>
-
-              <View style={[styles.statCard, { backgroundColor: colors.surface, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
-                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(52, 168, 83, 0.1)' }]}>
-                  <Users size={20} color="#34A853" />
-                </View>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{dashboardData.sharedCount}</Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Shared</Text>
-              </View>
-            </View>
           </View>
         </ScrollView>
       </View>
@@ -429,6 +402,9 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: 24,
+  },
+  uploadSection: {
+    marginTop: 100,
   },
   sectionHeader: {
     flexDirection: 'row',
