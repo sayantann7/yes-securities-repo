@@ -7,6 +7,7 @@ import { typography } from '@/constants/font';
 import { useAuth } from '@/context/AuthContext';
 import { renameDocument, deleteDocument } from '@/services/documentService';
 import { toggleBookmark, checkIfBookmarked } from '@/services/bookmarkService';
+import { shareDocument } from '@/services/shareService';
 import FileActionModal from './FileActionModal';
 
 interface DocumentItemProps {

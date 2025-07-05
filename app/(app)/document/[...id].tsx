@@ -11,6 +11,7 @@ import VideoViewer from '@/components/viewers/VideoViewer';
 import CommentsSection from '@/components/comments/CommentsSection';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
+import { shareDocument, downloadFile } from '@/services/shareService';
 
 export default function DocumentScreen() {
   const { id } = useLocalSearchParams<{ id: string | string[] }>();
@@ -66,16 +67,28 @@ export default function DocumentScreen() {
     router.back();
   };
 
-  const handleDownload = () => {
-    if (Platform.OS === 'web') {
-      window.open(document?.url, '_blank');
-    } else {
-      alert('Downloading document...');
+  const handleDownload = async () => {
+    if (document) {
+      try {
+        await downloadFile(document.url, document.name);
+      } catch (error) {
+        console.error('Error downloading document:', error);
+      }
     }
   };
 
-  const handleShare = () => {
-    alert('Sharing document...');
+  const handleShare = async () => {
+    if (document) {
+      try {
+        await shareDocument({
+          id: document.id,
+          name: document.name,
+          url: document.url,
+        });
+      } catch (error) {
+        console.error('Error sharing document:', error);
+      }
+    }
   };
 
   const renderDocumentViewer = () => {
@@ -133,17 +146,17 @@ export default function DocumentScreen() {
           <Text style={[styles.title, { color: Colors.primary }]} numberOfLines={1}>{document.name}</Text>
           <Text style={[styles.subtitle, { color: Colors.textSecondary }]}>{document.size} • {document.createdAt}</Text>
         </View>
-        {/* <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.actionButton}>
+        <View style={styles.actionsContainer}>
+          {/* <TouchableOpacity style={styles.actionButton}>
             <Star size={20} color={Colors.primary} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
             <Share2 size={20} color={Colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={handleDownload}>
             <Download size={20} color={Colors.primary} />
           </TouchableOpacity>
-        </View> */}
+        </View>
       </View>
       <View style={[styles.content, { backgroundColor: Colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
         {renderDocumentViewer()}

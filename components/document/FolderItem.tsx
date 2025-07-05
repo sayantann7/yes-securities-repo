@@ -7,6 +7,7 @@ import { typography } from '@/constants/font';
 import { useAuth } from '@/context/AuthContext';
 import { renameFolder, deleteFolder } from '@/services/folderService';
 import { toggleBookmark, checkIfBookmarked } from '@/services/bookmarkService';
+import { shareFolder } from '@/services/shareService';
 import FileActionModal from './FileActionModal';
 
 interface FolderItemProps {
