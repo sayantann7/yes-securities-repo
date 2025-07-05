@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, ActivityIndicator, Alert, Platform, RefreshControl } from 'react-native';
 import { useEffect, useState } from 'react';
 import { FileText, Star, Users } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
@@ -13,6 +13,7 @@ import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
 import { Folder } from '@/types';
 import { useFetchAdminDashboard } from '@/hooks/useFetchAdminDashboard';
 import DashboardStat from '@/components/admin/DashboardStat';
+import DocumentsPageSkeleton from '@/components/skeleton/DocumentsPageSkeleton';
 import * as DocumentPicker from 'expo-document-picker';
 
 export default function HomeScreen() {
@@ -23,7 +24,8 @@ export default function HomeScreen() {
 
   // --- Non-admin state ---
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  const { folders, rootFolders, documents } = useFetchFolders(currentFolderId);
+  const [refreshing, setRefreshing] = useState(false);
+  const { folders, rootFolders, documents, isLoading, reload } = useFetchFolders(currentFolderId);
 
   useEffect(() => {
     if (user && user.role === 'admin') {
@@ -54,6 +56,15 @@ export default function HomeScreen() {
 
   const navigateToFolder = (folderId: string) => {
     setCurrentFolderId(folderId);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await reload();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const renderSectionHeader = (title: string) => (
@@ -278,15 +289,22 @@ export default function HomeScreen() {
 
       <View style={[styles.content, { backgroundColor: colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}> 
         <View style={styles.documentsContainer}>
-          {currentFolderId ? (
-            <View style={{flex: 1}}>
+          {isLoading ? (
+            <DocumentsPageSkeleton viewMode="list" />
+          ) : currentFolderId ? (
+            <ScrollView
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              }
+              showsVerticalScrollIndicator={false}
+            >
               <View>
                 {renderSectionHeader("Folders")}
                 <FlatList
                   data={folders.filter(f => f.parentId === currentFolderId)}
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
-                    <FolderItem folder={item} onPress={() => openFolder(item)} />
+                    <FolderItem folder={item} onPress={() => openFolder(item)} onUpdate={handleRefresh} viewMode="list" />
                   )}
                   ListEmptyComponent={() => renderEmptyComponent("No folders")}
                   scrollEnabled={false}
@@ -298,14 +316,19 @@ export default function HomeScreen() {
                   data={documents}
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => (
-                    <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} />
+                    <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} onUpdate={handleRefresh} />
                   )}
                   ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
+                  scrollEnabled={false}
                 />
               </View>
-            </View>
+            </ScrollView>
           ) : (
             <FlatList
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              }
+              showsVerticalScrollIndicator={false}
               data={[{id: 'folders'}, {id: 'documents'}]}
               keyExtractor={(item) => item.id}
               renderItem={({item}) => {
@@ -317,7 +340,7 @@ export default function HomeScreen() {
                         data={rootFolders}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
-                          <FolderItem folder={item} onPress={() => openFolder(item)} />
+                          <FolderItem folder={item} onPress={() => openFolder(item)} onUpdate={handleRefresh} viewMode="list" />
                         )}
                         scrollEnabled={false}
                       />
@@ -332,9 +355,10 @@ export default function HomeScreen() {
                         data={documents}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
-                          <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} />
+                          <DocumentItem document={item} viewMode="list" onPress={() => router.push(`/document/${item.id}`)} onUpdate={handleRefresh} />
                         )}
                         ListEmptyComponent={() => renderEmptyComponent("No documents in this folder")}
+                        scrollEnabled={false}
                       />
                     </View>
                   );

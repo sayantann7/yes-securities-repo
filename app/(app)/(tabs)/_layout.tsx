@@ -16,6 +16,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         headerShown: false,
+        lazy: true,
       }}
     >
       <Tabs.Screen
@@ -70,6 +71,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         headerShown: false,
+        lazy: true,
       }}
     >
       <Tabs.Screen
@@ -79,6 +81,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <HomeIcon color={color} size={size} />,
         }}
       />
+      {/* <Tabs.Screen
+          name="documents"
+          options={{
+            title: 'Documents',
+            tabBarIcon: ({ color, size }) => <FolderIcon color={color} size={size} />,
+          }}
+        /> */}
       <Tabs.Screen
         name="search"
         options={{
