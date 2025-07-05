@@ -3,7 +3,7 @@ import { getToken } from './authService';
 import { notificationService } from './notificationService';
 
 // Base URL for API requests
-const API_URL = 'http://10.24.64.229:3000/user';
+const API_URL = 'http://192.168.3.154:3000/user';
 
 // In a real app, these would be API calls to a backend server
 export const getComments = async (documentId: string): Promise<Comment[]> => {

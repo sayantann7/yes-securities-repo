@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform }
 import { useLocalSearchParams, router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { ChevronLeft, Download, Share2, Star, MessageSquare, Bookmark } from 'lucide-react-native';
-import { getDocumentById } from '@/services/documentService';
+import { getDocumentById, trackDocumentView } from '@/services/documentService';
 import { getComments } from '@/services/commentService';
 import { Document as DocumentType } from '@/types';
 import PDFViewer from '@/components/viewers/PDFViewer';
@@ -10,11 +10,13 @@ import ImageViewer from '@/components/viewers/ImageViewer';
 import VideoViewer from '@/components/viewers/VideoViewer';
 import CommentsSection from '@/components/comments/CommentsSection';
 import { Colors } from '@/constants/Colors';
+import { useAuth } from '@/context/AuthContext';
 
 export default function DocumentScreen() {
   const { id } = useLocalSearchParams<{ id: string | string[] }>();
   // Build correct document ID from segments
   const documentId = Array.isArray(id) ? id.join('/') : id;
+  const { user } = useAuth();
   const [commentsCount, setCommentsCount] = useState<number>(0);
   const [document, setDocument] = useState<DocumentType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +29,12 @@ export default function DocumentScreen() {
         setIsLoading(true);
         const doc = await getDocumentById(documentId);
         setDocument(doc);
+        
+        // Track document view
+        if (user?.email && doc) {
+          console.log('[DocumentTracking] Calling trackDocumentView with:', user.email, doc.id);
+          await trackDocumentView(user.email, doc.id);
+        }
       } catch (err) {
         setError('Failed to load document. Please try again.');
         console.error(err);

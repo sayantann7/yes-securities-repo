@@ -1,7 +1,7 @@
 import { Bookmark } from '@/types';
 import { getToken } from './authService';
 
-const API_URL = 'http://10.24.64.229:3000';
+const API_URL = 'http://192.168.3.154:3000';
 
 export const toggleBookmark = async (itemId: string, itemType: 'document' | 'folder', itemName: string): Promise<{ isBookmarked: boolean }> => {
   try {

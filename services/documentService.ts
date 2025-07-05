@@ -2,7 +2,8 @@ import { Document } from '@/types';
 import { getToken } from './authService';
 
 // Base URL for API requests
-const API_URL = 'http://10.24.64.229:3000/api';
+const API_URL = 'http://192.168.3.154:3000/api';
+const USER_API_URL = 'http://192.168.3.154:3000/user';
 
 // Helper function to determine file type from key
 const getFileType = (key: string): string => {
@@ -321,5 +322,47 @@ export const deleteDocument = async (filePath: string): Promise<void> => {
   } catch (error) {
     console.error('Error deleting document:', error);
     throw error;
+  }
+};
+
+/**
+ * Track that a user has viewed a document
+ * userEmail: email of the user who viewed the document  
+ * documentId: ID of the document that was viewed
+ */
+export const trackDocumentView = async (userEmail: string, documentId: string): Promise<void> => {
+  try {
+    console.log('[DocumentTracking] Tracking document view for user:', userEmail, 'document:', documentId);
+    
+    const response = await fetch(`${USER_API_URL}/documentViewed`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userEmail,
+        documentId,
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('[DocumentTracking] Response error:', response.status, errorBody);
+      throw new Error('Failed to track document view');
+    }
+    
+    const responseData = await response.json();
+    console.log('[DocumentTracking] Document view tracked successfully:', responseData);
+  } catch (error) {
+    console.error('[DocumentTracking] Error tracking document view:', error);
+    // Don't throw the error as this is a tracking feature and shouldn't break the app
+  }
+};
+
+/**
+ * Test function for document tracking (development only)
+ */
+export const testDocumentTracking = async (userEmail: string): Promise<void> => {
+  if (__DEV__) {
+    console.log('[DocumentTracking] Manual test - tracking document view');
+    await trackDocumentView(userEmail, 'test-document-id');
   }
 };

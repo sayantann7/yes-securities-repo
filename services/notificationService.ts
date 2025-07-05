@@ -1,7 +1,7 @@
 import { Notification, InactiveUser, UserMetrics, UserOverallMetrics } from '@/types';
 import { getToken } from './authService';
 
-const API_URL = 'http://10.24.64.229:3000/user';
+const API_URL = 'http://192.168.3.154:3000/user';
 
 export const notificationService = {
   // Get all notifications for current user

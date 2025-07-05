@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 // Base URL for API requests
-const API_URL = 'http://10.24.64.229:3000';
+const API_URL = 'http://192.168.3.154:3000';
 
 // Export this helper function so it can be used elsewhere
 export const getToken = async (): Promise<string | null> => {

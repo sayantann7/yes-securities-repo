@@ -14,7 +14,7 @@ import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
 import IconPicker from './IconPicker';
 
 // Adjust API_URL as needed
-const API_URL = 'http://10.24.64.229:3000/api';
+const API_URL = 'http://192.168.3.154:3000/api';
 
 interface UploadFileModalProps {
   visible: boolean;

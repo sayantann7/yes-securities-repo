@@ -6,8 +6,6 @@ import { useEffect } from 'react';
 import { Text, TextInput } from 'react-native';
 import { useFonts } from 'expo-font';
 import { typography } from '@/constants/font';
-import { useTrackAppTime } from '@/hooks/useTrackAppTime';
-
 // Global Text component override to apply Nexa font consistently
 const customTextProps = {
   style: {
@@ -42,8 +40,6 @@ export default function RootLayout() {
     NexaExtraLight: require('../assets/fonts/nexa-extra-light.ttf'),
     NexaHeavy: require('../assets/fonts/nexa-heavy.ttf'),
   });
-
-  useTrackAppTime();
 
   useEffect(() => {
     if (fontsLoaded) {
