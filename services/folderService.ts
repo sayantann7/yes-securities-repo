@@ -3,7 +3,8 @@ import { getDocuments } from './documentService';
 import { getToken } from './authService';
 
 // Keep your existing API URL or update to localhost if testing locally
-const API_URL = 'http://192.168.3.154:3000/api';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_URL = `${API_BASE_URL}/api`;
 
 export const getFolders = async (parentId: string | null = null): Promise<Folder[]> => {
   try {

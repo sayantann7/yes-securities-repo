@@ -3,7 +3,8 @@ import { getToken } from './authService';
 import { notificationService } from './notificationService';
 
 // Base URL for API requests
-const API_URL = 'http://192.168.3.154:3000/user';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_URL = `${API_BASE_URL}/user`;
 
 // In a real app, these would be API calls to a backend server
 export const getComments = async (documentId: string): Promise<Comment[]> => {

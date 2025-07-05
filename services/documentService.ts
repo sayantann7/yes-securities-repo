@@ -2,8 +2,9 @@ import { Document } from '@/types';
 import { getToken } from './authService';
 
 // Base URL for API requests
-const API_URL = 'http://192.168.3.154:3000/api';
-const USER_API_URL = 'http://192.168.3.154:3000/user';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_URL = `${API_BASE_URL}/api`;
+const USER_API_URL = `${API_BASE_URL}/user`;
 
 // Helper function to determine file type from key
 const getFileType = (key: string): string => {

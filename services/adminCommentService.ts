@@ -1,7 +1,8 @@
 import { Comment, AdminCommentView } from '@/types';
 import { getToken } from './authService';
 
-const API_URL = 'http://192.168.3.154:3000/user';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_URL = `${API_BASE_URL}/user`;
 
 export const adminCommentService = {
   // Get all comments grouped by document (admin only)

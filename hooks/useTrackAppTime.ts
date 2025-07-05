@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 
-const API_URL = 'http://192.168.3.154:3000/user';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_URL = `${API_BASE_URL}/user`;
 
 // For testing: reduce minimum duration from 1 minute to 10 seconds
 const MIN_SESSION_DURATION_MS = 10 * 1000; // 10 seconds for testing
