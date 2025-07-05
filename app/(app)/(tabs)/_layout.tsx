@@ -1,17 +1,15 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Tabs } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { Home as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon, Settings as AdminIcon, Bookmark as BookmarkIcon } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
-
-const Tab = createBottomTabNavigator();
 
 export default function TabLayout() {
   const { user } = useAuth();
   const colors = Colors;
 
   return (
-    <Tab.Navigator
+    <Tabs
       screenOptions={{
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
         tabBarActiveTintColor: colors.primary,
@@ -19,42 +17,37 @@ export default function TabLayout() {
         headerShown: false,
       }}
     >
-      <Tab.Screen
+      <Tabs.Screen
         name="index"
-        component={require('./index').default}
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => <HomeIcon color={color} size={size} />,
         }}
       />
-      <Tab.Screen
+      <Tabs.Screen
         name="search"
-        component={require('./search').default}
         options={{
           title: 'Search',
           tabBarIcon: ({ color, size }) => <SearchIcon color={color} size={size} />,
         }}
       />
-      <Tab.Screen
+      <Tabs.Screen
         name="bookmarks"
-        component={require('./bookmarks').default}
         options={{
           title: 'Bookmarks',
           tabBarIcon: ({ color, size }) => <BookmarkIcon color={color} size={size} />,
         }}
       />
-      <Tab.Screen
+      <Tabs.Screen
         name="profile"
-        component={require('./profile').default}
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size }) => <UserIcon color={color} size={size} />,
         }}
       />
       {user?.role === 'admin' && (
-        <Tab.Screen
+        <Tabs.Screen
           name="admin"
-          component={require('./admin').default}
           options={{
             title: 'Admin',
             tabBarIcon: ({ color, size }) => <AdminIcon color={color} size={size} />,
@@ -62,15 +55,14 @@ export default function TabLayout() {
         />
       )}
       {user?.role === 'admin' && (
-        <Tab.Screen
+        <Tabs.Screen
           name="documents"
-          component={require('../documents').default}
           options={{
             title: 'Documents',
             tabBarIcon: ({ color, size }) => <FolderIcon color={color} size={size} />,
           }}
         />
       )}
-    </Tab.Navigator>
+    </Tabs>
   );
 }

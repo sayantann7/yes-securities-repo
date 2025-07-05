@@ -1,11 +1,11 @@
 export const typography = {
-  primary: 'NexaHeavy',
-  bold: 'NexaHeavy',
-  light: 'NexaHeavy',
-  medium: 'NexaHeavy',
+  primary: 'PlusJakartaRegular',
+  bold: 'PlusJakartaRegular',
+  light: 'PlusJakartaRegular',
+  medium: 'PlusJakartaRegular',
   // Additional Nexa font variants for consistency
-  regular: 'NexaHeavy',
-  semibold: 'NexaHeavy',
-  heavy: 'NexaHeavy',
-  extraLight: 'NexaHeavy',
+  regular: 'PlusJakartaRegular',
+  semibold: 'PlusJakartaRegular',
+  heavy: 'PlusJakartaRegular',
+  extraLight: 'PlusJakartaRegular',
 }; 

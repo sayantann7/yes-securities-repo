@@ -39,6 +39,8 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     NexaExtraLight: require('../assets/fonts/nexa-extra-light.ttf'),
     NexaHeavy: require('../assets/fonts/nexa-heavy.ttf'),
+    PlusJakartaItalic : require('../assets/fonts/plus-jakarta-italic.ttf'),
+    PlusJakartaRegular : require('../assets/fonts/plus-jakarta-regular.ttf'),
   });
 
   useEffect(() => {
