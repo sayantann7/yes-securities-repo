@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, ActivityIndicator, Alert, Platform, RefreshControl } from 'react-native';
 import { useEffect, useState } from 'react';
-import { FileText, Star, Users } from 'lucide-react-native';
+import { FileText, Star, Users, ChevronLeft } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { typography } from '@/constants/font';
@@ -56,6 +56,16 @@ export default function HomeScreen() {
 
   const navigateToFolder = (folderId: string) => {
     setCurrentFolderId(folderId);
+  };
+
+  const navigateToParent = () => {
+    if (!currentFolderId) return;
+    const currentFolder = folders.find(f => f.id === currentFolderId);
+    if (currentFolder?.parentId) {
+      setCurrentFolderId(currentFolder.parentId);
+    } else {
+      setCurrentFolderId(null);
+    }
   };
 
   const handleRefresh = async () => {
@@ -265,9 +275,19 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>    
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}> 
-        <View>
-          <Text style={[styles.greeting, { color: colors.primary, marginTop:50 }]}>Hi, {user?.name}</Text>
-          <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+        <View style={styles.headerLeft}>
+          {currentFolderId && (
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={navigateToParent}
+            >
+              <ChevronLeft size={24} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+          <View>
+            <Text style={[styles.greeting, { color: colors.primary, marginTop:50 }]}>Hi, {user?.name}</Text>
+            <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+          </View>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity>
@@ -384,6 +404,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     paddingTop: 24,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
+    borderRadius: 20,
+    backgroundColor: '#F0F4F8',
   },
   greeting: {
     fontSize: 24,

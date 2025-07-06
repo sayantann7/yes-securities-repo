@@ -31,6 +31,7 @@ export default function DocumentsScreen() {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [refreshing, setRefreshing] = useState(false);
   const [bottomRefreshing, setBottomRefreshing] = useState(false);
+  const [folderHistory, setFolderHistory] = useState<string[]>([]);
   const { folders, rootFolders, documents, isLoading, reload } = useFetchFolders(currentFolderId);
 
 
@@ -48,6 +49,10 @@ export default function DocumentsScreen() {
   };
 
   const openFolder = (folder: Folder) => {
+    // Add current folder to history before navigating
+    if (currentFolderId) {
+      setFolderHistory(prev => [...prev, currentFolderId]);
+    }
     setCurrentFolderId(folder.id);
     // router.push(`/folder/${folder.id}`); // Removed to keep navigation within tab
   };
@@ -71,6 +76,11 @@ export default function DocumentsScreen() {
 
   const navigateToFolder = (folderId: string) => {
     setCurrentFolderId(folderId);
+  };
+
+  const navigateToHome = () => {
+    setCurrentFolderId(null);
+    setFolderHistory([]); // Clear folder history when going home
   };
 
   const handleRefresh = async () => {
@@ -108,7 +118,19 @@ export default function DocumentsScreen() {
     <View style={[styles.container, { backgroundColor: Colors.background }]}>    
       <View style={[styles.header, { backgroundColor: Colors.surface, borderBottomColor: Colors.border }]}> 
         <View style={styles.headerLeft}>
-          <Text style={[styles.title, { color: Colors.primary }]}>Documents</Text>
+          <View style={styles.titleContainer}>
+            <Text style={[styles.title, { color: Colors.primary }]}>
+              {currentFolderId ? 
+                (folders.find(f => f.id === currentFolderId)?.name || 'Folder') : 
+                'Documents'
+              }
+            </Text>
+            {currentFolderId && (
+              <Text style={[styles.subtitle, { color: Colors.textSecondary }]}>
+                {getFolderPath().length} level{getFolderPath().length !== 1 ? 's' : ''} deep
+              </Text>
+            )}
+          </View>
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity 
@@ -291,6 +313,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
+  },
+  titleContainer: {
+    flex: 1,
+  },
+  subtitle: {
+    fontSize: 12,
+    marginTop: 2,
   },
   content: {
     flex: 1,
