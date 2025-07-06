@@ -160,7 +160,7 @@ export default function DocumentsScreen() {
                     <View>
                       {renderSectionHeader("Folders")}
                       <FlatList
-                        data={folders.filter(f => f.parentId === currentFolderId)}
+                        data={rootFolders}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
                           <FolderItem folder={item} onPress={() => openFolder(item)} onUpdate={handleRefresh} viewMode={viewMode} />
