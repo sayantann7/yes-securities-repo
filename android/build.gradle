@@ -1,3 +1,10 @@
+ext {
+    compileSdkVersion = 35
+    minSdkVersion = 24
+    targetSdkVersion = 35
+    ndkVersion = "27.1.12297006"
+    buildToolsVersion = "35.0.0"
+}
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
@@ -35,3 +42,17 @@ allprojects {
 
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
+
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty("android")) {
+            project.android.compileSdkVersion = rootProject.ext.compileSdkVersion
+            project.android.buildToolsVersion = rootProject.ext.buildToolsVersion
+            project.android.defaultConfig.minSdkVersion = rootProject.ext.minSdkVersion
+            project.android.defaultConfig.targetSdkVersion = rootProject.ext.targetSdkVersion
+            if (rootProject.ext.has("ndkVersion")) {
+                project.android.ndkVersion = rootProject.ext.ndkVersion
+            }
+        }
+    }
+}

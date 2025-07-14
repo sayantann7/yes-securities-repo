@@ -37,3 +37,4 @@ expoAutolinking.useExpoVersionCatalog()
 
 include ':app'
 includeBuild(expoAutolinking.reactNativeGradlePlugin)
+apply from: file("../node_modules/expo-modules-autolinking/scripts/autolinking.gradle")
