@@ -1,5 +1,5 @@
 {
-  "name": "yes-securities-app",
+  "name": "yes-securities-mobile-app",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "private": true,
@@ -55,13 +55,11 @@
     "react-native-web": "^0.20.0",
     "react-native-webview": "13.13.5",
     "react-redux": "^9.0.4",
-    "xlsx": "^0.18.5",
-    "yes-securities-app": "file:"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
-    "expo-cli": "^6.3.10",
     "typescript": "~5.8.3"
   }
 }
