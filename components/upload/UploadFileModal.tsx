@@ -13,8 +13,9 @@ import FolderItem from '@/components/document/FolderItem';
 import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
 import IconPicker from './IconPicker';
 
-// Adjust API_URL as needed
-const API_URL = 'http://192.168.3.154:3000/api';
+// Use environment variable for API URL
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_URL = `${API_BASE_URL}/api`;
 
 interface UploadFileModalProps {
   visible: boolean;
