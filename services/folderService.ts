@@ -3,7 +3,7 @@ import { getDocuments } from './documentService';
 import { getToken } from './authService';
 
 // Keep your existing API URL or update to localhost if testing locally
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_BASE_URL = "https://salesrepo.ysil.in/";
 const API_URL = `${API_BASE_URL}/api`;
 
 export const getFolders = async (parentId: string | null = null): Promise<Folder[]> => {

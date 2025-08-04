@@ -1,7 +1,7 @@
 import { Bookmark } from '@/types';
 import { getToken } from './authService';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_BASE_URL = "https://salesrepo.ysil.in/";
 const API_URL = `${API_BASE_URL}`;
 
 export const toggleBookmark = async (itemId: string, itemType: 'document' | 'folder', itemName: string): Promise<{ isBookmarked: boolean }> => {

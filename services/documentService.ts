@@ -2,7 +2,7 @@ import { Document } from '@/types';
 import { getToken } from './authService';
 
 // Base URL for API requests
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_BASE_URL = "https://salesrepo.ysil.in/";
 const API_URL = `${API_BASE_URL}/api`;
 const USER_API_URL = `${API_BASE_URL}/user`;
 

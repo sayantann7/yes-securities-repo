@@ -1,7 +1,7 @@
 import { Notification, InactiveUser, UserMetrics, UserOverallMetrics } from '@/types';
 import { getToken } from './authService';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_BASE_URL = "https://salesrepo.ysil.in/";
 const API_URL = `${API_BASE_URL}/user`;
 
 export const notificationService = {

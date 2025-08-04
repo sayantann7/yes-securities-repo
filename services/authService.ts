@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 // Base URL for API requests
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_BASE_URL = "https://salesrepo.ysil.in/";
 const API_URL = `${API_BASE_URL}`;
 
 // Export this helper function so it can be used elsewhere

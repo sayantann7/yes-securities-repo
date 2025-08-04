@@ -32,7 +32,7 @@ export interface AdminDashboardData {
   sharedCount: number;
 }
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const API_BASE_URL = "https://salesrepo.ysil.in/";
 const API_URL = `${API_BASE_URL}/user`;
 
 function getPercentageChange(current: number, previous: number): number {
