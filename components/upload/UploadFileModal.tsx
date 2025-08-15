@@ -38,17 +38,27 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
 
   const { folders, rootFolders, documents, isLoading, reload } = useFetchFolders(currentFolderId);
 
+  // Helper to format a single path segment to title case
+  const formatSegmentName = (segment: string): string => {
+    if (!segment) return 'Root';
+    return segment
+      .split('-')
+      .filter(Boolean)
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+      .join(' ') || 'Root';
+  };
+
+  // Build breadcrumb path from the currentFolderId prefix, mirroring Documents screen
   const getFolderPath = (): { id: string; name: string }[] => {
     if (!currentFolderId) return [];
-    const path: { id: string; name: string }[] = [];
-    let current = folders.find(f => f.id === currentFolderId);
-    while (current) {
-      path.unshift({ id: current.id, name: current.name });
-      if (!current.parentId) break;
-      current = folders.find(f => f.id === current?.parentId);
-      if (!current) break;
-    }
-    return path;
+    const trimmed = currentFolderId.replace(/^\/+/, '').replace(/\/+$/, '');
+    if (!trimmed) return [];
+    const parts = trimmed.split('/');
+    let acc = '';
+    return parts.map((part) => {
+      acc += part + '/';
+      return { id: acc, name: formatSegmentName(part) };
+    });
   };
 
   const handleCreateFolder = async () => {

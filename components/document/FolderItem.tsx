@@ -86,7 +86,14 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
           )}
         </View>
           <Text style={[styles.gridTitle, { color: Colors.text }]} numberOfLines={2}>
-            {folder.name}
+            {
+              // Derive basename from id if name includes path separators
+              (() => {
+                const raw = (folder.id || '').replace(/^\/+/, '').replace(/\/+$/, '');
+                const base = raw.split('/').filter(Boolean).pop() || folder.name;
+                return base.split('-').filter(Boolean).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ') || folder.name;
+              })()
+            }
           </Text>
           <Text style={[styles.gridSubtitle, { color: Colors.textSecondary }]}>
             {folder.itemCount || 0} items
@@ -138,7 +145,13 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
         
         <View style={styles.folderInfo}>
           <Text style={[styles.folderName, { color: Colors.text }]} numberOfLines={1}>
-            {folder.name}
+            {
+              (() => {
+                const raw = (folder.id || '').replace(/^\/+/, '').replace(/\/+$/, '');
+                const base = raw.split('/').filter(Boolean).pop() || folder.name;
+                return base.split('-').filter(Boolean).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ') || folder.name;
+              })()
+            }
           </Text>
           <Text style={[styles.folderCount, { color: Colors.textSecondary }]}>
             {folder.itemCount || 0} items

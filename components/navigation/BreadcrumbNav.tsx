@@ -79,11 +79,11 @@ const styles = StyleSheet.create({
   },
   breadcrumbButton: {
     padding: 8,
+    maxWidth: 160,
   },
   breadcrumbText: {
     fontSize: 14,
     color: '#7A869A',
-    maxWidth: 120,
   },
   currentBreadcrumb: {
     color: '#0C2340',

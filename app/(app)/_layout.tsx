@@ -46,6 +46,14 @@ export default function AppLayout() {
           gestureEnabled: true,
         }} 
       />
+      {/* Support deep folder paths using catch-all and redirect to [id] */}
+      <Stack.Screen 
+        name="folder/[...id]" 
+        options={{ 
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }} 
+      />
     </Stack>
   );
 }

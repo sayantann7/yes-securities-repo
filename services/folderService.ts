@@ -343,36 +343,27 @@ export const deleteFolder = async (folderPath: string): Promise<void> => {
 };
 
 function formatPrefix(prefix : string): string {
-  // Handle null, undefined, or empty prefix
+  // If empty or invalid, treat as root
   if (!prefix || typeof prefix !== 'string') {
     return 'Root';
   }
 
-  // Handle empty or just slash
-  if (prefix.trim() === '' || prefix.trim() === '/') {
+  // Normalize: strip leading/trailing slashes
+  const trimmed = prefix.replace(/^\/+/, '').replace(/\/+$/, '');
+  if (!trimmed) {
     return 'Root';
   }
 
-  // 1. Strip off any trailing slash (if present)
-  const noSlash = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
+  // Take only the last non-empty path segment (basename)
+  const segments = trimmed.split('/').filter(Boolean);
+  const last = segments[segments.length - 1] || '';
 
-  // Handle case where after removing slash, string is empty
-  if (noSlash.trim() === '') {
-    return 'Root';
-  }
+  // Convert hyphenated name to Title Case words
+  const words = last
+    .split('-')
+    .filter(Boolean)
+    .map(chunk => chunk.charAt(0).toUpperCase() + chunk.slice(1));
 
-  // 2. Split on hyphens
-  const parts = noSlash.split('-');
-
-  // 3. Capitalize each chunk and join with spaces
-  const words = parts.map(chunk => {
-    if (chunk.length === 0) return ''; 
-    return chunk[0].toUpperCase() + chunk.slice(1);
-  });
-
-  // 4. Filter out any accidental empty segments and join
-  const result = words.filter(w => w !== '').join(' ');
-  
-  // Return 'Root' if result is empty after processing
+  const result = words.join(' ');
   return result || 'Root';
 }

@@ -40,7 +40,30 @@ export default function DocumentsScreen() {
   const [folderHistory, setFolderHistory] = useState<string[]>([]);
   const { folders, rootFolders, documents, isLoading, reload } = useFetchFolders(currentFolderId);
 
+  // Helper to format a single path segment to title case (mirrors folderService.formatPrefix behavior)
+  const formatSegmentName = (segment: string): string => {
+    if (!segment) return 'Root';
+    return segment
+      .split('-')
+      .filter(Boolean)
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+      .join(' ') || 'Root';
+  };
 
+  // Build breadcrumb path from the currentFolderId prefix to avoid relying on a partial folders list
+  const getFolderPath = (): { id: string; name: string }[] => {
+    if (!currentFolderId) return [];
+    // Normalize: strip leading slashes and trailing slashes
+    const trimmed = currentFolderId.replace(/^\/+/, '').replace(/\/+$/, '');
+    if (!trimmed) return [];
+    const parts = trimmed.split('/');
+    let acc = '';
+    const path = parts.map((part) => {
+      acc += part + '/';
+      return { id: acc, name: formatSegmentName(part) };
+    });
+    return path;
+  };
 
   const toggleExpanded = (folderId: string) => {
     setExpandedFolders(prev => {
@@ -61,19 +84,6 @@ export default function DocumentsScreen() {
     }
     setCurrentFolderId(folder.id);
     // router.push(`/folder/${folder.id}`); // Removed to keep navigation within tab
-  };
-
-  const getFolderPath = (): { id: string; name: string }[] => {
-    if (!currentFolderId) return [];
-    const path: { id: string; name: string }[] = [];
-    let currentFolder = folders.find(f => f.id === currentFolderId);
-    while (currentFolder) {
-      path.unshift({ id: currentFolder.id, name: currentFolder.name });
-      if (!currentFolder.parentId) break;
-      currentFolder = folders.find(f => f.id === currentFolder?.parentId);
-      if (!currentFolder) break;
-    }
-    return path;
   };
 
   const navigateToRoot = () => {
@@ -127,7 +137,10 @@ export default function DocumentsScreen() {
           <View style={styles.titleContainer}>
             <Text style={[styles.title, { color: Colors.primary }]}>
               {currentFolderId ? 
-                (folders.find(f => f.id === currentFolderId)?.name || 'Folder') : 
+                // Prefer basename from currentFolderId; fallback to found folder name
+                ((currentFolderId.replace(/^\/+/, '').replace(/\/+$/, '').split('/').filter(Boolean).pop() || '')
+                  .split('-').filter(Boolean).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ') ||
+                 folders.find(f => f.id === currentFolderId)?.name || 'Folder') : 
                 'Documents'
               }
             </Text>
@@ -376,4 +389,4 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginVertical: 12,
   },
-}); 
+});

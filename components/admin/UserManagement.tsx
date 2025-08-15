@@ -51,14 +51,18 @@ interface UserItemProps {
 }
 
 const UserItem = ({ user, isSelected, onToggleSelect }: UserItemProps) => {
-  const getActivityColor = (daysInactive: number) => {
+  const getActivityColor = (daysInactive: number, signIns: number = 1) => {
+    // Users with 0 logins are considered inactive
+    if (signIns <= 0) return '#EA4335'; // Red
     if (daysInactive <= 1) return '#34A853'; // Green - Very Active
     if (daysInactive <= 7) return '#FBBC05'; // Yellow - Active
     if (daysInactive <= 30) return '#FF9800'; // Orange - Inactive
     return '#EA4335'; // Red - Very Inactive
   };
 
-  const getActivityLabel = (daysInactive: number) => {
+  const getActivityLabel = (daysInactive: number, signIns: number = 1) => {
+    // Users with 0 logins are considered inactive
+    if (signIns <= 0) return 'Inactive';
     if (daysInactive <= 1) return 'Very Active';
     if (daysInactive <= 7) return 'Active';
     if (daysInactive <= 30) return 'Inactive';
@@ -105,10 +109,10 @@ const UserItem = ({ user, isSelected, onToggleSelect }: UserItemProps) => {
         <View style={styles.userStatus}>
           <View style={[
             styles.activityIndicator, 
-            { backgroundColor: getActivityColor(user.daysInactive || 0) }
+            { backgroundColor: getActivityColor(user.daysInactive || 0, user.numberOfSignIns || 0) }
           ]} />
-          <Text style={[styles.activityText, { color: getActivityColor(user.daysInactive || 0) }]}>
-            {getActivityLabel(user.daysInactive || 0)}
+          <Text style={[styles.activityText, { color: getActivityColor(user.daysInactive || 0, user.numberOfSignIns || 0) }]}>
+            {getActivityLabel(user.daysInactive || 0, user.numberOfSignIns || 0)}
           </Text>
           <Switch
             value={isSelected}
@@ -228,11 +232,15 @@ export default function UserManagement() {
       );
     }
 
+    // Active = has logged in at least once AND inactive days <= 7
+    const isActive = (u: UserMetrics) => (u.numberOfSignIns || 0) > 0 && (u.daysInactive ?? Infinity) <= 7;
+    const isInactive = (u: UserMetrics) => (u.numberOfSignIns || 0) === 0 || (u.daysInactive ?? Infinity) > 7;
+
     // Apply status filter
     if (filterStatus === 'active') {
-      filtered = filtered.filter(user => (user.daysInactive || 0) <= 7);
+      filtered = filtered.filter(isActive);
     } else if (filterStatus === 'inactive') {
-      filtered = filtered.filter(user => (user.daysInactive || 0) > 7);
+      filtered = filtered.filter(isInactive);
     }
 
     // Apply sorting
@@ -335,7 +343,8 @@ export default function UserManagement() {
         filename = 'selected_users_metrics.xlsx';
         break;
       case 'inactive':
-        dataToExport = allUsers.filter(user => (user.daysInactive || 0) > 7);
+        // Align with app logic: Inactive = never signed in OR inactive > 7 days
+        dataToExport = allUsers.filter(u => (u.numberOfSignIns || 0) === 0 || (u.daysInactive ?? Infinity) > 7);
         filename = 'inactive_users_metrics.xlsx';
         break;
     }
@@ -356,7 +365,7 @@ export default function UserManagement() {
       'Last Sign-in': user.lastSignIn === 'Never' || !user.lastSignIn ? 'Never' : new Date(user.lastSignIn).toLocaleDateString(),
       'Days Inactive': user.daysInactive || 0,
       'Account Created': new Date(user.createdAt).toLocaleDateString(),
-      'Status': (user.daysInactive || 0) <= 7 ? 'Active' : 'Inactive'
+      'Status': ((user.numberOfSignIns || 0) > 0 && (user.daysInactive ?? Infinity) <= 7) ? 'Active' : 'Inactive'
     }));
 
     // Create workbook and worksheet
@@ -545,7 +554,7 @@ export default function UserManagement() {
                 styles.filterButtonText,
                 { color: filterStatus === 'active' ? 'white' : Colors.textSecondary }
               ]}>
-                Active ({allUsers.filter(u => (u.daysInactive || 0) <= 7).length})
+                Active ({allUsers.filter(u => (u.numberOfSignIns || 0) > 0 && (u.daysInactive ?? Infinity) <= 7).length})
               </Text>
             </TouchableOpacity>
 
@@ -560,7 +569,7 @@ export default function UserManagement() {
                 styles.filterButtonText,
                 { color: filterStatus === 'inactive' ? 'white' : Colors.textSecondary }
               ]}>
-                Inactive ({allUsers.filter(u => (u.daysInactive || 0) > 7).length})
+                Inactive ({allUsers.filter(u => (u.numberOfSignIns || 0) === 0 || (u.daysInactive ?? Infinity) > 7).length})
               </Text>
             </TouchableOpacity>
           </ScrollView>
