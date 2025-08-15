@@ -1,9 +1,8 @@
 import { User } from '@/context/AuthContext';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { API_BASE_URL } from '@/constants/api';
 
-// Base URL for API requests
-const API_BASE_URL = "https://salesrepo.ysil.in/";
 const API_URL = `${API_BASE_URL}`;
 
 // Export this helper function so it can be used elsewhere

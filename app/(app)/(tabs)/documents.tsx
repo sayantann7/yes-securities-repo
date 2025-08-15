@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Platform, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Platform, RefreshControl, ActivityIndicator, Dimensions } from 'react-native';
 import { useState, useEffect } from 'react';
 import { router, Redirect } from 'expo-router';
 import { ChevronRight, ChevronDown, FolderOpen, Plus, Grid, List } from 'lucide-react-native';
@@ -11,6 +11,12 @@ import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 import UploadFileModal from '@/components/upload/UploadFileModal';
 import DocumentsPageSkeleton from '@/components/skeleton/DocumentsPageSkeleton';
+import { getDeviceInfo, getHeaderLayout } from '@/utils/deviceUtils';
+
+// Get device info for responsive design
+const { width: screenWidth } = Dimensions.get('window');
+const deviceInfo = getDeviceInfo();
+const headerLayout = getHeaderLayout();
 
 const TAB_BAR_HEIGHT = 64;
 const BOTTOM_SPACING = Platform.OS === 'ios' ? 24 : 16;
@@ -138,16 +144,16 @@ export default function DocumentsScreen() {
             onPress={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
           >
             {viewMode === 'list' ? 
-              <Grid size={20} color={Colors.primary} /> : 
-              <List size={20} color={Colors.primary} />
+              <Grid size={headerLayout.iconSize} color={Colors.primary} /> : 
+              <List size={headerLayout.iconSize} color={Colors.primary} />
             }
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={{ backgroundColor: Colors.primary, borderRadius: 20, width: 40, height: 40, justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}
+            style={[styles.uploadButton, { backgroundColor: Colors.primary }]}
             onPress={() => setShowUploadModal(true)}
           >
-            <Plus size={24} color="#fff" />
+            <Plus size={headerLayout.iconSize + 2} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -289,36 +295,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingHorizontal: headerLayout.paddingHorizontal,
+    paddingTop: deviceInfo.statusBarHeight + deviceInfo.safeAreaPadding,
     paddingBottom: 16,
     borderBottomWidth: 1,
+    minHeight: 70, // Ensure minimum height for touch targets
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1, // Take available space
+    marginRight: headerLayout.spacing, // Space between left and right sections
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0, // Prevent shrinking
   },
   viewToggleButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: headerLayout.buttonSize,
+    height: headerLayout.buttonSize,
+    borderRadius: headerLayout.buttonSize / 2,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F0F4F8',
+    marginRight: headerLayout.spacing,
+  },
+  uploadButton: {
+    width: headerLayout.buttonSize,
+    height: headerLayout.buttonSize,
+    borderRadius: headerLayout.buttonSize / 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: headerLayout.fontSize,
     fontWeight: '700',
   },
   titleContainer: {
     flex: 1,
+    marginRight: headerLayout.spacing, // Ensure space between title and buttons
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: headerLayout.fontSize - 8, // Smaller than title
     marginTop: 2,
   },
   content: {

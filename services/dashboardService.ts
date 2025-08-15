@@ -1,4 +1,4 @@
-// import api from './api';
+import { API_BASE_URL } from '@/constants/api';
 
 export interface WeeklyActivity {
   currentWeek: number;
@@ -32,7 +32,6 @@ export interface AdminDashboardData {
   sharedCount: number;
 }
 
-const API_BASE_URL = "https://salesrepo.ysil.in/";
 const API_URL = `${API_BASE_URL}/user`;
 
 function getPercentageChange(current: number, previous: number): number {

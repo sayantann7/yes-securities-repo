@@ -54,13 +54,27 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
     try {
+      console.log('🔄 Creating folder with icon:', { 
+        folderName: newFolderName.trim(), 
+        hasIcon: !!selectedFolderIcon 
+      });
+      
       await createFolder(currentFolderId, newFolderName.trim(), selectedFolderIcon || undefined);
       setCreatingFolder(false);
       setNewFolderName('');
       setSelectedFolderIcon(null);
       reload();
+      
+      console.log('✅ Folder creation completed successfully');
     } catch (err) {
-      console.error('Create folder failed:', err);
+      console.error('❌ Create folder failed:', err);
+      
+      // Show specific error message to user
+      Alert.alert(
+        'Folder Creation Error',
+        `Failed to create folder: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        [{ text: 'OK' }]
+      );
     }
   };
 
@@ -131,28 +145,53 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
         // If file has custom icon, upload it
         if (file.customIcon) {
           try {
+            console.log('🖼️ Uploading custom icon for file:', file.name);
+            
             // Get the file extension from the icon URI
             const extension = file.customIcon.split('.').pop()?.toLowerCase() || 'jpeg';
+            console.log('📄 Icon extension detected:', extension);
+            
+            // Get authentication token
+            const token = await getToken();
+            const headers: Record<string, string> = {
+              'Content-Type': 'application/json'
+            };
+            if (token) {
+              headers['Authorization'] = `Bearer ${token}`;
+            }
             
             // Get signed URL for icon upload
+            console.log('📡 Requesting icon upload URL for:', key);
             const iconResp = await fetch(`${API_URL}/icons/upload`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers,
               body: JSON.stringify({ itemPath: key, iconType: extension }),
             });
+            
+            if (!iconResp.ok) {
+              const iconError = await iconResp.text();
+              throw new Error(`Failed to get icon upload URL: ${iconResp.status} ${iconError}`);
+            }
+            
             const { uploadUrl } = await iconResp.json();
 
             // Upload the icon image
+            console.log('📤 Uploading icon to S3...');
             const iconBlob = await fetch(file.customIcon).then(r => r.blob());
-            await fetch(uploadUrl, { 
+            const iconUploadResp = await fetch(uploadUrl, { 
               method: 'PUT', 
               headers: { 'Content-Type': `image/${extension}` }, 
               body: iconBlob 
             });
             
+            if (!iconUploadResp.ok) {
+              const uploadError = await iconUploadResp.text();
+              throw new Error(`S3 icon upload failed: ${iconUploadResp.status} ${uploadError}`);
+            }
+            
             console.log('✅ File icon uploaded successfully for:', file.name);
           } catch (iconError) {
-            console.error('Failed to upload icon for file:', file.name, iconError);
+            console.error('❌ Failed to upload icon for file:', file.name, iconError);
             // Continue with file upload even if icon fails
           }
         }
@@ -484,3 +523,19 @@ const styles = StyleSheet.create({
     height: 32,
   },
 });
+// Helper to get the current user's auth token (if available)
+async function getToken(): Promise<string | null> {
+  // Try to get token from AuthContext if available
+  try {
+    // Fallback: try to get from localStorage/sessionStorage (web)
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      return token || null;
+    }
+    // Fallback: no token found
+    return null;
+  } catch {
+    return null;
+  }
+}
+

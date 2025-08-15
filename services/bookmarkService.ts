@@ -1,7 +1,7 @@
 import { Bookmark } from '@/types';
 import { getToken } from './authService';
+import { API_BASE_URL } from '@/constants/api';
 
-const API_BASE_URL = "https://salesrepo.ysil.in/";
 const API_URL = `${API_BASE_URL}`;
 
 export const toggleBookmark = async (itemId: string, itemType: 'document' | 'folder', itemName: string): Promise<{ isBookmarked: boolean }> => {
@@ -23,7 +23,7 @@ export const toggleBookmark = async (itemId: string, itemType: 'document' | 'fol
     if (isBookmarked) {
       // Remove bookmark
       console.log('🗑️ Removing bookmark...');
-      const response = await fetch(`${API_URL}/user/bookmarks/${encodeURIComponent(itemId)}`, {
+      const response = await fetch(`${API_URL}/bookmark/bookmarks/${encodeURIComponent(itemId)}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -43,7 +43,7 @@ export const toggleBookmark = async (itemId: string, itemType: 'document' | 'fol
     } else {
       // Add bookmark
       console.log('➕ Adding bookmark...');
-      const response = await fetch(`${API_URL}/user/bookmarks`, {
+      const response = await fetch(`${API_URL}/bookmark/bookmarks`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -84,7 +84,7 @@ export const getBookmarks = async (): Promise<Bookmark[]> => {
     }
     console.log('✅ Token found in getBookmarks:', token ? 'yes' : 'no');
 
-    const response = await fetch(`${API_URL}/user/bookmarks`, {
+    const response = await fetch(`${API_URL}/bookmark/bookmarks`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -126,7 +126,7 @@ export const addBookmark = async (itemId: string, itemType: 'document' | 'folder
       throw new Error('No authentication token found');
     }
 
-    const response = await fetch(`${API_URL}/user/bookmarks`, {
+    const response = await fetch(`${API_URL}/bookmark/bookmarks`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -155,7 +155,7 @@ export const removeBookmark = async (itemId: string): Promise<void> => {
       throw new Error('No authentication token found');
     }
 
-    const response = await fetch(`${API_URL}/user/bookmarks/${encodeURIComponent(itemId)}`, {
+    const response = await fetch(`${API_URL}/bookmark/bookmarks/${encodeURIComponent(itemId)}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

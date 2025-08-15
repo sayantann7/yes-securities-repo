@@ -1,7 +1,7 @@
 import { Notification, InactiveUser, UserMetrics, UserOverallMetrics } from '@/types';
 import { getToken } from './authService';
+import { API_BASE_URL } from '@/constants/api';
 
-const API_BASE_URL = "https://salesrepo.ysil.in/";
 const API_URL = `${API_BASE_URL}/user`;
 
 export const notificationService = {
@@ -175,36 +175,6 @@ export const adminNotificationService = {
     }
   },
 
-  // Get all users with detailed metrics (admin only)
-  getUsersMetrics: async (): Promise<{ users: UserMetrics[], overallMetrics: UserOverallMetrics }> => {
-    try {
-      const token = await getToken();
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
-
-      const response = await fetch(`${API_URL}/admin/users-metrics`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch user metrics');
-      }
-
-      return {
-        users: data.users || [],
-        overallMetrics: data.overallMetrics || {}
-      };
-    } catch (error: any) {
-      console.error('Error fetching user metrics:', error);
-      throw new Error(error.message || 'Failed to fetch user metrics');
-    }
-  },
 
   // Ping/alert inactive users (admin only)
   pingInactiveUsers: async (userIds: string[], message: string): Promise<void> => {

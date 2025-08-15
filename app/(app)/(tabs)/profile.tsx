@@ -11,6 +11,7 @@ import * as DocumentPicker from 'expo-document-picker';
 export default function ProfileScreen() {
   const { user, logout, updateProfile } = useAuth();
   const colors = Colors;
+  const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   
   // Modal state and form
   const [modalVisible, setModalVisible] = useState(false);
@@ -93,6 +94,17 @@ export default function ProfileScreen() {
     setUploading(true);
     setUploadResult(null);
     try {
+      // Get the stored token
+      const getToken = async (): Promise<string | null> => {
+        if (Platform.OS === 'web') {
+          return localStorage.getItem('auth_token');
+        } else {
+          const SecureStore = await import('expo-secure-store');
+          return await SecureStore.getItemAsync('auth_token');
+        }
+      };
+
+      const token = await getToken();
       const formData = new FormData();
       if (Platform.OS === 'web') {
         formData.append('file', excelFile, excelFile.name);
@@ -103,10 +115,12 @@ export default function ProfileScreen() {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         } as any);
       }
-      const response = await fetch('http://192.168.1.103:3000/admin/users/import', {
+      const response = await fetch(`${API_BASE_URL}/admin/users/import`, {
         method: 'POST',
         body: formData,
-        headers: Platform.OS === 'web' ? {} : { 'Content-Type': 'multipart/form-data' },
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
       });
       const data = await response.json();
       if (!response.ok) {

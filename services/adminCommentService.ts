@@ -1,7 +1,7 @@
 import { Comment, AdminCommentView } from '@/types';
 import { getToken } from './authService';
+import { API_BASE_URL } from '@/constants/api';
 
-const API_BASE_URL = "https://salesrepo.ysil.in/";
 const API_URL = `${API_BASE_URL}/user`;
 
 export const adminCommentService = {

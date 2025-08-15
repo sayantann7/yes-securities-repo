@@ -1,10 +1,7 @@
 import { Folder, Document } from '@/types';
 import { getDocuments } from './documentService';
 import { getToken } from './authService';
-
-// Keep your existing API URL or update to localhost if testing locally
-const API_BASE_URL = "https://salesrepo.ysil.in/";
-const API_URL = `${API_BASE_URL}/api`;
+import { API_URL } from '@/constants/api';
 
 export const getFolders = async (parentId: string | null = null): Promise<Folder[]> => {
   try {
@@ -151,11 +148,14 @@ export const getFolderById = getFolderData;
  */
 export const createFolder = async (parentId: string | null, name: string, iconUri?: string): Promise<void> => {
   try {
+    console.log('🔄 Creating folder:', { parentId, name, hasIcon: !!iconUri });
+    
     // Determine prefix path
     let prefix = '';
     if (parentId && typeof parentId === 'string' && parentId.trim() !== '') {
       prefix = parentId.endsWith('/') ? parentId : `${parentId}/`;
     }
+    console.log('📁 Using prefix:', prefix);
     
     // First create the folder
     const response = await fetch(`${API_URL}/folders/create`, {
@@ -166,17 +166,27 @@ export const createFolder = async (parentId: string | null, name: string, iconUr
     
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error('createFolder response error:', response.status, errorBody);
-      throw new Error('Failed to create folder');
+      console.error('❌ createFolder response error:', response.status, errorBody);
+      throw new Error(`Failed to create folder: ${response.status} ${errorBody}`);
     }
+    
+    console.log('✅ Folder created successfully');
 
     // If custom icon is provided, upload it
     if (iconUri) {
-      const folderKey = `${prefix}${name}/`;
-      await uploadCustomIcon(folderKey, iconUri);
+      try {
+        const folderKey = `${prefix}${name}/`;
+        console.log('🖼️ Uploading icon for folder path:', folderKey);
+        const iconUrl = await uploadCustomIcon(folderKey, iconUri);
+        console.log('✅ Folder icon uploaded successfully:', iconUrl);
+      } catch (iconError) {
+        console.error('❌ Icon upload failed but folder was created:', iconError);
+        // Don't throw here - let the folder creation succeed even if icon fails
+        // This matches the behavior described by the user
+      }
     }
   } catch (error) {
-    console.error('Error creating folder:', error);
+    console.error('💥 Error creating folder:', error);
     throw error;
   }
 };
@@ -186,46 +196,86 @@ export const createFolder = async (parentId: string | null, name: string, iconUr
  */
 export const uploadCustomIcon = async (itemPath: string, iconUri: string): Promise<string> => {
   try {
+    console.log('🔄 Starting icon upload process for:', { itemPath, iconUri });
+    
+    // Get authentication token
+    const token = await getToken();
+    console.log('🔑 Auth token available:', !!token);
+    
     // Get the file extension from the URI
     const extension = iconUri.split('.').pop()?.toLowerCase() || 'png';
+    console.log('📄 Detected file extension:', extension);
+    
+    // Prepare headers
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     
     // Get signed upload URL
+    console.log('📡 Requesting signed upload URL from:', `${API_URL}/icons/upload`);
     const response = await fetch(`${API_URL}/icons/upload`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ itemPath, iconType: extension }),
     });
     
     if (!response.ok) {
-      throw new Error('Failed to get upload URL');
+      const errorText = await response.text();
+      console.error('❌ Failed to get upload URL:', response.status, errorText);
+      throw new Error(`Failed to get upload URL: ${response.status} ${errorText}`);
     }
     
     const { uploadUrl } = await response.json();
+    console.log('✅ Received upload URL:', uploadUrl);
     
     // Upload the icon
+    console.log('📤 Uploading icon to S3...');
     const iconBlob = await fetch(iconUri).then(r => r.blob());
-    await fetch(uploadUrl, {
+    const uploadResponse = await fetch(uploadUrl, {
       method: 'PUT',
       headers: { 'Content-Type': `image/${extension}` },
       body: iconBlob,
     });
     
+    if (!uploadResponse.ok) {
+      const uploadError = await uploadResponse.text();
+      console.error('❌ S3 upload failed:', uploadResponse.status, uploadError);
+      throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadError}`);
+    }
+    
+    console.log('✅ Icon uploaded to S3 successfully');
+    
     // Wait a moment for S3 to process the upload
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     // After successful upload, get the view URL
     const encodedPath = encodeURIComponent(itemPath);
-    const iconResponse = await fetch(`${API_URL}/icons/${encodedPath}`);
+    console.log('🔍 Retrieving icon URL for path:', encodedPath);
+    
+    const iconHeaders: Record<string, string> = {};
+    if (token) {
+      iconHeaders['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const iconResponse = await fetch(`${API_URL}/icons/${encodedPath}`, {
+      headers: iconHeaders
+    });
     
     if (!iconResponse.ok) {
-      throw new Error('Failed to get icon URL after upload');
+      const iconError = await iconResponse.text();
+      console.error('❌ Failed to get icon URL after upload:', iconResponse.status, iconError);
+      throw new Error(`Failed to get icon URL after upload: ${iconResponse.status} ${iconError}`);
     }
     
     const { iconUrl } = await iconResponse.json();
     console.log('✅ Icon uploaded and URL retrieved:', iconUrl);
     return iconUrl;
   } catch (error) {
-    console.error('Error uploading custom icon:', error);
+    console.error('💥 Error uploading custom icon:', error);
     throw error;
   }
 };
@@ -260,19 +310,34 @@ export const renameFolder = async (oldPath: string, newName: string): Promise<vo
  */
 export const deleteFolder = async (folderPath: string): Promise<void> => {
   try {
+    console.log('🗑️ Deleting folder:', folderPath);
+    
+    // Get authentication token
+    const token = await getToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    console.log('📡 DELETE request to:', `${API_URL}/folders/delete`);
     const response = await fetch(`${API_URL}/folders/delete`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ folderPath }),
     });
     
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error('deleteFolder response error:', response.status, errorBody);
-      throw new Error('Failed to delete folder');
+      console.error('❌ deleteFolder response error:', response.status, errorBody);
+      throw new Error(`Failed to delete folder: ${response.status} ${errorBody}`);
     }
+    
+    console.log('✅ Folder deleted successfully');
   } catch (error) {
-    console.error('Error deleting folder:', error);
+    console.error('💥 Error deleting folder:', error);
     throw error;
   }
 };

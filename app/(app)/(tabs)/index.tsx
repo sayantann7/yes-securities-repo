@@ -15,12 +15,11 @@ import { useFetchAdminDashboard } from '@/hooks/useFetchAdminDashboard';
 import DashboardStat from '@/components/admin/DashboardStat';
 import DocumentsPageSkeleton from '@/components/skeleton/DocumentsPageSkeleton';
 import * as DocumentPicker from 'expo-document-picker';
+import { API_BASE_URL, ADMIN_API_URL, UPLOAD_TIMEOUT } from '@/constants/api';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const colors = Colors;
-
-  const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   // --- Non-admin state ---
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -92,27 +91,52 @@ export default function HomeScreen() {
     const [uploading, setUploading] = useState(false);
     const [uploadResult, setUploadResult] = useState<any>(null);
 
-    // Pick Excel file
-    const handlePickExcel = async () => {
+    // Pick Excel/CSV file
+    const pickExcelFile = async () => {
       try {
         const result = await (Platform.OS === 'web'
           ? new Promise<any>((resolve) => {
               const input = document.createElement('input');
               input.type = 'file';
-              input.accept = '.xlsx';
+              input.accept = '.xlsx,.xls,.csv';
               input.onchange = (e: any) => {
                 const file = e.target.files[0];
-                resolve({ name: file.name, fileObj: file });
+                if (file) {
+                  resolve({ name: file.name, fileObj: file });
+                } else {
+                  resolve(null);
+                }
               };
               input.click();
             })
-          : DocumentPicker.getDocumentAsync({ type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+          : DocumentPicker.getDocumentAsync({ 
+              type: [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-excel',
+                'text/csv'
+              ],
+              multiple: false
+            })
         );
-        if (result && (result.fileObj || (result.assets && result.assets[0]))) {
-          setExcelFile(result.fileObj || result.assets[0]);
+        if (result && !result.canceled && (result.fileObj || (result.assets && result.assets[0]))) {
+          const file = result.fileObj || result.assets[0];
+          
+          // Validate file type
+          const fileName = file.name || '';
+          const isValidFile = fileName.endsWith('.xlsx') || 
+                            fileName.endsWith('.xls') || 
+                            fileName.endsWith('.csv');
+          
+          if (!isValidFile) {
+            Alert.alert('Invalid File', 'Please select an Excel file (.xlsx, .xls) or CSV file (.csv)');
+            return;
+          }
+          
+          setExcelFile(file);
           setUploadResult(null);
         }
       } catch (err: unknown) {
+        console.error('File picker error:', err);
         Alert.alert('Error', 'Failed to pick file');
       }
     };
@@ -123,30 +147,109 @@ export default function HomeScreen() {
       setUploading(true);
       setUploadResult(null);
       try {
+        // Get the stored token
+        const getToken = async (): Promise<string | null> => {
+          if (Platform.OS === 'web') {
+            return localStorage.getItem('auth_token');
+          } else {
+            const SecureStore = await import('expo-secure-store');
+            return await SecureStore.getItemAsync('auth_token');
+          }
+        };
+
+        const token = await getToken();
+        
+        if (!token) {
+          setUploadResult({ error: 'Authentication required. Please sign in again.', errors: [] });
+          return;
+        }
+
         const formData = new FormData();
+        
+        // Handle file upload for different platforms
         if (Platform.OS === 'web') {
           formData.append('file', excelFile, excelFile.name);
         } else {
+          // For mobile platforms, ensure proper file type detection
+          const fileType = excelFile.name?.endsWith('.csv') 
+            ? 'text/csv' 
+            : excelFile.name?.endsWith('.xlsx')
+            ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            : 'application/vnd.ms-excel';
+            
           formData.append('file', {
             uri: excelFile.uri,
             name: excelFile.name,
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            type: fileType,
           } as any);
         }
-        const response = await fetch(`${API_BASE_URL}/admin/users/import`, {
+
+        console.log('Uploading file:', excelFile.name);
+        console.log('API URL:', `${ADMIN_API_URL}/users/import`);
+        
+        // Add timeout and better error handling
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT); // Use upload timeout
+        
+        const response = await fetch(`${ADMIN_API_URL}/users/import`, {
           method: 'POST',
           body: formData,
-          headers: Platform.OS === 'web' ? {} : { 'Content-Type': 'multipart/form-data' },
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            // Don't set Content-Type for FormData - let the browser/platform set it with boundary
+          },
+          signal: controller.signal, // Add abort signal for timeout
         });
-        const data = await response.json();
+        
+        clearTimeout(timeoutId); // Clear timeout if request completes
+        
+        console.log('Response status:', response.status);
+        
+        const responseText = await response.text();
+        console.log('Response text:', responseText);
+        
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('Failed to parse response:', parseError);
+          setUploadResult({ 
+            error: `Server responded with invalid JSON. Status: ${response.status}`, 
+            errors: [responseText] 
+          });
+          return;
+        }
+        
         if (!response.ok) {
-          setUploadResult({ error: data.error || 'Upload failed', errors: [] });
+          console.error('Upload failed with status:', response.status, data);
+          setUploadResult({ 
+            error: data.error || `Upload failed with status ${response.status}`, 
+            errors: data.errors || [] 
+          });
         } else {
+          console.log('Upload successful:', data);
           setUploadResult(data.results || data);
           setExcelFile(null);
         }
       } catch (err: any) {
-        setUploadResult({ error: err.message || 'Upload failed', errors: [] });
+        console.error('Upload error:', err);
+        
+        if (err.name === 'AbortError') {
+          setUploadResult({ 
+            error: 'Upload timed out after 30 seconds. Please try again with a smaller file.', 
+            errors: [] 
+          });
+        } else if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
+          setUploadResult({ 
+            error: 'Network error - please check your internet connection and server status', 
+            errors: [`Server URL: ${API_BASE_URL}`] 
+          });
+        } else {
+          setUploadResult({ 
+            error: err.message || 'Upload failed - please try again', 
+            errors: [] 
+          });
+        }
       } finally {
         setUploading(false);
       }
@@ -226,11 +329,21 @@ export default function HomeScreen() {
             </Text>
             <TouchableOpacity
               style={[styles.uploadBtn, { backgroundColor: colors.primary, marginBottom: 8 }]}
-              onPress={handlePickExcel}
+              onPress={pickExcelFile}
               disabled={uploading}
             >
-              <Text style={{ color: '#fff', fontWeight: '600' }}>{excelFile ? excelFile.name : 'Select Excel File'}</Text>
+              <Text style={{ color: '#fff', fontWeight: '600' }}>{excelFile ? excelFile.name : 'Select Excel/CSV File'}</Text>
             </TouchableOpacity>
+            
+            <View style={{ marginBottom: 8, paddingHorizontal: 4 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, textAlign: 'center' }}>
+                File must contain columns: <Text style={{ fontWeight: '600' }}>fullname</Text>, <Text style={{ fontWeight: '600' }}>email</Text>, and <Text style={{ fontWeight: '600' }}>ad-id</Text>
+              </Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, textAlign: 'center', marginTop: 2 }}>
+                Supported formats: .xlsx, .xls, .csv
+              </Text>
+            </View>
+            
             <TouchableOpacity
               style={[styles.uploadBtn, { backgroundColor: colors.primary }]} 
               onPress={handleUploadExcel}
