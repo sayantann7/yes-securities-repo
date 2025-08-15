@@ -109,9 +109,6 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
           <Text style={[styles.gridTitle, { color: Colors.text }]} numberOfLines={2}>
             {document.name}
           </Text>
-          <Text style={[styles.gridSubtitle, { color: Colors.textSecondary }]}>
-            {formatFileSize(Number(document.size))}
-          </Text>
           {/* Show more button for all users */}
           <TouchableOpacity style={styles.gridMoreButton} onPress={handleMorePress}>
             <MoreHorizontal size={16} color={Colors.textSecondary} />
@@ -161,14 +158,6 @@ export default function DocumentItem({ document, viewMode, onPress, onUpdate }: 
           <Text style={[styles.documentName, { color: Colors.text }]} numberOfLines={1}>
             {document.name}
           </Text>
-          <View style={styles.documentMeta}>
-            <Text style={[styles.documentSize, { color: Colors.textSecondary }]}>
-              {document.size}
-            </Text>
-            <Text style={[styles.documentDate, { color: Colors.textSecondary }]}>
-              {new Date(document.createdAt).toLocaleDateString()}
-            </Text>
-          </View>
         </View>
         
         {/* Show more button for all users */}

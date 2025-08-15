@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, Platform, Modal, TextInput } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { Colors } from '@/constants/Colors';
+import { API_BASE_URL } from '@/constants/api';
 import { 
   User, LogOut, Settings, Bell, Moon, Key, Shield, Download, 
   HardDrive, Wifi, WifiOff
@@ -11,8 +12,13 @@ import * as DocumentPicker from 'expo-document-picker';
 export default function ProfileScreen() {
   const { user, logout, updateProfile } = useAuth();
   const colors = Colors;
-  const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
   
+  // Change password state
+  const [changePwdVisible, setChangePwdVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+
   // Modal state and form
   const [modalVisible, setModalVisible] = useState(false);
   const [newFullname, setNewFullname] = useState(user?.name || '');
@@ -49,6 +55,54 @@ export default function ProfileScreen() {
       Alert.alert('Success', 'Profile updated successfully');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to update profile');
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      Alert.alert('Missing fields', 'Please enter your current and new password.');
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+      const getToken = async (): Promise<string | null> => {
+        if (Platform.OS === 'web') {
+          return localStorage.getItem('auth_token');
+        } else {
+          const SecureStore = await import('expo-secure-store');
+          return await SecureStore.getItemAsync('auth_token');
+        }
+      };
+
+      const token = await getToken();
+      const res = await fetch(`${API_BASE_URL}/user/changePassword`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          email: user?.email,
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        Alert.alert('Error', (data as any).error || 'Failed to update password');
+        return;
+      }
+
+      Alert.alert('Success', 'Password updated successfully');
+      setChangePwdVisible(false);
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to update password');
+    } finally {
+      setChangingPassword(false);
     }
   };
   
@@ -157,6 +211,14 @@ export default function ProfileScreen() {
             <Text style={{color: colors.primary}}>Edit</Text>
           </TouchableOpacity> */}
         </View>
+
+        {/* Change Password Button */}
+        <TouchableOpacity 
+          style={[styles.uploadBtn, { backgroundColor: colors.surface, borderColor: colors.primary, borderWidth: 1, marginHorizontal: 16 }]}
+          onPress={() => setChangePwdVisible(true)}
+        >
+          <Text style={{ color: colors.primary, fontWeight: '600' }}>Change Password</Text>
+        </TouchableOpacity>
         
         {/* <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <Text style={[styles.sectionTitle, { color: colors.primary }]}>Preferences</Text>
@@ -186,6 +248,60 @@ export default function ProfileScreen() {
         
         <Text style={[styles.versionText, { color: colors.textSecondary }]}>Version 1.0.0</Text>
       </ScrollView>
+
+      {/* Change Password Modal */}
+      <Modal
+        transparent
+        visible={changePwdVisible}
+        animationType="fade"
+        onRequestClose={() => setChangePwdVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Change Password</Text>
+
+            <TextInput
+              style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+              placeholder="Current password"
+              placeholderTextColor={colors.textSecondary}
+              secureTextEntry
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+            />
+
+            <TextInput
+              style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+              placeholder="New password"
+              placeholderTextColor={colors.textSecondary}
+              secureTextEntry
+              value={newPassword}
+              onChangeText={setNewPassword}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: colors.error }]}
+                onPress={() => {
+                  setChangePwdVisible(false);
+                  setCurrentPassword('');
+                  setNewPassword('');
+                }}
+                disabled={changingPassword}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: colors.primary }]}
+                onPress={handleChangePassword}
+                disabled={changingPassword}
+              >
+                <Text style={styles.buttonText}>{changingPassword ? 'Updating...' : 'Update'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

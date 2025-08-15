@@ -68,23 +68,24 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
         <TouchableOpacity 
           style={[styles.gridItem, { backgroundColor: Colors.surface }]} 
           onPress={onPress}
-        >        <View style={[styles.gridIconContainer, { backgroundColor: Colors.surfaceVariant }]}>
-          {folder.iconUrl && !iconError ? (
-            <Image 
-              source={{ uri: folder.iconUrl }} 
-              style={styles.gridCustomIcon}
-              resizeMode="cover"
-              onError={(error) => {
-                console.log('🚫 Grid icon failed to load for folder:', folder.name);
-                console.log('🚫 Error details:', error.nativeEvent);
-                console.log('🚫 Icon URL was:', folder.iconUrl);
-                setIconError(true);
-              }}
-            />
-          ) : (
-            <FolderIcon size={32} color="#6B73FF" />
-          )}
-        </View>
+        >
+          <View style={[styles.gridIconContainer, { backgroundColor: Colors.surfaceVariant }]}>
+            {folder.iconUrl && !iconError ? (
+              <Image 
+                source={{ uri: folder.iconUrl }} 
+                style={styles.gridCustomIcon}
+                resizeMode="cover"
+                onError={(error) => {
+                  console.log('🚫 Grid icon failed to load for folder:', folder.name);
+                  console.log('🚫 Error details:', error.nativeEvent);
+                  console.log('🚫 Icon URL was:', folder.iconUrl);
+                  setIconError(true);
+                }}
+              />
+            ) : (
+              <FolderIcon size={32} color="#6B73FF" />
+            )}
+          </View>
           <Text style={[styles.gridTitle, { color: Colors.text }]} numberOfLines={2}>
             {
               // Derive basename from id if name includes path separators
