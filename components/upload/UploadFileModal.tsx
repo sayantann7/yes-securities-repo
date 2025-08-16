@@ -150,7 +150,22 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
 
         // use blob from fileObj if provided (web), otherwise fetch by uri
         const blob = file.fileObj ? file.fileObj : await fetch(file.uri).then(r => r.blob());
-        await fetch(signedUrl, { method: 'PUT', headers: { 'Content-Type': file.mimeType || 'application/octet-stream' }, body: blob });
+        const headers: Record<string, string> = { 'Content-Type': file.mimeType || 'application/octet-stream' };
+        // On web, include Content-Length if available (some S3 setups require it)
+        if (typeof window !== 'undefined' && 'size' in blob && typeof (blob as any).size === 'number') {
+          headers['Content-Length'] = String((blob as any).size);
+        }
+        // Simple retry to handle transient network issues
+        const putOnce = async () => fetch(signedUrl, { method: 'PUT', headers, body: blob });
+        let putRes = await putOnce();
+        if (!putRes.ok) {
+          await new Promise(r => setTimeout(r, 500));
+          putRes = await putOnce();
+        }
+        if (!putRes.ok) {
+          const text = await putRes.text();
+          throw new Error(`Upload failed: ${putRes.status} ${text}`);
+        }
 
         // If file has custom icon, upload it
         if (file.customIcon) {
