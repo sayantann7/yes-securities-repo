@@ -26,7 +26,20 @@ export const notificationService = {
         throw new Error(data.error || 'Failed to fetch notifications');
       }
 
-      return data.notifications || [];
+      const list = Array.isArray(data.notifications) ? data.notifications : [];
+      // Normalize items so comment entries include documentId and readable title/message
+      return list.map((n: any) => ({
+        id: n.id,
+        type: n.type,
+        title: n.title || (n.type === 'comment' ? 'New comment' : 'Notification'),
+        message: n.message || n.commentText || n.preview || '',
+        read: !!n.read,
+        createdAt: n.createdAt,
+        userId: n.userId,
+        documentId: n.documentId || n.itemId || undefined,
+        senderId: n.senderId,
+        sender: n.sender ? { id: n.sender.id, name: n.sender.name, avatar: n.sender.avatarUrl } : undefined,
+      }));
     } catch (error: any) {
       console.error('Error fetching notifications:', error);
       throw new Error(error.message || 'Failed to fetch notifications');

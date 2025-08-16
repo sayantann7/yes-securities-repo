@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -120,6 +120,7 @@ export default function NotificationManagement() {
     try {
       setIsLoading(true);
       const userNotifications = await notificationService.getNotifications();
+      // Keep raw notifications; grouping is derived below
       setNotifications(userNotifications);
       setError(null);
     } catch (err: any) {
@@ -139,13 +140,13 @@ export default function NotificationManagement() {
   const handleMarkAsRead = async (notificationId: string) => {
     try {
       await notificationService.markAsRead(notificationId);
-      setNotifications(prev =>
-        prev.map(notification =>
-          notification.id === notificationId
-            ? { ...notification, read: true }
-            : notification
-        )
-      );
+      // Find the notification to get its documentId, then mark all for that doc as read
+      setNotifications(prev => {
+        const target = prev.find(n => n.id === notificationId);
+        if (!target) return prev;
+        const docId = target.documentId;
+        return prev.map(n => (docId && n.documentId === docId) ? { ...n, read: true } : (n.id === notificationId ? { ...n, read: true } : n));
+      });
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to mark notification as read');
     }
@@ -163,12 +164,24 @@ export default function NotificationManagement() {
     }
   };
 
-  const getNotificationStats = () => {
-    const unreadCount = notifications.filter(n => !n.read).length;
-    const commentCount = notifications.filter(n => n.type === 'comment').length;
-    const uploadCount = notifications.filter(n => n.type === 'upload').length;
-    const pingCount = notifications.filter(n => n.type === 'ping' || n.type === 'alert').length;
+  // Derived: latest unread comment per document (folder)
+  const latestUnreadComments = useMemo(() => {
+    const byDoc = new Map<string, Notification>();
+    const comments = notifications
+      .filter(n => n.type === 'comment' && !n.read && n.documentId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    for (const n of comments) {
+      const key = n.documentId as string;
+      if (!byDoc.has(key)) byDoc.set(key, n);
+    }
+    return Array.from(byDoc.values());
+  }, [notifications]);
 
+  const getNotificationStats = () => {
+    const unreadCount = latestUnreadComments.length;
+    const commentCount = latestUnreadComments.length;
+    const uploadCount = notifications.filter(n => n.type === 'upload' && !n.read).length;
+    const pingCount = notifications.filter(n => (n.type === 'ping' || n.type === 'alert') && !n.read).length;
     return { unreadCount, commentCount, uploadCount, pingCount };
   };
 
@@ -264,7 +277,7 @@ export default function NotificationManagement() {
       </View>
 
       {/* Notifications List */}
-      {notifications.length === 0 ? (
+    {latestUnreadComments.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Bell size={48} color={Colors.textSecondary} />
           <Text style={[styles.emptyText, { color: Colors.textSecondary }]}>
@@ -273,8 +286,8 @@ export default function NotificationManagement() {
         </View>
       ) : (
         <FlatList
-          data={notifications}
-          keyExtractor={(item) => item.id}
+      data={latestUnreadComments}
+      keyExtractor={(item) => `${item.documentId}-${item.id}`}
           renderItem={({ item }) => (
             <NotificationItem
               notification={item}
