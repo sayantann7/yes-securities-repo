@@ -12,9 +12,9 @@ import DocumentItem from '@/components/document/DocumentItem';
 import FolderItem from '@/components/document/FolderItem';
 import BreadcrumbNav from '@/components/navigation/BreadcrumbNav';
 import IconPicker from './IconPicker';
+import { API_BASE_URL } from '@/constants/api';
 
 // Use environment variable for API URL
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 const API_URL = `${API_BASE_URL}/api`;
 
 interface UploadFileModalProps {
@@ -149,22 +149,35 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
         const { url: signedUrl } = await resp.json();
 
         // use blob from fileObj if provided (web), otherwise fetch by uri
-        const blob = file.fileObj ? file.fileObj : await fetch(file.uri).then(r => r.blob());
-        const headers: Record<string, string> = { 'Content-Type': file.mimeType || 'application/octet-stream' };
-        // On web, include Content-Length if available (some S3 setups require it)
-        if (typeof window !== 'undefined' && 'size' in blob && typeof (blob as any).size === 'number') {
-          headers['Content-Length'] = String((blob as any).size);
-        }
-        // Simple retry to handle transient network issues
-        const putOnce = async () => fetch(signedUrl, { method: 'PUT', headers, body: blob });
-        let putRes = await putOnce();
-        if (!putRes.ok) {
-          await new Promise(r => setTimeout(r, 500));
-          putRes = await putOnce();
-        }
-        if (!putRes.ok) {
-          const text = await putRes.text();
-          throw new Error(`Upload failed: ${putRes.status} ${text}`);
+        const contentType = file.mimeType || 'application/octet-stream';
+        if (Platform.OS === 'web') {
+          // Web: use fetch + Blob body
+          const blob = file.fileObj ? file.fileObj : await fetch(file.uri).then(r => r.blob());
+          const headers: Record<string, string> = { 'Content-Type': contentType };
+          if (typeof window !== 'undefined' && 'size' in blob && typeof (blob as any).size === 'number') {
+            headers['Content-Length'] = String((blob as any).size);
+          }
+          const putOnce = async () => fetch(signedUrl, { method: 'PUT', headers, body: blob });
+          let putRes = await putOnce();
+          if (!putRes.ok) {
+            await new Promise(r => setTimeout(r, 500));
+            putRes = await putOnce();
+          }
+          if (!putRes.ok) {
+            const text = await putRes.text();
+            throw new Error(`Upload failed: ${putRes.status} ${text}`);
+          }
+        } else {
+          // Native (iOS/Android): use FileSystem.uploadAsync for local file URIs
+          if (!file.uri) throw new Error('Missing file URI for native upload');
+          const result = await FileSystem.uploadAsync(signedUrl, file.uri, {
+            httpMethod: 'PUT',
+            headers: { 'Content-Type': contentType },
+            uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+          });
+          if (result.status < 200 || result.status >= 300) {
+            throw new Error(`Upload failed: ${result.status} ${result.body?.slice(0, 200)}`);
+          }
         }
 
         // If file has custom icon, upload it
@@ -244,6 +257,10 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
       onClose();
     } catch (err) {
       console.error('Upload failed:', err);
+      try {
+        const msg = err instanceof Error ? err.message : String(err);
+        Alert.alert('Upload Failed', msg);
+      } catch {}
     } finally {
       setUploading(false);
     }
