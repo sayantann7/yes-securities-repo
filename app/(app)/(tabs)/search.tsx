@@ -11,8 +11,8 @@ import {
 import { Search as SearchIcon, Filter, FileText, X } from 'lucide-react-native';
 import { useDebounce } from '@/hooks/useDebounce';
 import DocumentSearchItem from '@/components/document/DocumentSearchItem';
-import { searchDocuments } from '@/services/documentService';
-import { Document } from '@/types';
+import { Document, Folder } from '@/types';
+import { searchAll, SearchItem } from '@/services/searchService';
 import FilterModal from '@/components/search/FilterModal';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/Colors';
@@ -21,17 +21,12 @@ export default function SearchScreen() {
   const colors = Colors;
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [results, setResults] = useState<Document[]>([]);
+  const [results, setResults] = useState<Array<SearchItem>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<{
-    fileTypes: string[];
-    dateRange: { start: Date | null; end: Date | null };
-    authors: string[];
-  }>({
+  const [typeFilter, setTypeFilter] = useState<'all' | 'files' | 'folders'>('all');
+  const [activeFilters, setActiveFilters] = useState<{ fileTypes: string[] }>({
     fileTypes: [],
-    dateRange: { start: null, end: null },
-    authors: [],
   });
   
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -44,7 +39,8 @@ export default function SearchScreen() {
     const fetchResults = async () => {
       setIsLoading(true);
       try {
-        const searchResults = await searchDocuments(debouncedSearchQuery, activeFilters);
+  const filtersPayload: any = { fileTypes: activeFilters.fileTypes };
+        const searchResults = await searchAll(debouncedSearchQuery, typeFilter, filtersPayload, 150);
         setResults(searchResults);
       } catch (error) {
         console.error('Search error:', error);
@@ -53,14 +49,14 @@ export default function SearchScreen() {
       }
     };
     fetchResults();
-  }, [debouncedSearchQuery, activeFilters]);
+  }, [debouncedSearchQuery, activeFilters, typeFilter]);
   
   const clearSearch = () => {
     setSearchQuery('');
     setResults([]);
   };
   
-  const applyFilters = (filters: any) => {
+  const applyFilters = (filters: { fileTypes: string[] }) => {
     setActiveFilters(filters);
     setShowFilterModal(false);
   };
@@ -72,36 +68,11 @@ export default function SearchScreen() {
     }));
   };
   
-  const removeAuthorFilter = (author: string) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      authors: prev.authors.filter(a => a !== author)
-    }));
-  };
-  
-  const clearDateFilter = () => {
-    setActiveFilters(prev => ({
-      ...prev,
-      dateRange: { start: null, end: null }
-    }));
-  };
-  
   const clearAllFilters = () => {
-    setActiveFilters({
-      fileTypes: [],
-      dateRange: { start: null, end: null },
-      authors: [],
-    });
+  setActiveFilters({ fileTypes: [] });
   };
   
-  const hasActiveFilters = () => {
-    return (
-      activeFilters.fileTypes.length > 0 || 
-      activeFilters.authors.length > 0 || 
-      activeFilters.dateRange.start !== null || 
-      activeFilters.dateRange.end !== null
-    );
-  };
+  const hasActiveFilters = () => activeFilters.fileTypes.length > 0;
   
   const renderFilterChips = () => {
     if (!hasActiveFilters()) return null;
@@ -119,28 +90,7 @@ export default function SearchScreen() {
           </TouchableOpacity>
         ))}
         
-        {activeFilters.authors.map(author => (
-          <TouchableOpacity 
-            key={author} 
-            style={[styles.filterChip, { backgroundColor: colors.surfaceVariant }]}
-            onPress={() => removeAuthorFilter(author)}
-          >
-            <Text style={[styles.filterChipText, { color: colors.primary }]}>By: {author}</Text>
-            <X size={14} color={colors.primary} />
-          </TouchableOpacity>
-        ))}
-        
-        {(activeFilters.dateRange.start || activeFilters.dateRange.end) && (
-          <TouchableOpacity 
-            style={[styles.filterChip, { backgroundColor: colors.surfaceVariant }]}
-            onPress={clearDateFilter}
-          >
-            <Text style={[styles.filterChipText, { color: colors.primary }]}>
-              Date: {activeFilters.dateRange.start?.toLocaleDateString() || 'Any'} - {activeFilters.dateRange.end?.toLocaleDateString() || 'Any'}
-            </Text>
-            <X size={14} color={colors.primary} />
-          </TouchableOpacity>
-        )}
+  {/* date and author filters removed */}
         
         <TouchableOpacity 
           style={styles.clearAllButton}
@@ -185,7 +135,7 @@ export default function SearchScreen() {
       
       {renderFilterChips()}
       
-      <View style={styles.resultsContainer}>
+  <View style={styles.resultsContainer}>
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
@@ -196,14 +146,28 @@ export default function SearchScreen() {
             <Text style={[styles.resultsCount, { color: colors.textSecondary }]}>{results.length} results found</Text>
             <FlatList
               data={results}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <DocumentSearchItem
-                  document={item}
-                  searchTerm={searchQuery}
-                  onPress={() => router.push(`/document/${item.id}`)}
-                />
-              )}
+              keyExtractor={(item) => item.key}
+              renderItem={({ item }) => {
+                const last = item.key.replace(/^\/+/, '').replace(/\/+$/, '').split('/').pop() || item.key;
+                if (item.type === 'folder') {
+                  return (
+                    <TouchableOpacity
+                      style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}
+                      onPress={() => router.push(`/folder/${encodeURIComponent(item.key)}`)}
+                    >
+                      <Text style={{ color: colors.text, fontWeight: '600' }}>{last}</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Folder</Text>
+                    </TouchableOpacity>
+                  );
+                }
+                return (
+                  <DocumentSearchItem
+                    document={{ id: item.key, name: last, type: 'file', size: 'Unknown', url: '', createdAt: item.lastModified || new Date().toISOString(), author: 'Unknown', folderId: null }}
+                    searchTerm={searchQuery}
+                    onPress={() => router.push(`/document/${encodeURIComponent(item.key)}`)}
+                  />
+                );
+              }}
               contentContainerStyle={styles.resultsList}
               showsVerticalScrollIndicator={false}
             />
@@ -211,19 +175,19 @@ export default function SearchScreen() {
         ) : searchQuery.trim() !== '' ? (
           <View style={styles.emptyResultsContainer}>
             <FileText size={48} color={colors.textSecondary} />
-            <Text style={[styles.noResultsText, { color: colors.primary }]}>No documents found</Text>
+            <Text style={[styles.noResultsText, { color: colors.primary }]}>No results found</Text>
             <Text style={[styles.noResultsSubtext, { color: colors.textSecondary }]}>Try adjusting your search or filters</Text>
           </View>
         ) : (
           <View style={styles.startSearchContainer}>
             <SearchIcon size={48} color={colors.textSecondary} />
             <Text style={[styles.startSearchText, { color: colors.primary }]}>Start searching</Text>
-            <Text style={[styles.startSearchSubtext, { color: colors.textSecondary }]}>Enter keywords to find documents, folders, or content</Text>
+            <Text style={[styles.startSearchSubtext, { color: colors.textSecondary }]}>Enter keywords to find documents or folders</Text>
           </View>
         )}
       </View>
       
-      <FilterModal 
+  <FilterModal 
         visible={showFilterModal} 
         onClose={() => setShowFilterModal(false)}
         onApply={applyFilters}
