@@ -15,9 +15,9 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
-# native build folders (for CNG/Prebuild)
-/android
-/ios
+# native build folders (managed workflow)
+# If using EAS bare workflow, commit ios/ and android/
+# (We are committing native projects, so don't ignore them.)
 
 # metro
 .metro-health-check*
