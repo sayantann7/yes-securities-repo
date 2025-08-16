@@ -2,14 +2,8 @@ import { Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { Text, View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Redirect } from 'expo-router';
-import { useTrackAppTime } from '@/hooks/useTrackAppTime';
-
 export default function AppLayout() {
   const { isAuthenticated, isLoading } = useAuth();
-  
-  // Initialize app time tracking for authenticated users
-  useTrackAppTime();
-  
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -18,11 +12,9 @@ export default function AppLayout() {
       </View>
     );
   }
-  
   if (!isAuthenticated) {
     return <Redirect href="/(auth)" />;
   }
-
   return (
     <Stack 
       screenOptions={{ 
