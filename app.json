@@ -12,7 +12,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.yes.securities",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
       }
     },
     "web": {
@@ -28,7 +31,8 @@
       "typedRoutes": true
     },
     "android": {
-      "package": "com.yes.securities"
+      "package": "com.yes.securities",
+      "usesCleartextTraffic": true
     },
     "extra": {
       "router": {},
