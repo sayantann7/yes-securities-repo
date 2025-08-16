@@ -1,21 +1,33 @@
 {
   "cli": {
-    "version": ">= 16.13.4",
+  "version": ">= 12.6.0",
     "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "image": "latest",
+        "cocoapods": "1.15.2",
+        "bundler": "2.5.10"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "image": "latest",
+        "cocoapods": "1.15.2",
+        "bundler": "2.5.10"
+      }
     },
     "production": {
       "autoIncrement": true,
       "distribution": "store",
       "ios": {
-        "cocoapods": "1.15.2"
+        "image": "latest",
+        "cocoapods": "1.15.2",
+        "bundler": "2.5.10"
       }
     }
   },

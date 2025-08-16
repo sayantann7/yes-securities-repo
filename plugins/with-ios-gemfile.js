@@ -3,7 +3,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const { withDangerousMod } = require('@expo/config-plugins');
+// Import from 'expo/config-plugins' so we don't require installing a separate package.
+const { withDangerousMod } = require('expo/config-plugins');
 
 module.exports = function withIosGemfile(config) {
   return withDangerousMod(config, [
@@ -18,9 +19,16 @@ module.exports = function withIosGemfile(config) {
       ].join('\n');
 
       try {
+        // Ensure ios directory exists (defensive); Expo should create it before this mod runs.
+        if (!fs.existsSync(iosDir)) {
+          fs.mkdirSync(iosDir, { recursive: true });
+        }
         // Only write if missing to avoid overwriting user-managed Gemfile
         if (!fs.existsSync(gemfilePath)) {
           fs.writeFileSync(gemfilePath, content, 'utf8');
+          console.log('[with-ios-gemfile] Created ios/Gemfile with CocoaPods 1.15.2');
+        } else {
+          console.log('[with-ios-gemfile] ios/Gemfile already present — leaving as-is');
         }
       } catch (e) {
         // Best-effort; don't fail prebuild if we cannot write. Build will still attempt global `pod`.
