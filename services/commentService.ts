@@ -20,15 +20,15 @@ export const getComments = async (documentId: string): Promise<Comment[]> => {
       throw new Error(data.error || 'Failed to fetch comments');
     }
     // Transform backend response to match frontend expected format
-    return data.comments.map((comment: any) => ({
+  return data.comments.map((comment: any) => ({
       id: comment.id,
       documentId: comment.documentId,
       text: comment.content,
       createdAt: comment.createdAt,
       author: {
         id: comment.userId,
-        name: comment.user?.fullname || 'User', // use fullname if included
-        avatar: comment.user?.avatarUrl || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg'
+    name: comment.user?.fullname || 'User', // use fullname if included
+    avatar: comment.user?.avatarUrl || undefined
       },
       replies: []
     }));

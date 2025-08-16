@@ -14,6 +14,14 @@ export default function CommentItem({ comment, onReply, isReply = false }: Comme
   const [replyText, setReplyText] = useState('');
   const [liked, setLiked] = useState(false);
   
+  const getInitials = (name?: string) => {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0]?.[0] || '';
+    const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+    return (first + last).toUpperCase() || first.toUpperCase() || '?';
+  };
+  
   const handleLike = () => {
     setLiked(!liked);
   };
@@ -47,10 +55,16 @@ export default function CommentItem({ comment, onReply, isReply = false }: Comme
   
   return (
     <View style={[styles.container, isReply && styles.replyContainer]}>
-      <Image 
-        source={{ uri: comment.author.avatar || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg' }} 
-        style={styles.avatar}
-      />
+      {comment.author.avatar ? (
+        <Image 
+          source={{ uri: comment.author.avatar }} 
+          style={styles.avatar}
+        />
+      ) : (
+        <View style={[styles.avatar, styles.initialsAvatar]}>
+          <Text style={styles.initialsText}>{getInitials(comment.author.name)}</Text>
+        </View>
+      )}
       
       <View style={styles.contentContainer}>
         <View style={styles.header}>
@@ -142,6 +156,16 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     marginRight: 12,
+  },
+  initialsAvatar: {
+    backgroundColor: '#0C2340',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initialsText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   contentContainer: {
     flex: 1,

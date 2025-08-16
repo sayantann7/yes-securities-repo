@@ -8,7 +8,7 @@ import { Document as DocumentType } from '@/types';
 import PDFViewer from '@/components/viewers/PDFViewer';
 import ImageViewer from '@/components/viewers/ImageViewer';
 import VideoViewer from '@/components/viewers/VideoViewer';
-import CommentsSection from '@/components/comments/CommentsSection';
+import CommentsModal from '@/components/comments/CommentsModal';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 import { shareDocument, downloadFile } from '@/services/shareService';
@@ -176,9 +176,7 @@ export default function DocumentScreen() {
           <Text style={styles.footerButtonText}>Save</Text>
         </TouchableOpacity> */}
       </View>
-      {showComments && (
-        <CommentsSection documentId={document.id} onCommentsCountChange={setCommentsCount} />
-      )}
+      <CommentsModal visible={showComments} documentId={documentId!} onCommentsCountChange={setCommentsCount} onClose={() => setShowComments(false)} />
     </View>
   );
 }

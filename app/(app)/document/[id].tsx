@@ -8,7 +8,7 @@ import { Document as DocumentType } from '@/types';
 import PDFViewer from '@/components/viewers/PDFViewer';
 import ImageViewer from '@/components/viewers/ImageViewer';
 import VideoViewer from '@/components/viewers/VideoViewer';
-import CommentsSection from '@/components/comments/CommentsSection';
+import CommentsModal from '@/components/comments/CommentsModal';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 import { shareDocument, downloadFile } from '@/services/shareService';
@@ -157,7 +157,7 @@ export default function DocumentScreen() {
         </View>
       </View>
       
-      <View style={[styles.content, { backgroundColor: Colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
+  <View style={[styles.content, { backgroundColor: Colors.surface, borderRadius: 12, margin: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 }]}>
         {renderDocumentViewer()}
       </View>
       
@@ -178,16 +178,20 @@ export default function DocumentScreen() {
         </TouchableOpacity>
       </View>
       
-      {showComments && (
-        <CommentsSection documentId={document.id} onCommentsCountChange={setCommentsCount} />
-      )}
+      <CommentsModal 
+        visible={showComments}
+        documentId={document.id}
+        onCommentsCountChange={setCommentsCount}
+        onClose={() => setShowComments(false)}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+  flex: 1,
+  position: 'relative',
   },
   header: {
     flexDirection: 'row',

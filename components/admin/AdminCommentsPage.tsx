@@ -79,15 +79,15 @@ const CommentViewItem = ({
 
       {isExpanded && (
         <View style={styles.commentsSection}>
-          {documentView.comments.map((comment) => (
+          {(documentView.comments || []).map((comment) => (
             <View key={comment.id} style={styles.commentItem}>
               <View style={styles.commentHeader}>
                 <Text style={[styles.commentAuthor, { color: Colors.text }]}>
-                  {comment.author.name}
+                  {comment.author?.name || 'User'}
                 </Text>
                 <View style={styles.commentActions}>
                   <Text style={[styles.commentTime, { color: Colors.textSecondary }]}>
-                    {getTimeAgo(comment.createdAt)}
+                    {comment?.createdAt ? getTimeAgo(comment.createdAt) : ''}
                   </Text>
                   <TouchableOpacity
                     onPress={() => {

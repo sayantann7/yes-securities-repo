@@ -26,7 +26,26 @@ export const adminCommentService = {
         throw new Error(data.error || 'Failed to fetch comments');
       }
 
-      return data.documents || [];
+      const docs = Array.isArray(data.documents) ? data.documents : [];
+
+      // Normalize API response into AdminCommentView[] with Comment.text populated
+      return docs.map((doc: any) => ({
+        documentId: doc.documentId || doc.id || '',
+        documentName: doc.documentName || doc.name || 'Unknown Document',
+        comments: (doc.comments || []).map((c: any) => ({
+          id: c.id,
+          documentId: c.documentId || doc.documentId || '',
+          text: c.text ?? c.content ?? '',
+          createdAt: c.createdAt,
+          author: {
+            id: c.userId,
+            name: c.user?.fullname || 'User',
+            avatar: c.user?.avatarUrl || undefined,
+            email: c.user?.email,
+          },
+          replies: [],
+        }))
+      }));
     } catch (error: any) {
       console.error('Error fetching admin comments:', error);
       throw new Error(error.message || 'Failed to fetch comments');
@@ -54,15 +73,15 @@ export const adminCommentService = {
         throw new Error(data.error || 'Failed to fetch document comments');
       }
 
-      return data.comments.map((comment: any) => ({
+    return (data.comments || []).map((comment: any) => ({
         id: comment.id,
         documentId: comment.documentId,
         text: comment.content,
         createdAt: comment.createdAt,
         author: {
           id: comment.userId,
-          name: comment.user?.fullname || 'User',
-          avatar: comment.user?.avatarUrl || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
+      name: comment.user?.fullname || 'User',
+      avatar: comment.user?.avatarUrl || undefined,
           email: comment.user?.email
         },
         replies: []
@@ -99,7 +118,7 @@ export const adminCommentService = {
         throw new Error(data.error || 'Failed to add reply');
       }
 
-      return {
+    return {
         id: data.comment.id,
         documentId: data.comment.documentId,
         text: data.comment.content,
@@ -107,7 +126,7 @@ export const adminCommentService = {
         author: {
           id: data.comment.userId,
           name: 'Admin',
-          avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg'
+      avatar: undefined
         },
         replies: []
       };
