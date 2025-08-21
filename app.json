@@ -1,6 +1,6 @@
 {
   "expo": {
-  "name": "YSL Sales Buddy",
+    "name": "YSL Sales Buddy",
     "slug": "yes-securities-sales-repository",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,6 +11,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yes.securities",
+      "icon": "./assets/images/icon.png",
+      "appStoreIcon": "./assets/images/icon.png",
       "deploymentTarget": "13.4",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
