@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -192,25 +192,16 @@ export default function UserManagement() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState<'name' | 'timeSpent' | 'documentsViewed' | 'lastSignIn'>('name');
 
-  useEffect(() => {
-    if (user?.role !== 'admin') {
-      Alert.alert('Access Denied', 'Only administrators can access this page.');
-      return;
-    }
-    fetchUserMetrics();
-  }, [user]);
-
-  useEffect(() => {
-    applyFiltersAndSort();
-  }, [allUsers, searchQuery, filterStatus, sortBy]);
-
-  const fetchUserMetrics = async () => {
+  const fetchUserMetrics = useCallback(async (force?: boolean) => {
     try {
       setIsLoading(true);
+      if (force) {
+        adminNotificationService.invalidateUsersMetrics?.();
+      }
       const data = await adminNotificationService.getUsersMetrics();
-      setAllUsers(data.users);
-      setOverallMetrics(data.overallMetrics);
-      setSelectedUsers(new Set()); // Clear selection when refetching
+      setAllUsers(data.users || []);
+      setOverallMetrics(data.overallMetrics || null);
+      setSelectedUsers(new Set());
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch user metrics');
@@ -219,7 +210,21 @@ export default function UserManagement() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (user?.role !== 'admin') {
+      Alert.alert('Access Denied', 'Only administrators can access this page.');
+      return;
+    }
+    fetchUserMetrics();
+  }, [user, fetchUserMetrics]);
+
+  useEffect(() => {
+    applyFiltersAndSort();
+  }, [allUsers, searchQuery, filterStatus, sortBy]);
+
+  // (legacy fetchUserMetrics removed in favor of useCallback version above)
 
   const applyFiltersAndSort = () => {
     let filtered = [...allUsers];
@@ -439,7 +444,7 @@ export default function UserManagement() {
         </Text>
         <TouchableOpacity
           style={[styles.retryButton, { backgroundColor: Colors.primary }]}
-          onPress={fetchUserMetrics}
+          onPress={() => fetchUserMetrics(true)}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -452,7 +457,7 @@ export default function UserManagement() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: Colors.text }]}>User Management</Text>
-        <TouchableOpacity style={styles.refreshButton} onPress={fetchUserMetrics}>
+  <TouchableOpacity style={styles.refreshButton} onPress={() => fetchUserMetrics(true)}>
           <RefreshCw size={20} color={Colors.primary} />
         </TouchableOpacity>
       </View>

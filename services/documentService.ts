@@ -1,5 +1,6 @@
 import { Document } from '@/types';
 import { getToken } from './authService';
+import { swr, invalidateByPrefix, invalidateCache } from './cache';
 import { API_BASE_URL } from '@/constants/api';
 
 const API_URL = `${API_BASE_URL}/api`;
@@ -57,109 +58,71 @@ const getDocumentUrl = async (id: string): Promise<string> => {
 };
 
 export const getDocuments = async (folderId: string | null = null): Promise<Document[]> => {
-  try {
-    // Ensure API prefix ends with slash if a folderId is provided
-    let prefix = '';
-    if (folderId && typeof folderId === 'string' && folderId.trim() !== '') {
-      prefix = folderId.endsWith('/') ? folderId : `${folderId}/`;
-    }
-
-    // Get authentication token
-    const token = await getToken();
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    // Changed from GET to POST
-    const response = await fetch(`${API_URL}/folders`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ prefix }),
-    });
-
-    if (!response.ok) {
-      console.error('Failed to fetch documents, status:', response.status);
-      const errorText = await response.text();
-      console.error('Error response:', errorText);
-      throw new Error('Failed to fetch documents');
-    }
-
-    const data = await response.json();
-    console.log('Documents API response:', data); // For debugging
-    
-    // Transform the files from S3 into Document objects
-    const documents: Document[] = [];
-    
-    // Check if files exists and is an array - Updated for new response format
-    if (data.files && Array.isArray(data.files)) {
-      console.log(`Processing ${data.files.length} files in folder ${prefix || 'root'}`);
-      
-      for (const fileObj of data.files) {
-        // Handle new response format: { key: string, iconUrl?: string, isBookmarked?: boolean }
-        const key = fileObj.key;
-        if (!key || key.endsWith('/')) {
-          continue;
-        }
-        const keyParts = key.split('/');
-        const fileName = keyParts[keyParts.length - 1];
-        
-         try {
-           // Fetch document URL directly without circular dependency
-           const urlResponse = await fetch(`${API_URL}/files/fetch`, {
-             method: 'POST',
-             headers: {
-               'Content-Type': 'application/json',
-             },
-             body: JSON.stringify({ key }),
-           });
-          
-          if (!urlResponse.ok) {
-            console.error(`Failed to get URL for ${key}, status:`, urlResponse.status);
-            continue;
-          }
-          
-          const urlData = await urlResponse.json();
-          
-          documents.push({
-            id: key,
-            name: fileName,
-            type: getFileType(fileName),
-            size: 'Unknown', // Size is not available in the new format, could be fetched separately if needed
-            url: urlData.url,
-            createdAt: new Date().toISOString(), // Current time as fallback
-            author: 'Unknown',
-            folderId: folderId,
-            commentCount: 0,
-            iconUrl: fileObj.iconUrl, // Include the custom icon URL
-            isBookmarked: fileObj.isBookmarked || false, // Include bookmark status
-          });
-          
-          // Debug log for icon URLs
-          if (fileObj.iconUrl) {
-            console.log('🖼️ Document icon URL received:', { 
-              fileName: fileName, 
-              iconUrl: fileObj.iconUrl 
+  const cacheKey = `docs:${folderId || 'root'}`;
+  return swr<Document[]>(cacheKey, 60_000, async () => { // 60s TTL
+    try {
+      let prefix = '';
+      if (folderId && typeof folderId === 'string' && folderId.trim() !== '') {
+        prefix = folderId.endsWith('/') ? folderId : `${folderId}/`;
+      }
+      const token = await getToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const response = await fetch(`${API_URL}/folders`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ prefix }),
+      });
+      if (!response.ok) {
+        console.error('Failed to fetch documents, status:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error('Failed to fetch documents');
+      }
+      const data = await response.json();
+      const documents: Document[] = [];
+      if (data.files && Array.isArray(data.files)) {
+        for (const fileObj of data.files) {
+          const key = fileObj.key;
+          if (!key || key.endsWith('/')) continue;
+          const fileName = key.split('/').pop() || key;
+          try {
+            const urlResponse = await fetch(`${API_URL}/files/fetch`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ key }),
             });
-          }
-        } catch (err) {
-          console.error(`Error processing file ${key}:`, err);
+            if (!urlResponse.ok) continue;
+            const urlData = await urlResponse.json();
+            documents.push({
+              id: key,
+              name: fileName,
+              type: getFileType(fileName),
+              size: 'Unknown',
+              url: urlData.url,
+              createdAt: new Date().toISOString(),
+              author: 'Unknown',
+              folderId: folderId,
+              commentCount: 0,
+              iconUrl: fileObj.iconUrl,
+              isBookmarked: fileObj.isBookmarked || false,
+            });
+          } catch {}
         }
       }
-    } else {
-      console.log(`No files found in folder ${prefix || 'root'}, only folders`);
+      return documents.sort((a, b) => a.name.localeCompare(b.name));
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      throw error;
     }
-    
-    // Sort documents alphabetically by name before returning
-    return documents.sort((a, b) => a.name.localeCompare(b.name));
-  } catch (error) {
-    console.error('Error fetching documents:', error);
-    throw error;
-  }
+  });
 };
+
+// Invalidate caches when documents mutate
+export function invalidateDocumentsCache(folderId?: string) {
+  if (folderId) invalidateCache(`docs:${folderId}`);
+  else invalidateByPrefix('docs:');
+}
 
 export const getDocumentById = async (id: string): Promise<Document> => {
   try {

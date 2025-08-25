@@ -1,4 +1,5 @@
 import { Notification, InactiveUser, UserMetrics, UserOverallMetrics } from '@/types';
+import { swr, invalidateCache } from './cache';
 import { getToken } from './authService';
 import { API_BASE_URL } from '@/constants/api';
 
@@ -221,12 +222,9 @@ export const adminNotificationService = {
 
   // Get all users with comprehensive metrics (admin only)
   getUsersMetrics: async (): Promise<{ users: UserMetrics[]; overallMetrics: UserOverallMetrics }> => {
-    try {
+    return swr('users:metrics', 120_000, async () => { // 2 minute TTL
       const token = await getToken();
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
-
+      if (!token) throw new Error('Not authenticated');
       const response = await fetch(`${API_URL}/admin/users-metrics`, {
         method: 'GET',
         headers: {
@@ -234,16 +232,12 @@ export const adminNotificationService = {
           'Authorization': `Bearer ${token}`
         },
       });
-
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || 'Failed to fetch user metrics');
       }
-
       return await response.json();
-    } catch (error: any) {
-      console.error('Error fetching user metrics:', error);
-      throw new Error(error.message || 'Failed to fetch user metrics');
-    }
+    });
   },
+  invalidateUsersMetrics: () => invalidateCache('users:metrics'),
 };

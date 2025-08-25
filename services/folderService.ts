@@ -42,31 +42,53 @@ export const getFolders = async (parentId: string | null = null): Promise<Folder
       // Use Promise.all to fetch document counts concurrently
       await Promise.all(data.folders.map(async (folderObj: { key: string, iconUrl?: string, isBookmarked?: boolean }) => {
         const folderPrefix = folderObj.key;
-        
-        // Ensure folderPrefix is a valid string
+
         if (!folderPrefix || typeof folderPrefix !== 'string') {
           console.warn('Invalid folder prefix:', folderPrefix);
           return;
         }
-        
+
         const name = formatPrefix(folderPrefix);
-        // Fetch documents for the current folder to get the itemCount
-        const documents = await getDocuments(folderPrefix);
-        
+
+        // Fetch documents & subfolders concurrently for accurate item count
+        const [documents, subfolderCount] = await Promise.all([
+          getDocuments(folderPrefix),
+          (async () => {
+            try {
+              // Reuse token retrieval via getToken (avoid passing auth header if not needed inside API)
+              const token = await getToken();
+              const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+              if (token) headers['Authorization'] = `Bearer ${token}`;
+              const r = await fetch(`${API_URL}/folders`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ prefix: folderPrefix })
+              });
+              if (!r.ok) return 0;
+              const d = await r.json();
+              if (d && Array.isArray(d.folders)) return d.folders.length;
+              return 0;
+            } catch {
+              return 0;
+            }
+          })()
+        ]);
+
+        const totalItems = documents.length + subfolderCount;
+
         folders.push({
-          id: folderPrefix, 
-          name: name,
+          id: folderPrefix,
+          name,
           parentId: parentId,
-          createdAt: new Date().toISOString(),
-          itemCount: documents.length,
-          iconUrl: folderObj.iconUrl, // Include the custom icon URL
-          isBookmarked: folderObj.isBookmarked || false, // Include bookmark status
+            createdAt: new Date().toISOString(),
+          itemCount: totalItems, // files + immediate subfolders
+          iconUrl: folderObj.iconUrl,
+          isBookmarked: folderObj.isBookmarked || false,
         });
-        
-        // Debug log for icon URLs
+
         if (folderObj.iconUrl) {
-          console.log('🖼️ Folder icon URL received:', { 
-            folderName: name, 
+          console.log('🖼️ Folder icon URL received:', {
+            folderName: name,
             iconUrl: folderObj.iconUrl,
             isSignedUrl: folderObj.iconUrl.includes('X-Amz-'),
             urlDomain: new URL(folderObj.iconUrl).hostname
@@ -109,8 +131,23 @@ export const getFolderData = async (folderId: string | null = null): Promise<Fol
 
     // Use formatPrefix to get the folder name
     const name = formatPrefix(prefix);
-    // Fetch documents for the current folder to get the itemCount
-    const documents = await getDocuments(prefix);
+    // Fetch documents & subfolders concurrently for accurate item count
+    const [documents, subfolderCount] = await Promise.all([
+      getDocuments(prefix),
+      (async () => {
+        try {
+          const r = await fetch(`${API_URL}/folders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prefix })
+          });
+          if (!r.ok) return 0;
+          const d = await r.json();
+          if (d && Array.isArray(d.folders)) return d.folders.length;
+          return 0;
+        } catch { return 0; }
+      })()
+    ]);
 
     // parentId is the input folderId's parent, which is not available here, so set as null or as needed
     return {
@@ -118,7 +155,7 @@ export const getFolderData = async (folderId: string | null = null): Promise<Fol
       name: name,
       parentId: null, // Or determine the parentId if possible/needed
       createdAt: new Date().toISOString(),
-      itemCount: documents.length // Set itemCount to the number of documents
+  itemCount: documents.length + subfolderCount // files + immediate subfolders
     };
 
   } catch (error) {
