@@ -363,7 +363,10 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
               renderItem={({ item }) => (
                 <FolderItem folder={item} onPress={() => setCurrentFolderId(item.id)} />
               )}
-              scrollEnabled={false}
+              style={{ maxHeight: 220 }}
+              nestedScrollEnabled
+              scrollEnabled
+              showsVerticalScrollIndicator={false}
             />
           ) : (
             <Text style={[styles.emptyText, { color: Colors.textSecondary }]}>No folders</Text>
@@ -379,6 +382,9 @@ export default function UploadFileModal({ visible, onClose }: UploadFileModalPro
               renderItem={({ item }) => (
                 <DocumentItem document={item} viewMode="list" />
               )}
+              style={{ maxHeight: 260, marginBottom: 8 }}
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={false}
             />
           ) : (
             <Text style={[styles.emptyText, { color: Colors.textSecondary }]}>No documents</Text>
