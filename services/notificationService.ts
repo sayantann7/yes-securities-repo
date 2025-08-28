@@ -221,23 +221,28 @@ export const adminNotificationService = {
   },
 
   // Get all users with comprehensive metrics (admin only)
-  getUsersMetrics: async (): Promise<{ users: UserMetrics[]; overallMetrics: UserOverallMetrics }> => {
-    return swr('users:metrics', 120_000, async () => { // 2 minute TTL
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      const response = await fetch(`${API_URL}/admin/users-metrics`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to fetch user metrics');
+  getUsersMetricsPage: async (params?: { cursor?: string; limit?: number; q?: string; sort?: string; order?: 'asc'|'desc'; activity?: string; includeOverall?: boolean }): Promise<{ users: UserMetrics[]; pageInfo: { nextCursor: string|null; hasNextPage: boolean; count: number }; overallMetrics?: UserOverallMetrics | null }> => {
+    const token = await getToken();
+    if (!token) throw new Error('Not authenticated');
+    const searchParams = new URLSearchParams();
+    if (params?.cursor) searchParams.set('cursor', params.cursor);
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.q) searchParams.set('q', params.q);
+    if (params?.sort) searchParams.set('sort', params.sort);
+    if (params?.order) searchParams.set('order', params.order);
+    if (params?.activity) searchParams.set('activity', params.activity);
+    if (params?.includeOverall) searchParams.set('includeOverall', '1');
+    const url = `${API_URL}/admin/users-metrics${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       }
-      return await response.json();
     });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Failed to fetch users metrics page');
+    return data;
   },
-  invalidateUsersMetrics: () => invalidateCache('users:metrics'),
+  invalidateUsersMetrics: () => invalidateCache('users:metrics'), // retained for legacy compatibility
 };

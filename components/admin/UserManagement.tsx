@@ -101,7 +101,7 @@ const UserItem = ({ user, isSelected, onToggleSelect }: UserItemProps) => {
           </Text>
           <View style={styles.userRole}>
             <Text style={[styles.roleText, { color: Colors.primary }]}>
-              {user.role.toUpperCase()}
+              {(user.role ? user.role : 'user').toUpperCase()}
             </Text>
           </View>
         </View>
@@ -180,99 +180,176 @@ const MetricCard = ({ title, value, subtitle, icon, color }: {
 
 export default function UserManagement() {
   const { user } = useAuth();
-  const [allUsers, setAllUsers] = useState<UserMetrics[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<UserMetrics[]>([]);
+  // Separate immediate input (searchInput) from committed query (searchQuery) used for fetching.
+  const SEARCH_INACTIVITY_DELAY = 3000; // ms after last keystroke before committing
+  const MIN_SEARCH_CHARS = 2; // don't fire queries for 1 char unless cleared
+  const [users, setUsers] = useState<UserMetrics[]>([]); // accumulated users (capped)
   const [overallMetrics, setOverallMetrics] = useState<UserOverallMetrics | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportCancelled, setExportCancelled] = useState(false);
+  const [userHasScrolled, setUserHasScrolled] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [prevCursors, setPrevCursors] = useState<string[]>([]); // stack of previous page starting ids
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 20;
+  // Server-driven filters
   const [pingMessage, setPingMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); // committed value that triggers fetch
+  const [searchInput, setSearchInput] = useState(''); // live text input
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState<'name' | 'timeSpent' | 'documentsViewed' | 'lastSignIn'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc'|'desc'>('asc');
 
-  const fetchUserMetrics = useCallback(async (force?: boolean) => {
+  // Map UI sort to backend sort field + order
+  const buildSortParams = () => {
+    switch (sortBy) {
+      case 'name':
+        return { sort: 'fullname', order: sortOrder };
+      case 'timeSpent':
+        return { sort: 'timeSpent', order: 'desc' as const };
+      case 'documentsViewed':
+        return { sort: 'documentsViewed', order: 'desc' as const };
+      case 'lastSignIn':
+        return { sort: 'lastSignIn', order: 'desc' as const };
+      default:
+        return { sort: 'createdAt', order: 'desc' as const };
+    }
+  };
+
+  const fetchFirstPage = useCallback(async (force?: boolean) => {
     try {
       setIsLoading(true);
-      if (force) {
-        adminNotificationService.invalidateUsersMetrics?.();
-      }
-      const data = await adminNotificationService.getUsersMetrics();
-      setAllUsers(data.users || []);
+      if (force) adminNotificationService.invalidateUsersMetrics?.();
+    const { sort, order } = buildSortParams();
+    const activity = filterStatus === 'all' ? undefined : filterStatus; // backend uses 'active'|'inactive'
+  const data = await adminNotificationService.getUsersMetricsPage({ limit: PAGE_SIZE, includeOverall: true, q: searchQuery || undefined, sort, order, activity });
+  setUsers(data.users || []);
       setOverallMetrics(data.overallMetrics || null);
+      setNextCursor(data.pageInfo?.nextCursor || null);
+      setPrevCursors([]);
+      setCurrentPage(1);
       setSelectedUsers(new Set());
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch user metrics');
-      setAllUsers([]);
+  setUsers([]);
       setOverallMetrics(null);
+      setNextCursor(null);
+      setPrevCursors([]);
+      setCurrentPage(1);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [searchQuery, filterStatus, sortBy, sortOrder]);
+
+  const fetchNextPage = useCallback(async () => {
+    if (!nextCursor || isLoadingMore) return;
+    try {
+      setIsLoadingMore(true);
+      const { sort, order } = buildSortParams();
+      const activity = filterStatus === 'all' ? undefined : filterStatus;
+      const data = await adminNotificationService.getUsersMetricsPage({ cursor: nextCursor, limit: PAGE_SIZE, q: searchQuery || undefined, sort, order, activity });
+      // push previous window start id onto stack (we use first user id of current page)
+      if (users[0]?.id) setPrevCursors(prev => [...prev, users[0].id]);
+      setUsers(data.users || []);
+      setNextCursor(data.pageInfo?.nextCursor || null);
+      setSelectedUsers(new Set());
+      setCurrentPage(p => p + 1);
+    } catch (err) {
+      console.error('Load next page failed', err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [nextCursor, isLoadingMore, searchQuery, filterStatus, sortBy, sortOrder, users]);
+
+  const fetchPrevPage = useCallback(async () => {
+    if (prevCursors.length === 0 || isLoadingMore) return;
+    try {
+      setIsLoadingMore(true);
+      const { sort, order } = buildSortParams();
+      const activity = filterStatus === 'all' ? undefined : filterStatus;
+      // We need to refetch from the beginning building forward until reaching desired cursor predecessor.
+      // Simpler: request a fresh first page then iterate using stored stack excluding last to reconstruct.
+      const chain = [...prevCursors];
+      const targetStack = chain.slice(0, -1); // after popping one
+      let cursor: string | undefined = undefined;
+      let pageUsers: UserMetrics[] = [];
+      let next: string | null = null;
+      // Rebuild pages until we reach last remaining stack top
+      const rebuild = async () => {
+        const resp = await adminNotificationService.getUsersMetricsPage({ cursor, limit: PAGE_SIZE, q: searchQuery || undefined, sort, order, activity });
+        pageUsers = resp.users || [];
+        next = resp.pageInfo?.nextCursor || null;
+        if (!cursor && pageUsers.length) {
+          // initial page already good if stack empty
+          return;
+        }
+      };
+      // Start from scratch
+      const firstResp = await adminNotificationService.getUsersMetricsPage({ limit: PAGE_SIZE, includeOverall: true, q: searchQuery || undefined, sort, order, activity });
+      let rebuiltUsers = firstResp.users || [];
+      let rebuiltNext = firstResp.pageInfo?.nextCursor || null;
+      const stackToRebuild = targetStack; // ids of starting pages except current
+      let index = 0;
+      let lastStartId = rebuiltUsers[0]?.id;
+      while (index < stackToRebuild.length && rebuiltNext) {
+        const resp = await adminNotificationService.getUsersMetricsPage({ cursor: rebuiltNext, limit: PAGE_SIZE, q: searchQuery || undefined, sort, order, activity });
+        // push previous start id to mimic progression
+        lastStartId = resp.users?.[0]?.id;
+        rebuiltUsers = resp.users || [];
+        rebuiltNext = resp.pageInfo?.nextCursor || null;
+        index++;
+      }
+      setUsers(rebuiltUsers);
+      setNextCursor(rebuiltNext);
+      setPrevCursors(prev => prev.slice(0, -1));
+      setCurrentPage(p => Math.max(1, p - 1));
+      setSelectedUsers(new Set());
+    } catch (err) {
+      console.error('Load previous page failed', err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [prevCursors, isLoadingMore, searchQuery, filterStatus, sortBy, sortOrder]);
 
   useEffect(() => {
     if (user?.role !== 'admin') {
       Alert.alert('Access Denied', 'Only administrators can access this page.');
       return;
     }
-    fetchUserMetrics();
-  }, [user, fetchUserMetrics]);
+    fetchFirstPage();
+  }, [user, fetchFirstPage]);
 
+  // Commit searchInput -> searchQuery after user stops typing.
   useEffect(() => {
-    applyFiltersAndSort();
-  }, [allUsers, searchQuery, filterStatus, sortBy]);
-
-  // (legacy fetchUserMetrics removed in favor of useCallback version above)
-
-  const applyFiltersAndSort = () => {
-    let filtered = [...allUsers];
-
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(user => 
-        user.fullname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Active = has logged in at least once AND inactive days <= 7
-    const isActive = (u: UserMetrics) => (u.numberOfSignIns || 0) > 0 && (u.daysInactive ?? Infinity) <= 7;
-    const isInactive = (u: UserMetrics) => (u.numberOfSignIns || 0) === 0 || (u.daysInactive ?? Infinity) > 7;
-
-    // Apply status filter
-    if (filterStatus === 'active') {
-      filtered = filtered.filter(isActive);
-    } else if (filterStatus === 'inactive') {
-      filtered = filtered.filter(isInactive);
-    }
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'name':
-          return a.fullname.localeCompare(b.fullname);
-        case 'timeSpent':
-          return b.timeSpent - a.timeSpent;
-        case 'documentsViewed':
-          return b.documentsViewed - a.documentsViewed;
-        case 'lastSignIn':
-          if (a.lastSignIn === 'Never' && b.lastSignIn === 'Never') return 0;
-          if (a.lastSignIn === 'Never') return 1;
-          if (b.lastSignIn === 'Never') return -1;
-          if (!a.lastSignIn || !b.lastSignIn) return 0;
-          return new Date(b.lastSignIn).getTime() - new Date(a.lastSignIn).getTime();
-        default:
-          return 0;
+    if (user?.role !== 'admin') return;
+    const id = setTimeout(() => {
+      if (searchInput === searchQuery) return;
+      if (searchInput.length === 0 || searchInput.length >= MIN_SEARCH_CHARS) {
+        setSearchQuery(searchInput);
       }
-    });
+    }, SEARCH_INACTIVITY_DELAY);
+    return () => clearTimeout(id);
+  }, [searchInput, searchQuery, user]);
 
-    setFilteredUsers(filtered);
-  };
+  // Fetch when committed query / filters change (tiny delay to batch rapid programmatic updates)
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      const id = setTimeout(() => fetchFirstPage(), 80);
+      return () => clearTimeout(id);
+    }
+  }, [searchQuery, filterStatus, sortBy, sortOrder, fetchFirstPage, user]);
+
+  // applyFiltersAndSort removed - now server side
 
   const handleToggleUser = (userId: string) => {
-    setSelectedUsers(prev => {
+  setSelectedUsers(prev => {
       const newSet = new Set(prev);
       if (newSet.has(userId)) {
         newSet.delete(userId);
@@ -284,10 +361,10 @@ export default function UserManagement() {
   };
 
   const handleSelectAll = () => {
-    if (selectedUsers.size === filteredUsers.length) {
+    if (selectedUsers.size === users.length) {
       setSelectedUsers(new Set());
     } else {
-      setSelectedUsers(new Set(filteredUsers.map(user => user.id)));
+      setSelectedUsers(new Set(users.map((user: UserMetrics) => user.id)));
     }
   };
 
@@ -330,26 +407,80 @@ export default function UserManagement() {
     );
   };
 
-  const exportToExcel = async (exportType: 'all' | 'selected' | 'inactive') => {
+  // Fetch all pages for export (optionally filter by activity) without altering on-screen list
+  const fetchAllUsersForExport = async (activity?: 'active' | 'inactive'): Promise<UserMetrics[]> => {
+    const aggregated: UserMetrics[] = [];
+    let cursor: string | null | undefined = undefined;
+    let first = true;
+    setExportProgress(0);
+    setExportCancelled(false);
+    const targetTotal = activity === 'active'
+      ? overallMetrics?.activeUsers
+      : activity === 'inactive'
+        ? overallMetrics?.inactiveUsers
+        : overallMetrics?.totalUsers;
+    try {
+      do {
+        if (exportCancelled) break;
+        const { sort, order } = buildSortParams();
+        const page = await adminNotificationService.getUsersMetricsPage({
+          cursor: cursor || undefined,
+          limit: 200,
+          includeOverall: first,
+          activity,
+          sort,
+          order
+        });
+        if (Array.isArray(page.users)) aggregated.push(...page.users);
+        cursor = page.pageInfo?.nextCursor;
+        first = false;
+        if (targetTotal && targetTotal > 0) {
+          const pct = Math.min(100, Math.round((aggregated.length / targetTotal) * 100));
+          setExportProgress(pct);
+        }
+      } while (cursor);
+    } catch (e) {
+      console.error('Full export fetch failed', e);
+    }
+    return aggregated;
+  };
+
+  const exportToExcel = async (exportType: 'all' | 'selected' | 'inactive' | 'active') => {
     let dataToExport: UserMetrics[] = [];
     let filename = '';
 
     switch (exportType) {
       case 'all':
-        dataToExport = allUsers;
+        if (overallMetrics && users.length < overallMetrics.totalUsers) {
+          setIsExporting(true);
+          dataToExport = await fetchAllUsersForExport();
+          setIsExporting(false);
+          if (exportCancelled) return;
+        } else {
+          dataToExport = users;
+        }
         filename = 'all_users_metrics.xlsx';
+        break;
+      case 'active':
+        setIsExporting(true);
+        dataToExport = await fetchAllUsersForExport('active');
+        setIsExporting(false);
+        if (exportCancelled) return;
+        filename = 'active_users_metrics.xlsx';
         break;
       case 'selected':
         if (selectedUsers.size === 0) {
           Alert.alert('No Users Selected', 'Please select users to export.');
           return;
         }
-        dataToExport = allUsers.filter(user => selectedUsers.has(user.id));
+  dataToExport = users.filter((user: UserMetrics) => selectedUsers.has(user.id));
         filename = 'selected_users_metrics.xlsx';
         break;
       case 'inactive':
-        // Align with app logic: Inactive = never signed in OR inactive > 7 days
-        dataToExport = allUsers.filter(u => (u.numberOfSignIns || 0) === 0 || (u.daysInactive ?? Infinity) > 7);
+        setIsExporting(true);
+        dataToExport = await fetchAllUsersForExport('inactive');
+        setIsExporting(false);
+        if (exportCancelled) return;
         filename = 'inactive_users_metrics.xlsx';
         break;
     }
@@ -363,7 +494,7 @@ export default function UserManagement() {
     const excelData = dataToExport.map(user => ({
       'Full Name': user.fullname,
       'Email': user.email,
-      'Role': user.role,
+  'Role': user.role || 'user',
       'Time Spent (minutes)': user.timeSpent,
       'Documents Viewed': user.documentsViewed,
       'Total Sign-ins': user.numberOfSignIns,
@@ -444,7 +575,7 @@ export default function UserManagement() {
         </Text>
         <TouchableOpacity
           style={[styles.retryButton, { backgroundColor: Colors.primary }]}
-          onPress={() => fetchUserMetrics(true)}
+          onPress={() => fetchFirstPage(true)}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -457,7 +588,7 @@ export default function UserManagement() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: Colors.text }]}>User Management</Text>
-  <TouchableOpacity style={styles.refreshButton} onPress={() => fetchUserMetrics(true)}>
+  <TouchableOpacity style={styles.refreshButton} onPress={() => fetchFirstPage(true)}>
           <RefreshCw size={20} color={Colors.primary} />
         </TouchableOpacity>
       </View>
@@ -527,8 +658,15 @@ export default function UserManagement() {
               style={[styles.searchInput, { color: Colors.text }]}
               placeholder="Search users..."
               placeholderTextColor={Colors.textSecondary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
+              value={searchInput}
+              onChangeText={setSearchInput}
+              autoCapitalize='none'
+              autoCorrect={false}
+              onSubmitEditing={() => {
+                if (searchInput !== searchQuery) {
+                  setSearchQuery(searchInput);
+                }
+              }}
             />
           </View>
 
@@ -544,7 +682,7 @@ export default function UserManagement() {
                 styles.filterButtonText,
                 { color: filterStatus === 'all' ? 'white' : Colors.textSecondary }
               ]}>
-                All ({allUsers.length})
+                Window (20)
               </Text>
             </TouchableOpacity>
 
@@ -559,7 +697,7 @@ export default function UserManagement() {
                 styles.filterButtonText,
                 { color: filterStatus === 'active' ? 'white' : Colors.textSecondary }
               ]}>
-                Active ({allUsers.filter(u => (u.numberOfSignIns || 0) > 0 && (u.daysInactive ?? Infinity) <= 7).length})
+                Active (page)
               </Text>
             </TouchableOpacity>
 
@@ -574,7 +712,7 @@ export default function UserManagement() {
                 styles.filterButtonText,
                 { color: filterStatus === 'inactive' ? 'white' : Colors.textSecondary }
               ]}>
-                Inactive ({allUsers.filter(u => (u.numberOfSignIns || 0) === 0 || (u.daysInactive ?? Infinity) > 7).length})
+                Inactive (page)
               </Text>
             </TouchableOpacity>
           </ScrollView>
@@ -610,48 +748,68 @@ export default function UserManagement() {
           <Text style={[styles.sectionTitle, { color: Colors.text }]}>Export Options</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.exportButtons}>
             <TouchableOpacity
-              style={[styles.exportButton, { backgroundColor: Colors.primary }]}
+              style={[styles.exportButton, { backgroundColor: Colors.primary, opacity: isExporting ? 0.6 : 1 }]}
               onPress={() => exportToExcel('all').catch(err => console.error('Export error:', err))}
+              disabled={isExporting}
             >
               <Download size={16} color="white" />
               <Text style={styles.exportButtonText}>All Users</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.exportButton, { backgroundColor: '#34A853' }]}
+              style={[styles.exportButton, { backgroundColor: '#1976D2', opacity: isExporting ? 0.6 : 1 }]}
+              onPress={() => exportToExcel('active').catch(err => console.error('Export error:', err))}
+              disabled={isExporting}
+            >
+              <Download size={16} color="white" />
+              <Text style={styles.exportButtonText}>Active Users</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.exportButton, { backgroundColor: '#34A853', opacity: (selectedUsers.size === 0 || isExporting) ? 0.6 : 1 }]}
               onPress={() => exportToExcel('selected').catch(err => console.error('Export error:', err))}
-              disabled={selectedUsers.size === 0}
+              disabled={selectedUsers.size === 0 || isExporting}
             >
               <Download size={16} color="white" />
               <Text style={styles.exportButtonText}>Selected ({selectedUsers.size})</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.exportButton, { backgroundColor: '#EA4335' }]}
+              style={[styles.exportButton, { backgroundColor: '#EA4335', opacity: isExporting ? 0.6 : 1 }]}
               onPress={() => exportToExcel('inactive').catch(err => console.error('Export error:', err))}
+              disabled={isExporting}
             >
               <Download size={16} color="white" />
               <Text style={styles.exportButtonText}>Inactive Users</Text>
             </TouchableOpacity>
           </ScrollView>
+          {isExporting && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 12 }}>
+              <ActivityIndicator color={Colors.primary} />
+              <Text style={{ color: Colors.textSecondary }}>Exporting... {exportProgress}%</Text>
+              <TouchableOpacity onPress={() => setExportCancelled(true)} style={{ padding: 6 }}>
+                <Text style={{ color: Colors.error }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Selection Header */}
-        {filteredUsers.length > 0 && (
+  {users.length > 0 && (
           <View style={styles.selectionHeader}>
             <TouchableOpacity style={styles.selectAllButton} onPress={handleSelectAll}>
               <Text style={[styles.selectAllText, { color: Colors.primary }]}>
-                {selectedUsers.size === filteredUsers.length ? 'Deselect All' : 'Select All'}
+                {selectedUsers.size === users.length ? 'Deselect All' : 'Select All'}
               </Text>
             </TouchableOpacity>
             <Text style={[styles.selectedCount, { color: Colors.textSecondary }]}>
-              {selectedUsers.size} of {filteredUsers.length} selected
+              {selectedUsers.size} of {users.length} selected
             </Text>
           </View>
         )}
 
         {/* Users List */}
-        {filteredUsers.length === 0 ? (
+  {users.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Users size={48} color={Colors.textSecondary} />
             <Text style={[styles.emptyText, { color: Colors.textSecondary }]}>
@@ -665,7 +823,7 @@ export default function UserManagement() {
           </View>
         ) : (
           <FlatList
-            data={filteredUsers}
+            data={users}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <UserItem
@@ -677,7 +835,31 @@ export default function UserManagement() {
             style={styles.usersList}
             contentContainerStyle={styles.usersContent}
             showsVerticalScrollIndicator={false}
-            scrollEnabled={false}
+            ListFooterComponent={() => (
+              <View style={{ paddingVertical: 16 }}>
+                {(isLoadingMore || isExporting) && <ActivityIndicator color={Colors.primary} />}
+                {/* Pagination Controls */}
+                {!isLoadingMore && !isExporting && (
+                  <View style={styles.paginationBar}>
+                    <TouchableOpacity
+                      style={[styles.pageButton, prevCursors.length === 0 && styles.pageButtonDisabled]}
+                      disabled={prevCursors.length === 0 || isLoadingMore}
+                      onPress={fetchPrevPage}
+                    >
+                      <Text style={styles.pageButtonText}>Prev</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.pageIndicator}>Page {currentPage}</Text>
+                    <TouchableOpacity
+                      style={[styles.pageButton, !nextCursor && styles.pageButtonDisabled]}
+                      disabled={!nextCursor || isLoadingMore}
+                      onPress={fetchNextPage}
+                    >
+                      <Text style={styles.pageButtonText}>Next</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
           />
         )}
 
@@ -1041,5 +1223,33 @@ const styles = StyleSheet.create({
   accessDeniedText: {
     fontSize: 18,
     fontWeight: '500',
+  },
+  paginationBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    paddingTop: 8,
+  },
+  pageButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  pageButtonDisabled: {
+    backgroundColor: '#9E9E9E',
+  },
+  pageButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  pageIndicator: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.textSecondary,
+    minWidth: 80,
+    textAlign: 'center',
   },
 });
