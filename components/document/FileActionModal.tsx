@@ -9,9 +9,11 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { X, Edit2, Trash2, Bookmark, BookmarkCheck } from 'lucide-react-native';
+import { X, Edit2, Trash2, Bookmark, BookmarkCheck, Image as ImageIcon } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
+import * as DocumentPicker from 'expo-document-picker';
+import { uploadCustomIcon } from '@/services/folderService';
 
 interface FileActionModalProps {
   visible: boolean;
@@ -40,6 +42,7 @@ export default function FileActionModal({
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(itemName);
   const [isLoading, setIsLoading] = useState(false);
+  const [changingIcon, setChangingIcon] = useState(false);
 
   const handleRename = () => {
     setNewName(itemName);
@@ -99,6 +102,31 @@ export default function FileActionModal({
       setIsRenaming(false);
     } else {
       onClose();
+    }
+  };
+
+  const handleChangeIcon = async () => {
+    if (itemType !== 'folder') return; // only folders for now
+    try {
+      setChangingIcon(true);
+      const result = await DocumentPicker.getDocumentAsync({ type: ['image/*'], multiple: false, copyToCacheDirectory: true });
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        setChangingIcon(false);
+        return;
+      }
+      const asset = result.assets[0];
+      if (!asset.uri) {
+        setChangingIcon(false);
+        return;
+      }
+      await uploadCustomIcon(itemId.endsWith('/') ? itemId : `${itemId}/`, asset.uri);
+      Alert.alert('Success', 'Folder icon updated');
+      onClose();
+    } catch (e:any) {
+      console.error('Error changing icon:', e);
+      Alert.alert('Error', e?.message || 'Failed to update icon');
+    } finally {
+      setChangingIcon(false);
     }
   };
 
@@ -178,6 +206,7 @@ export default function FileActionModal({
 
               {user?.role === 'admin' && (
                 <>
+                  {/* Icon is add-only now; hiding change icon action if an icon might already exist. */}
                   <TouchableOpacity
                     style={styles.actionItem}
                     onPress={handleRename}

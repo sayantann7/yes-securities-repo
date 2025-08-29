@@ -261,6 +261,9 @@ export const uploadCustomIcon = async (itemPath: string, iconUri: string): Promi
     });
     
     if (!response.ok) {
+      if (response.status === 409) {
+        throw new Error('Icon already exists');
+      }
       const errorText = await response.text();
       console.error('❌ Failed to get upload URL:', response.status, errorText);
       throw new Error(`Failed to get upload URL: ${response.status} ${errorText}`);
