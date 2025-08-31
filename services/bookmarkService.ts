@@ -21,24 +21,31 @@ export const toggleBookmark = async (itemId: string, itemType: 'document' | 'fol
     console.log('📋 Item is currently bookmarked:', isBookmarked);
     
     if (isBookmarked) {
-      // Remove bookmark
+      // Remove bookmark with variant handling (leading slash inconsistencies)
       console.log('🗑️ Removing bookmark...');
-      const response = await fetch(`${API_URL}/bookmark/bookmarks/${encodeURIComponent(itemId)}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log('📡 Remove bookmark response status:', response.status);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Remove bookmark failed:', errorText);
+      const variants = Array.from(new Set([
+        itemId,
+        itemId.replace(/^\/+/, ''),
+        '/' + itemId.replace(/^\/+/, ''),
+        (() => { try { return decodeURIComponent(itemId); } catch { return itemId; } })()
+      ]));
+      let removed = false; let lastStatus: number | undefined; let lastBody: string | undefined;
+      for (const v of variants) {
+        const resp = await fetch(`${API_URL}/bookmark/bookmarks/${encodeURIComponent(v)}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        });
+        lastStatus = resp.status;
+        if (resp.ok) { removed = true; break; }
+        if (resp.status === 404) continue; // try next variant
+        lastBody = await resp.text();
+        break; // non-404 error
+      }
+      if (!removed) {
+        console.error('❌ Remove bookmark failed after variants:', { variants, lastStatus, lastBody });
         throw new Error('Failed to remove bookmark');
       }
-
-      console.log('✅ Bookmark removed successfully');
+      console.log('✅ Bookmark removed successfully (variant-aware)');
       return { isBookmarked: false };
     } else {
       // Add bookmark

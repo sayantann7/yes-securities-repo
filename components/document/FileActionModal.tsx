@@ -22,6 +22,7 @@ interface FileActionModalProps {
   itemType: 'folder' | 'file';
   itemId: string;
   isBookmarked?: boolean;
+  iconUrl?: string; // optional current icon to control Add Icon visibility
   onRename: (newName: string) => Promise<void>;
   onDelete: () => Promise<void>;
   onBookmark: () => Promise<void>;
@@ -34,6 +35,7 @@ export default function FileActionModal({
   itemType,
   itemId,
   isBookmarked = false,
+  iconUrl,
   onRename,
   onDelete,
   onBookmark,
@@ -206,7 +208,18 @@ export default function FileActionModal({
 
               {user?.role === 'admin' && (
                 <>
-                  {/* Icon is add-only now; hiding change icon action if an icon might already exist. */}
+                  {itemType === 'folder' && !iconUrl && (
+                    <TouchableOpacity
+                      style={styles.actionItem}
+                      onPress={handleChangeIcon}
+                      disabled={isLoading || changingIcon}
+                    >
+                      <ImageIcon size={20} color={Colors.primary} />
+                      <Text style={[styles.actionText, { color: Colors.text }]}>
+                        {changingIcon ? 'Uploading icon...' : 'Add icon'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity
                     style={styles.actionItem}
                     onPress={handleRename}

@@ -269,7 +269,7 @@ export const uploadCustomIcon = async (itemPath: string, iconUri: string): Promi
       throw new Error(`Failed to get upload URL: ${response.status} ${errorText}`);
     }
     
-    const { uploadUrl } = await response.json();
+  const { uploadUrl } = await response.json();
     console.log('✅ Received upload URL:', uploadUrl);
     
     // Upload the icon
@@ -292,28 +292,27 @@ export const uploadCustomIcon = async (itemPath: string, iconUri: string): Promi
     // Wait a moment for S3 to process the upload
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // After successful upload, get the view URL
-    const encodedPath = encodeURIComponent(itemPath);
-    console.log('🔍 Retrieving icon URL for path:', encodedPath);
-    
-    const iconHeaders: Record<string, string> = {};
-    if (token) {
-      iconHeaders['Authorization'] = `Bearer ${token}`;
-    }
-    
-    const iconResponse = await fetch(`${API_URL}/icons/${encodedPath}`, {
-      headers: iconHeaders
+    // After successful upload, refresh icon cache server-side to bypass any cached null
+    console.log('� Requesting icon cache refresh...');
+    const refreshHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) refreshHeaders['Authorization'] = `Bearer ${token}`;
+    const refreshResp = await fetch(`${API_URL}/icons/refresh`, {
+      method: 'POST',
+      headers: refreshHeaders,
+      body: JSON.stringify({ itemPath })
     });
-    
-    if (!iconResponse.ok) {
-      const iconError = await iconResponse.text();
-      console.error('❌ Failed to get icon URL after upload:', iconResponse.status, iconError);
-      throw new Error(`Failed to get icon URL after upload: ${iconResponse.status} ${iconError}`);
+    if (!refreshResp.ok) {
+      const refreshErr = await refreshResp.text();
+      console.error('❌ Icon refresh failed:', refreshResp.status, refreshErr);
+      throw new Error(`Failed to refresh icon cache: ${refreshResp.status} ${refreshErr}`);
     }
-    
-    const { iconUrl } = await iconResponse.json();
-    console.log('✅ Icon uploaded and URL retrieved:', iconUrl);
-    return iconUrl;
+    const refreshData = await refreshResp.json();
+    if (!refreshData.iconUrl) {
+      console.error('❌ Icon still not available after refresh attempts:', refreshData.attempts);
+      throw new Error('Icon not yet available');
+    }
+    console.log('✅ Icon available after refresh:', refreshData.iconUrl);
+    return refreshData.iconUrl;
   } catch (error) {
     console.error('💥 Error uploading custom icon:', error);
     throw error;
