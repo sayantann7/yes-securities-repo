@@ -11,9 +11,11 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import { BookmarkCheck, Folder as FolderIcon, FileText, Trash2, Grid, List, RefreshCw } from 'lucide-react-native';
 import { Colors } from '@/constants/Colors';
-import { Bookmark } from '@/types';
+import { Bookmark, Notification } from '@/types';
 import { getBookmarks, removeBookmark } from '@/services/bookmarkService';
 import { useAuth } from '@/context/AuthContext';
+import { useNotifications } from '@/hooks/useNotifications';
+import { Bell, CheckCircle2 } from 'lucide-react-native';
 
 interface BookmarkItemProps {
   bookmark: Bookmark;
@@ -96,6 +98,7 @@ export default function BookmarksScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading: notifLoading, refresh: refreshNotifications } = useNotifications();
 
   const fetchBookmarks = async () => {
     try {
@@ -191,32 +194,72 @@ export default function BookmarksScreen() {
         </View>
       </View>
 
-      {/* Bookmarks List */}
-      <View style={styles.content}>
-        {bookmarks.length === 0 && !isLoading ? (
-          renderEmptyState()
-        ) : (
-          <FlatList
-            data={bookmarks}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <BookmarkItem
-                bookmark={item}
-                onPress={() => handleBookmarkPress(item)}
-                onRemove={() => handleRemoveBookmark(item.itemId)}
-                viewMode={viewMode}
+      <FlatList
+        ListHeaderComponent={
+          <View style={styles.content}>
+            {bookmarks.length === 0 && !isLoading ? (
+              renderEmptyState()
+            ) : (
+              <FlatList
+                data={bookmarks}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <BookmarkItem
+                    bookmark={item}
+                    onPress={() => handleBookmarkPress(item)}
+                    onRemove={() => handleRemoveBookmark(item.itemId)}
+                    viewMode={viewMode}
+                  />
+                )}
+                refreshControl={
+                  <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }
+                numColumns={viewMode === 'grid' ? 2 : 1}
+                key={viewMode}
+                contentContainerStyle={viewMode === 'grid' ? styles.gridContainer : undefined}
+                scrollEnabled={false}
               />
             )}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-            numColumns={viewMode === 'grid' ? 2 : 1}
-            key={viewMode} // Force re-render when view mode changes
-            contentContainerStyle={viewMode === 'grid' ? styles.gridContainer : undefined}
-            showsVerticalScrollIndicator={false}
-          />
-        )}
-      </View>
+            {user && user.role !== 'admin' && (
+              <View style={styles.notificationsSection}>
+                <View style={styles.notificationsHeaderRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Bell size={20} color={Colors.primary} style={{ marginRight: 6 }} />
+                    <Text style={[styles.notificationsTitle, { color: Colors.primary }]}>Notifications</Text>
+                    {unreadCount > 0 && <View style={styles.unreadBadge}><Text style={styles.unreadBadgeText}>{unreadCount}</Text></View>}
+                  </View>
+                  {unreadCount > 0 && (
+                    <TouchableOpacity onPress={markAllAsRead} style={styles.markAllNotifBtn}>
+                      <CheckCircle2 size={16} color={Colors.primary} />
+                      <Text style={styles.markAllNotifText}>Mark all</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                {notifLoading ? (
+                  <View style={styles.notifLoading}><Text style={{ color: Colors.textSecondary }}>Loading...</Text></View>
+                ) : notifications.length === 0 ? (
+                  <Text style={{ color: Colors.textSecondary, fontSize: 14, paddingVertical: 8 }}>No notifications yet</Text>
+                ) : (
+                  notifications.slice(0, 15).map(n => (
+                    <TouchableOpacity key={n.id} style={[styles.notificationRow, !n.read && styles.notificationRowUnread]} onPress={() => { if (!n.read) markAsRead(n.id); }}>
+                      <View style={styles.notificationDotWrap}>{!n.read && <View style={styles.notificationDot} />}</View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.notificationTitle, !n.read && { color: Colors.primary }]} numberOfLines={1}>{n.title}</Text>
+                        {!!n.message && <Text style={styles.notificationMessage} numberOfLines={2}>{n.message}</Text>}
+                        <Text style={styles.notificationTime}>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </View>
+            )}
+          </View>
+        }
+        data={[]}
+        renderItem={null as any}
+        keyExtractor={() => 'x'}
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   );
 }
@@ -347,4 +390,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
+  notificationsSection: { marginTop: 32, paddingTop: 8, borderTopWidth: 1, borderTopColor: Colors.borderLight },
+  notificationsHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  notificationsTitle: { fontSize: 20, fontWeight: '700' },
+  unreadBadge: { marginLeft: 8, backgroundColor: '#ff3b30', minWidth: 20, paddingHorizontal: 6, height: 20, borderRadius: 10, alignItems:'center', justifyContent:'center' },
+  unreadBadgeText: { color:'#fff', fontSize: 12, fontWeight:'600' },
+  markAllNotifBtn: { flexDirection:'row', alignItems:'center', gap:4, paddingHorizontal:10, paddingVertical:6, borderRadius:16, backgroundColor: 'rgba(45,137,252,0.08)' },
+  markAllNotifText: { marginLeft:4, color: Colors.primary, fontSize:12, fontWeight:'600' },
+  notificationRow: { flexDirection:'row', paddingVertical:10, borderBottomWidth:1, borderBottomColor: Colors.borderLight },
+  notificationRowUnread: { backgroundColor:'rgba(45,137,252,0.06)', borderRadius:8, paddingHorizontal:8 },
+  notificationDotWrap: { width:20, alignItems:'center', paddingTop:4 },
+  notificationDot: { width:8, height:8, borderRadius:4, backgroundColor: Colors.primary },
+  notificationTitle: { fontSize:14, fontWeight:'600', marginBottom:2 },
+  notificationMessage: { fontSize:12, opacity:0.75 },
+  notificationTime: { fontSize:10, opacity:0.5, marginTop:2 },
+  notifLoading: { paddingVertical:12 }
 });

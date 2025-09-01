@@ -3,7 +3,7 @@ import { swr, invalidateCache } from './cache';
 import { getToken } from './authService';
 import { API_BASE_URL } from '@/constants/api';
 
-const API_URL = `${API_BASE_URL}/user`;
+const API_URL = `${API_BASE_URL}`; // base
 
 export const notificationService = {
   // Get all notifications for current user
@@ -14,7 +14,7 @@ export const notificationService = {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`${API_URL}/notifications`, {
+  const response = await fetch(`${API_URL}/notifications`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -56,7 +56,7 @@ export const notificationService = {
       }
 
       const response = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -81,8 +81,8 @@ export const notificationService = {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`${API_URL}/notifications/mark-all-read`, {
-        method: 'PUT',
+      const response = await fetch(`${API_URL}/notifications/read-all`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -107,7 +107,7 @@ export const notificationService = {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`${API_URL}/notifications/comment`, {
+  const response = await fetch(`${API_URL}/user/notifications/comment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ export const notificationService = {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`${API_URL}/notifications/upload`, {
+  const response = await fetch(`${API_URL}/user/notifications/upload`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,6 +158,22 @@ export const notificationService = {
       // Don't throw error as this is secondary functionality
     }
   },
+};
+
+// Helper to quickly get unread count without fetching full list
+export const getUnreadNotificationCount = async (): Promise<number> => {
+  try {
+    const token = await getToken();
+    if (!token) return 0;
+    const resp = await fetch(`${API_URL}/notifications?unread=true`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!resp.ok) return 0;
+    const data = await resp.json();
+    return Array.isArray(data.notifications) ? data.notifications.length : 0;
+  } catch {
+    return 0;
+  }
 };
 
 export const adminNotificationService = {

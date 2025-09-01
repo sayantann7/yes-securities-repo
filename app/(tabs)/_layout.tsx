@@ -1,10 +1,26 @@
 import { Tabs } from 'expo-router';
-import { PhoneIncoming as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon } from 'lucide-react-native';
-import { Text, StyleSheet, Platform } from 'react-native';
+import { PhoneIncoming as HomeIcon, Folder as FolderIcon, Search as SearchIcon, User as UserIcon, Bell as BellIcon } from 'lucide-react-native';
+import { Text, StyleSheet, Platform, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { typography } from '@/constants/font';
+import { useAuth } from '@/context/AuthContext';
+import React, { useEffect, useState } from 'react';
+import { getUnreadNotificationCount } from '@/services/notificationService';
 
 export default function TabLayout() {
+  const { user } = useAuth();
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try { const c = await getUnreadNotificationCount(); if (mounted) setUnread(c); } catch {}
+    };
+    load();
+    const id = setInterval(load, 30000); // poll every 30s lightweight
+    return () => { mounted = false; clearInterval(id); };
+  }, []);
+
   return (
     <Tabs
       screenOptions={{
@@ -50,6 +66,22 @@ export default function TabLayout() {
           ),
         }}
       />
+      {user && user.role !== 'admin' && (
+        <Tabs.Screen
+          name="notifications"
+          options={{
+            title: 'Alerts',
+            tabBarIcon: ({ color, size }) => (
+              <View>
+                <BellIcon color={color} size={size} />
+                {unread > 0 && (
+                  <View style={styles.badge}><Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text></View>
+                )}
+              </View>
+            ),
+          }}
+        />
+      )}
       <Tabs.Screen
         name="profile"
         options={{
@@ -91,4 +123,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontFamily: typography.primary,
   },
+  badge: {
+    position: 'absolute',
+    right: -8,
+    top: -4,
+    backgroundColor: '#ff3b30',
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  badgeText: { color:'#fff', fontSize:10, fontWeight:'700' }
 });

@@ -42,7 +42,7 @@ export interface Comment {
 
 export interface Notification {
   id: string;
-  type: 'comment' | 'upload' | 'ping' | 'alert';
+  type: 'comment' | 'upload' | 'ping' | 'alert' | 'folder' | 'delete';
   title: string;
   message: string;
   read: boolean;
