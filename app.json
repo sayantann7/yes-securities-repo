@@ -36,7 +36,9 @@
     },
     "android": {
       "package": "com.yes.securities",
-      "usesCleartextTraffic": true
+      "usesCleartextTraffic": true,
+      "allowBackup": false,
+      "fullBackupContent": false
     },
     "extra": {
       "router": {},

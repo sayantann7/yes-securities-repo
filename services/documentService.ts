@@ -256,6 +256,24 @@ export const searchDocuments = async (
  */
 export const renameDocument = async (oldPath: string, newName: string): Promise<void> => {
   try {
+    // --- Input Validation ---
+    const orig = newName;
+    if (typeof newName !== 'string') throw new Error('File name must be a string');
+    newName = newName.trim();
+    if (!newName) throw new Error('File name cannot be empty');
+    if (newName.length > 120) throw new Error('File name too long (max 120 chars)');
+    if (/[/\\]/.test(newName)) throw new Error('File name cannot contain slashes');
+    // Ensure there is an extension (keep existing if user omitted)
+    if (!newName.includes('.')) {
+      const oldBase = oldPath.split('/').pop() || '';
+      const oldExt = oldBase.includes('.') ? oldBase.split('.').pop() : '';
+      if (oldExt) newName = `${newName}.${oldExt}`;
+    }
+    // Character whitelist
+    if (!/^[A-Za-z0-9 _()&.-]+$/.test(newName)) throw new Error('File name has invalid characters');
+    // Collapse multiple spaces
+    newName = newName.replace(/\s{2,}/g,' ');
+    console.log('🛡️ Validated file rename:', { input: orig, sanitized: newName });
     const response = await fetch(`${API_URL}/files/rename`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

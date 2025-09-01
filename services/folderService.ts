@@ -186,6 +186,35 @@ export const getFolderById = getFolderData;
 export const createFolder = async (parentId: string | null, name: string, iconUri?: string): Promise<void> => {
   try {
     console.log('🔄 Creating folder:', { parentId, name, hasIcon: !!iconUri });
+
+    // --- Input Validation ---
+    const originalName = name;
+    if (typeof name !== 'string') {
+      throw new Error('Folder name must be a string');
+    }
+    name = name.trim();
+    if (!name) {
+      throw new Error('Folder name cannot be empty');
+    }
+    if (name.length > 80) {
+      throw new Error('Folder name too long (max 80 characters)');
+    }
+    // Disallow path separators and control chars
+    if (/[/\\]/.test(name)) {
+      throw new Error('Folder name cannot contain slashes');
+    }
+    // Allow letters, numbers, spaces, dash, underscore, parentheses, ampersand, dot
+    if (!/^[A-Za-z0-9 _()&.-]+$/.test(name)) {
+      throw new Error('Folder name has invalid characters');
+    }
+    // Prevent reserved or risky names
+    const reserved = new Set(['con','nul','prn','aux','com1','com2','lpt1','lpt2','.','..']);
+    if (reserved.has(name.toLowerCase())) {
+      throw new Error('Folder name is reserved');
+    }
+    // Collapse inner multiple spaces
+    name = name.replace(/\s{2,}/g,' ');
+    console.log('🛡️ Validated folder name:', { input: originalName, sanitized: name });
     
     // Determine prefix path
     let prefix = '';

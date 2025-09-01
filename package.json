@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-  "dev": "EXPO_NO_TELEMETRY=1 expo start",
-  "prebuild:android": "CI=1 expo prebuild --platform android --no-install",
+    "dev": "EXPO_NO_TELEMETRY=1 expo start",
+    "prebuild:android": "CI=1 expo prebuild --platform android --no-install",
     "build:web": "expo export --platform web",
     "lint": "expo lint",
     "android": "expo run:android",

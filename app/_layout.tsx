@@ -4,6 +4,7 @@ import { store } from '@/store';
 import { AuthProvider } from '@/context/AuthContext';
 import { useEffect } from 'react';
 import { useTrackAppTime } from '@/hooks/useTrackAppTime';
+import { useRootDetection } from '@/hooks/useRootDetection';
 import { Text, TextInput } from 'react-native';
 import { useFonts } from 'expo-font';
 import { typography } from '@/constants/font';
@@ -38,6 +39,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   // Always track app time at the root, regardless of navigation group
   useTrackAppTime();
+  const { rooted } = useRootDetection({ onBlocked: () => {} });
   // Load custom Nexa fonts
   const [fontsLoaded] = useFonts({
     NexaExtraLight: require('../assets/fonts/nexa-extra-light.ttf'),
@@ -53,7 +55,12 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   // Don't render the app until fonts are loaded
-  if (!fontsLoaded) {
+  if (!fontsLoaded || rooted === null) {
+    return null;
+  }
+
+  if (rooted) {
+    // Render nothing (Alert already shown) to effectively block usage.
     return null;
   }
 
