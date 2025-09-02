@@ -29,7 +29,8 @@
     "plugins": [
       "expo-router",
       "expo-web-browser",
-      "./plugins/with-ios-gemfile"
+      "./plugins/with-ios-gemfile",
+      "./plugins/with-android-disable-backup"
     ],
     "experiments": {
       "typedRoutes": true
