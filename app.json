@@ -10,10 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yes.securities",
+      "bundleIdentifier": "com.yes.salerepository",
       "icon": "./assets/images/icon.png",
       "appStoreIcon": "./assets/images/icon.png",
-      "deploymentTarget": "13.4",
+      "deploymentTarget": "11",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSAppTransportSecurity": {
@@ -36,7 +36,7 @@
       "typedRoutes": true
     },
     "android": {
-      "package": "com.yes.securities",
+      "package": "com.yes.salerepository",
       "usesCleartextTraffic": true,
       "allowBackup": false,
       "fullBackupContent": false
