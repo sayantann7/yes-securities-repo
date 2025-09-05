@@ -5,26 +5,37 @@
   },
   "build": {
     "development": {
-      "developmentClient": true,
-      "distribution": "internal",
+      "android": {
+        "autoIncrement": true,
+         "distribution": "store",
+        "buildType": "app-bundle"   
+      },
       "ios": {
-        "image": "latest",
+         "autoIncrement": true,
         "cocoapods": "1.15.2",
         "bundler": "2.5.10"
       }
     },
     "preview": {
-      "distribution": "internal",
+      "android": {
+        "autoIncrement": true,
+         "distribution": "store",
+        "buildType": "app-bundle"   
+      },
       "ios": {
-        "image": "latest",
+         "autoIncrement": true,
         "cocoapods": "1.15.2",
         "bundler": "2.5.10"
       }
     },
     "production": {
-      "autoIncrement": true,
-      "distribution": "store",
+      "android": {
+        "autoIncrement": true,
+         "distribution": "store",
+        "buildType": "app-bundle"   
+      },
       "ios": {
+         "autoIncrement": true,
         "image": "latest",
         "cocoapods": "1.15.2",
         "bundler": "2.5.10"

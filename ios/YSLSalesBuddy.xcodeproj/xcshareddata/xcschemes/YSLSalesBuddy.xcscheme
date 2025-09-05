@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "yessecuritiessalesrepository.app"
-               BlueprintName = "yessecuritiessalesrepository"
-               ReferencedContainer = "container:yessecuritiessalesrepository.xcodeproj">
+               BuildableName = "YSLSalesBuddy.app"
+               BlueprintName = "YSLSalesBuddy"
+               ReferencedContainer = "container:YSLSalesBuddy.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "yessecuritiessalesrepositoryTests.xctest"
-               BlueprintName = "yessecuritiessalesrepositoryTests"
-               ReferencedContainer = "container:yessecuritiessalesrepository.xcodeproj">
+               BuildableName = "YSLSalesBuddyTests.xctest"
+               BlueprintName = "YSLSalesBuddyTests"
+               ReferencedContainer = "container:YSLSalesBuddy.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "yessecuritiessalesrepository.app"
-            BlueprintName = "yessecuritiessalesrepository"
-            ReferencedContainer = "container:yessecuritiessalesrepository.xcodeproj">
+            BuildableName = "YSLSalesBuddy.app"
+            BlueprintName = "YSLSalesBuddy"
+            ReferencedContainer = "container:YSLSalesBuddy.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "yessecuritiessalesrepository.app"
-            BlueprintName = "yessecuritiessalesrepository"
-            ReferencedContainer = "container:yessecuritiessalesrepository.xcodeproj">
+            BuildableName = "YSLSalesBuddy.app"
+            BlueprintName = "YSLSalesBuddy"
+            ReferencedContainer = "container:YSLSalesBuddy.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -1,4 +1,4 @@
-package com.yes.securities
+package com.yslsalesbuddy
 
 import android.app.Application
 import android.content.res.Configuration
