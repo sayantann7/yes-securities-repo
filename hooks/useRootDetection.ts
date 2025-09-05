@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Platform, NativeModules } from 'react-native';
 import * as Constants from 'expo-constants';
+import { useJailbreakDetection } from './useJailbreakDetection';
 
 export interface RootHeuristicsResult {
   rooted: boolean | null;        // null while evaluating
@@ -54,6 +55,7 @@ function evaluateHeuristics(info: Record<string, any>) {
 export function useRootDetection(opts: Options = {}) {
   const { onBlocked, threshold = 3, showAlert = true } = opts;
   const [result, setResult] = useState<RootHeuristicsResult>({ rooted: null, riskScore: 0, reasons: [], details: {} });
+  const isJailbroken = useJailbreakDetection();
 
   useEffect(() => {
     let cancelled = false;
@@ -62,6 +64,25 @@ export function useRootDetection(opts: Options = {}) {
         if (!cancelled) setResult({ rooted: false, riskScore: 0, reasons: ['platform:web'], details: snapshotInfo(), evaluatedAt: new Date().toISOString() });
         return;
       }
+      // iOS: use jailbreak detection
+      if (Platform.OS === 'ios') {
+        if (isJailbroken) {
+          if (!cancelled) setResult({ rooted: true, riskScore: 10, reasons: ['ios:jailbreak-detected'], details: snapshotInfo(), evaluatedAt: new Date().toISOString() });
+          if (showAlert) {
+            Alert.alert(
+              'Security Warning',
+              'This device appears to be jailbroken. For security, the app will close.',
+              [{ text: 'Exit', onPress: () => { onBlocked?.(); } }],
+              { cancelable: false }
+            );
+          }
+          return;
+        } else {
+          if (!cancelled) setResult({ rooted: false, riskScore: 0, reasons: [], details: snapshotInfo(), evaluatedAt: new Date().toISOString() });
+          return;
+        }
+      }
+      // Android: use heuristics
       const info = snapshotInfo();
       const { score, reasons } = evaluateHeuristics(info);
       const rooted = score >= threshold;
@@ -70,7 +91,7 @@ export function useRootDetection(opts: Options = {}) {
       if (rooted && showAlert) {
         Alert.alert(
           'Security Warning',
-            'Potential rooted / compromised environment detected (heuristics). For security the app will close.',
+          'Potential rooted / compromised environment detected (heuristics). For security the app will close.',
           [{ text: 'Exit', onPress: () => { onBlocked?.(); } }],
           { cancelable: false }
         );
@@ -80,8 +101,8 @@ export function useRootDetection(opts: Options = {}) {
     // Optional second pass after short delay (some native modules populate late)
     const retry = setTimeout(() => { if (result.rooted === null) run(); }, 1200);
     return () => { cancelled = true; clearTimeout(retry); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isJailbroken]);
 
   return result;
 }
