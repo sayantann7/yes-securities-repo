@@ -89,7 +89,7 @@ android {
 
     namespace 'com.yes.securities'
     defaultConfig {
-        applicationId 'com.yes.securities'
+        applicationId 'com.yes.salerepository'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
