@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>myapp</string>
-          <string>com.yes.salerepository</string>
+          <string>com.yes.securities</string>
         </array>
       </dict>
       <dict>

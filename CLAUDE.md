@@ -84,8 +84,8 @@ All API interactions are handled through dedicated service modules:
 ### Platform Considerations
 - Cross-platform authentication storage
 - Web support with Metro bundler
-- iOS bundle identifier: `com.yes.salerepository`
-- Android package: `com.yes.salerepository`
+- iOS bundle identifier: `com.yes.securities`
+- Android package: `com.yes.securities`
 
 ### State Management Patterns
 - Use Redux for global state (documents, folders, user data)
