@@ -31,6 +31,11 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
     setIconError(false);
   }, [folder.isBookmarked, folder.id, folder.iconUrl]);
 
+  const itemCountLabel =
+    typeof folder.itemCount === 'number' && folder.itemCount >= 0
+      ? folder.itemCount
+      : '--';
+
   const handleMorePress = (e: any) => {
     e.stopPropagation(); // Prevent triggering folder navigation
     setShowActionModal(true);
@@ -97,7 +102,7 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
             }
           </Text>
           <Text style={[styles.gridSubtitle, { color: Colors.textSecondary }]}>
-            {folder.itemCount || 0} items
+            {itemCountLabel} items
           </Text>
           {/* Show more button for all users */}
           <TouchableOpacity style={styles.gridMoreButton} onPress={handleMorePress}>
@@ -155,7 +160,7 @@ export default function FolderItem({ folder, onPress, onUpdate, viewMode = 'list
             }
           </Text>
           <Text style={[styles.folderCount, { color: Colors.textSecondary }]}>
-            {folder.itemCount || 0} items
+            {itemCountLabel} items
           </Text>
         </View>
         

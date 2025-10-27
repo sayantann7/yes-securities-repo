@@ -20,23 +20,15 @@ export function useFetchFolders(folderId: string | null = null) {
         const startTime = Date.now();
         const minLoadingTime = 800; // 800ms minimum loading time
         
-        // Fetch all folders to build the folder structure
-        const allFolders = await getFolders(null);
-        // Sort all folders alphabetically by name
-        const sortedAllFolders = allFolders.sort((a, b) => a.name.localeCompare(b.name));
-        setFolders(sortedAllFolders);
-        
-        // Fetch root folders or subfolders based on the folderId
-        const foldersList = await getFolders(folderId);
-        // Sort folders alphabetically by name
-        const sortedFolders = foldersList.sort((a, b) => a.name.localeCompare(b.name));
-        setRootFolders(sortedFolders);
-        
-        // Fetch documents for the current folder
-        const documentsList = await getDocuments(folderId);
-        // Sort documents alphabetically by name
-        const sortedDocuments = documentsList.sort((a, b) => a.name.localeCompare(b.name));
-        setDocuments(sortedDocuments);
+        const [allFolders, foldersList, documentsList] = await Promise.all([
+          getFolders(null),
+          getFolders(folderId),
+          getDocuments(folderId)
+        ]);
+
+        setFolders(allFolders.sort((a, b) => a.name.localeCompare(b.name)));
+        setRootFolders(foldersList.sort((a, b) => a.name.localeCompare(b.name)));
+        setDocuments(documentsList.sort((a, b) => a.name.localeCompare(b.name)));
         
         // Ensure minimum loading time
         const elapsedTime = Date.now() - startTime;
@@ -64,23 +56,15 @@ export function useFetchFolders(folderId: string | null = null) {
    */
   const reload = async () => {
     try {
-      // Fetch all folders to build the folder structure
-      const allFolders = await getFolders(null);
-      // Sort all folders alphabetically by name
-      const sortedAllFolders = allFolders.sort((a, b) => a.name.localeCompare(b.name));
-      setFolders(sortedAllFolders);
-      
-      // Fetch root folders or subfolders based on the folderId
-      const foldersList = await getFolders(folderId);
-      // Sort folders alphabetically by name
-      const sortedFolders = foldersList.sort((a, b) => a.name.localeCompare(b.name));
-      setRootFolders(sortedFolders);
-      
-      // Fetch documents for the current folder
-      const documentsList = await getDocuments(folderId);
-      // Sort documents alphabetically by name
-      const sortedDocuments = documentsList.sort((a, b) => a.name.localeCompare(b.name));
-      setDocuments(sortedDocuments);
+      const [allFolders, foldersList, documentsList] = await Promise.all([
+        getFolders(null),
+        getFolders(folderId),
+        getDocuments(folderId)
+      ]);
+
+      setFolders(allFolders.sort((a, b) => a.name.localeCompare(b.name)));
+      setRootFolders(foldersList.sort((a, b) => a.name.localeCompare(b.name)));
+      setDocuments(documentsList.sort((a, b) => a.name.localeCompare(b.name)));
       
     } catch (err) {
       console.error('Error reloading folders:', err);

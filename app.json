@@ -30,7 +30,9 @@
       "expo-router",
       "expo-web-browser",
       "./plugins/with-ios-gemfile",
-      "./plugins/with-android-disable-backup"
+      "./plugins/with-android-disable-backup",
+      "expo-font",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

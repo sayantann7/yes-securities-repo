@@ -1,7 +1,7 @@
 import { Document } from '@/types';
-import { getToken } from './authService';
-import { swr, invalidateByPrefix, invalidateCache } from './cache';
+import { invalidateByPrefix } from './cache';
 import { API_BASE_URL } from '@/constants/api';
+import { loadFolderListing } from './folderListingService';
 
 const API_URL = `${API_BASE_URL}/api`;
 const USER_API_URL = `${API_BASE_URL}/user`;
@@ -58,70 +58,84 @@ const getDocumentUrl = async (id: string): Promise<string> => {
 };
 
 export const getDocuments = async (folderId: string | null = null): Promise<Document[]> => {
-  const cacheKey = `docs:${folderId || 'root'}`;
-  return swr<Document[]>(cacheKey, 60_000, async () => { // 60s TTL
-    try {
-      let prefix = '';
-      if (folderId && typeof folderId === 'string' && folderId.trim() !== '') {
-        prefix = folderId.endsWith('/') ? folderId : `${folderId}/`;
+  try {
+    const listing = await loadFolderListing(folderId, {
+      includeUrls: true,
+      loadIcons: true,
+    });
+
+    const documents: Document[] = [];
+
+    for (const fileObj of listing.files) {
+      const key = fileObj.key;
+      if (!key || key.endsWith('/')) continue;
+
+      const fileName = key.split('/').pop() || key;
+      const sizeLabel = typeof fileObj.size === 'number' ? formatFileSize(fileObj.size) : 'Unknown';
+      const createdAt = fileObj.lastModified || new Date().toISOString();
+
+      if (fileObj.url) {
+        documents.push({
+          id: key,
+          name: fileName,
+          type: getFileType(fileName),
+          size: sizeLabel,
+          url: fileObj.url,
+          thumbnailUrl: fileObj.thumbnailUrl ?? undefined,
+          createdAt,
+          author: 'Unknown',
+          folderId: folderId,
+          commentCount: 0,
+          iconUrl: fileObj.iconUrl ?? undefined,
+          isBookmarked: fileObj.isBookmarked || false,
+        });
+        continue;
       }
-      const token = await getToken();
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const response = await fetch(`${API_URL}/folders`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ prefix }),
-      });
-      if (!response.ok) {
-        console.error('Failed to fetch documents, status:', response.status);
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error('Failed to fetch documents');
+
+      try {
+        const urlResponse = await fetch(`${API_URL}/files/fetch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key }),
+        });
+        if (!urlResponse.ok) continue;
+        const urlData = await urlResponse.json();
+
+        documents.push({
+          id: key,
+          name: fileName,
+          type: getFileType(fileName),
+          size: sizeLabel,
+          url: urlData.url,
+          thumbnailUrl: fileObj.thumbnailUrl ?? undefined,
+          createdAt,
+          author: 'Unknown',
+          folderId: folderId,
+          commentCount: 0,
+          iconUrl: fileObj.iconUrl ?? undefined,
+          isBookmarked: fileObj.isBookmarked || false,
+        });
+      } catch (err) {
+        console.error(`Failed to fetch URL for ${key}:`, err);
       }
-      const data = await response.json();
-      const documents: Document[] = [];
-      if (data.files && Array.isArray(data.files)) {
-        for (const fileObj of data.files) {
-          const key = fileObj.key;
-          if (!key || key.endsWith('/')) continue;
-          const fileName = key.split('/').pop() || key;
-          try {
-            const urlResponse = await fetch(`${API_URL}/files/fetch`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ key }),
-            });
-            if (!urlResponse.ok) continue;
-            const urlData = await urlResponse.json();
-            documents.push({
-              id: key,
-              name: fileName,
-              type: getFileType(fileName),
-              size: 'Unknown',
-              url: urlData.url,
-              createdAt: new Date().toISOString(),
-              author: 'Unknown',
-              folderId: folderId,
-              commentCount: 0,
-              iconUrl: fileObj.iconUrl,
-              isBookmarked: fileObj.isBookmarked || false,
-            });
-          } catch {}
-        }
-      }
-      return documents.sort((a, b) => a.name.localeCompare(b.name));
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-      throw error;
     }
-  });
+
+    return documents.sort((a, b) => a.name.localeCompare(b.name));
+  } catch (error) {
+    console.error('Error fetching documents:', error);
+    throw error;
+  }
 };
 
 // Invalidate caches when documents mutate
 export function invalidateDocumentsCache(folderId?: string) {
-  if (folderId) invalidateCache(`docs:${folderId}`);
-  else invalidateByPrefix('docs:');
+  if (folderId) {
+    const normalized = (folderId || '').trim();
+    const keyBase = normalized ? (normalized.endsWith('/') ? normalized.slice(0, -1) : normalized) : 'root';
+    invalidateByPrefix(`listing:${keyBase}`);
+  } else {
+    invalidateByPrefix('listing:');
+  }
 }
 
 export const getDocumentById = async (id: string): Promise<Document> => {
@@ -129,9 +143,33 @@ export const getDocumentById = async (id: string): Promise<Document> => {
     // First, we need to get the metadata about the document
     const keyParts = id.split('/');
     const fileName = keyParts[keyParts.length - 1];
-    const folderId = keyParts.slice(0, -1).join('/') + '/';
-    
-    // Get the signed URL for viewing/downloading - changed to POST
+    const parentPrefix = keyParts.slice(0, -1).join('/') || null;
+
+    // Try to reuse cached folder listing for instant load
+    try {
+      const listing = await loadFolderListing(parentPrefix, { includeUrls: true, loadIcons: true });
+      const match = listing.files.find(file => file.key === id);
+      if (match && match.url) {
+        return {
+          id,
+          name: fileName,
+          type: getFileType(fileName),
+          size: typeof match.size === 'number' ? formatFileSize(match.size) : 'Unknown',
+          url: match.url,
+          createdAt: match.lastModified || new Date().toISOString(),
+          author: 'Unknown',
+          folderId: parentPrefix ? `${parentPrefix}/` : '/',
+          commentCount: 0,
+          thumbnailUrl: match.thumbnailUrl ?? undefined,
+          iconUrl: match.iconUrl ?? undefined,
+          isBookmarked: match.isBookmarked || false,
+        };
+      }
+    } catch (lookupError) {
+      console.warn('Cached listing lookup failed, falling back to direct fetch:', lookupError);
+    }
+
+    // Fallback: fetch signed URL directly
     const urlResponse = await fetch(`${API_URL}/files/fetch`, {
       method: 'POST',
       headers: {
@@ -148,20 +186,17 @@ export const getDocumentById = async (id: string): Promise<Document> => {
     }
 
     const urlData = await urlResponse.json();
-    console.log('Document URL response:', urlData); // For debugging
-    
-    // Since we don't have a direct way to get full metadata from just the key,
-    // we'll create a document object with available information
+
     return {
-      id: id,
+      id,
       name: fileName,
       type: getFileType(fileName),
-      size: 'Unknown', // Would need separate call to get size
+      size: 'Unknown',
       url: urlData.url,
       createdAt: new Date().toISOString(),
-      author: 'Unknown', // S3 doesn't provide author information
-      folderId: folderId,
-      commentCount: 0 // Needs separate tracking system
+      author: 'Unknown',
+      folderId: parentPrefix ? `${parentPrefix}/` : '/',
+      commentCount: 0
     };
   } catch (error) {
     console.error('Error getting document:', error);

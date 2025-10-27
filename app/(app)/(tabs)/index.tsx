@@ -17,6 +17,19 @@ import DocumentsPageSkeleton from '@/components/skeleton/DocumentsPageSkeleton';
 import * as DocumentPicker from 'expo-document-picker';
 import { API_BASE_URL, ADMIN_API_URL, UPLOAD_TIMEOUT } from '@/constants/api';
 
+const getUserInitials = (name?: string | null): string => {
+  if (!name) return '';
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  if (parts.length === 0) return '';
+  return parts
+    .map(part => part.charAt(0).toUpperCase())
+    .join('');
+};
+
 export default function HomeScreen() {
   const { user } = useAuth();
   const colors = Colors;
@@ -25,6 +38,7 @@ export default function HomeScreen() {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const { folders, rootFolders, documents, isLoading, reload } = useFetchFolders(currentFolderId);
+  const userInitials = getUserInitials(user?.name);
 
   useEffect(() => {
     if (user && user.role === 'admin') {
@@ -398,8 +412,8 @@ export default function HomeScreen() {
             </TouchableOpacity>
           )}
           <View>
-            <Text style={[styles.greeting, { color: colors.primary, marginTop:50 }]}>Hi, {user?.name}</Text>
-            <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+            <Text style={[styles.greeting, { color: colors.primary, marginTop:50 }]}>{userInitials || '--'}</Text>
+            <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>Investyle Partner</Text>
           </View>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>

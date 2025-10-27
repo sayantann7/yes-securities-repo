@@ -1,106 +1,85 @@
 import { Folder, Document } from '@/types';
-import { getDocuments } from './documentService';
 import { getToken } from './authService';
 import { API_URL } from '@/constants/api';
+import { loadFolderListing } from './folderListingService';
+
+const detectFileType = (key: string): string => {
+  const extension = key.split('.').pop()?.toLowerCase() || '';
+  switch (extension) {
+    case 'pdf':
+      return 'pdf';
+    case 'png':
+    case 'jpg':
+    case 'jpeg':
+    case 'gif':
+    case 'svg':
+      return 'image';
+    case 'mp4':
+    case 'mov':
+    case 'avi':
+      return 'video';
+    case 'mp3':
+    case 'wav':
+      return 'audio';
+    case 'xlsx':
+    case 'xls':
+      return 'spreadsheet';
+    case 'docx':
+    case 'doc':
+      return 'document';
+    case 'pptx':
+    case 'ppt':
+      return 'presentation';
+    default:
+      return 'file';
+  }
+};
+
+const readableSize = (sizeInBytes: number): string => {
+  if (!Number.isFinite(sizeInBytes) || sizeInBytes < 0) {
+    return 'Unknown';
+  }
+  if (sizeInBytes < 1024) {
+    return `${sizeInBytes} B`;
+  }
+  if (sizeInBytes < 1024 * 1024) {
+    return `${(sizeInBytes / 1024).toFixed(1)} KB`;
+  }
+  if (sizeInBytes < 1024 * 1024 * 1024) {
+    return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  return `${(sizeInBytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+};
 
 export const getFolders = async (parentId: string | null = null): Promise<Folder[]> => {
   try {
-    // Normalize prefix: ensure trailing slash if parentId provided
-    let prefix = '';
-    if (parentId && typeof parentId === 'string' && parentId.trim() !== '') {
-      prefix = parentId.endsWith('/') ? parentId : `${parentId}/`;
-    }
-
-    // Get authentication token
-    const token = await getToken();
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    // Changed from GET to POST
-    const response = await fetch(`${API_URL}/folders`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ prefix }),
+    const listing = await loadFolderListing(parentId, {
+      includeUrls: false,
+      loadIcons: true,
     });
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch folders');
-    }
-
-    const data = await response.json();
-    
-    // Transform the response into the Folder format expected by the frontend
-    const folders: Folder[] = [];
-    
-    // Check if folders array exists and is an array
-    if (data.folders && Array.isArray(data.folders)) {
-      // Use Promise.all to fetch document counts concurrently
-      await Promise.all(data.folders.map(async (folderObj: { key: string, iconUrl?: string, isBookmarked?: boolean }) => {
+    const folders: Folder[] = (listing.folders || [])
+      .filter((folderObj) => typeof folderObj.key === 'string' && folderObj.key.length > 0)
+      .map((folderObj) => {
         const folderPrefix = folderObj.key;
-
-        if (!folderPrefix || typeof folderPrefix !== 'string') {
-          console.warn('Invalid folder prefix:', folderPrefix);
-          return;
-        }
-
         const name = formatPrefix(folderPrefix);
+        const itemCount = typeof folderObj.itemCount === 'number'
+          ? folderObj.itemCount
+          : undefined;
 
-        // Fetch documents & subfolders concurrently for accurate item count
-        const [documents, subfolderCount] = await Promise.all([
-          getDocuments(folderPrefix),
-          (async () => {
-            try {
-              // Reuse token retrieval via getToken (avoid passing auth header if not needed inside API)
-              const token = await getToken();
-              const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-              if (token) headers['Authorization'] = `Bearer ${token}`;
-              const r = await fetch(`${API_URL}/folders`, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({ prefix: folderPrefix })
-              });
-              if (!r.ok) return 0;
-              const d = await r.json();
-              if (d && Array.isArray(d.folders)) return d.folders.length;
-              return 0;
-            } catch {
-              return 0;
-            }
-          })()
-        ]);
-
-        const totalItems = documents.length + subfolderCount;
-
-        folders.push({
+        return {
           id: folderPrefix,
           name,
-          parentId: parentId,
-            createdAt: new Date().toISOString(),
-          itemCount: totalItems, // files + immediate subfolders
-          iconUrl: folderObj.iconUrl,
+          parentId,
+          createdAt: folderObj.lastModified || new Date().toISOString(),
+          itemCount,
+          iconUrl: folderObj.iconUrl ?? undefined,
           isBookmarked: folderObj.isBookmarked || false,
-        });
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
 
-        if (folderObj.iconUrl) {
-          console.log('🖼️ Folder icon URL received:', {
-            folderName: name,
-            iconUrl: folderObj.iconUrl,
-            isSignedUrl: folderObj.iconUrl.includes('X-Amz-'),
-            urlDomain: new URL(folderObj.iconUrl).hostname
-          });
-        } else {
-          console.log('❌ No icon URL for folder:', name);
-        }
-      }));
-    }
-    
-    // Sort folders alphabetically by name before returning
-    return folders.sort((a, b) => a.name.localeCompare(b.name));
+    return folders;
   } catch (error) {
     console.error('Error fetching folders:', error);
     throw error;
@@ -109,55 +88,23 @@ export const getFolders = async (parentId: string | null = null): Promise<Folder
 
 export const getFolderData = async (folderId: string | null = null): Promise<Folder> => {
   try {
-    let prefix = '';
-    if (folderId && typeof folderId === 'string' && folderId.trim() !== '') {
-      prefix = folderId;
-    }
-
-    // Changed from GET to POST
-    const response = await fetch(`${API_URL}/folders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ prefix }),
+    const prefix = folderId && folderId.trim() !== '' ? folderId : '';
+    const listing = await loadFolderListing(prefix || null, {
+      includeUrls: false,
+      loadIcons: true,
     });
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch folders');
-    }
-
-    const data = await response.json();
-
-    // Use formatPrefix to get the folder name
     const name = formatPrefix(prefix);
-    // Fetch documents & subfolders concurrently for accurate item count
-    const [documents, subfolderCount] = await Promise.all([
-      getDocuments(prefix),
-      (async () => {
-        try {
-          const r = await fetch(`${API_URL}/folders`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prefix })
-          });
-          if (!r.ok) return 0;
-          const d = await r.json();
-          if (d && Array.isArray(d.folders)) return d.folders.length;
-          return 0;
-        } catch { return 0; }
-      })()
-    ]);
+    const documentsCount = Array.isArray(listing.files) ? listing.files.length : 0;
+    const subfolderCount = Array.isArray(listing.folders) ? listing.folders.length : 0;
 
-    // parentId is the input folderId's parent, which is not available here, so set as null or as needed
     return {
       id: prefix,
-      name: name,
-      parentId: null, // Or determine the parentId if possible/needed
+      name,
+      parentId: null,
       createdAt: new Date().toISOString(),
-  itemCount: documents.length + subfolderCount // files + immediate subfolders
+      itemCount: documentsCount + subfolderCount,
     };
-
   } catch (error) {
     console.error('Error fetching folders:', error);
     throw error;
@@ -168,9 +115,43 @@ export const getFolderData = async (folderId: string | null = null): Promise<Fol
 export const getFolderContents = async (
   folderId: string | null = null
 ): Promise<{ folders: Folder[]; files: Document[] }> => {
-  // Reuse getFolders and getDocuments to retrieve properly formatted data
-  const folders = await getFolders(folderId);
-  const files = await getDocuments(folderId);
+  const listing = await loadFolderListing(folderId, {
+    includeUrls: true,
+    loadIcons: true,
+  });
+
+  const folders = (listing.folders || []).map((folderObj) => ({
+    id: folderObj.key,
+    name: formatPrefix(folderObj.key),
+    parentId: folderId,
+    createdAt: folderObj.lastModified || new Date().toISOString(),
+    itemCount: folderObj.itemCount,
+    iconUrl: folderObj.iconUrl ?? undefined,
+    isBookmarked: folderObj.isBookmarked || false,
+  })).sort((a, b) => a.name.localeCompare(b.name));
+
+  const files: Document[] = (listing.files || [])
+    .filter((fileObj) => typeof fileObj.key === 'string' && !fileObj.key.endsWith('/'))
+    .map((fileObj) => {
+      const key = fileObj.key;
+      const fileName = key.split('/').pop() || key;
+      return {
+        id: key,
+        name: fileName,
+  type: detectFileType(fileName),
+  size: typeof fileObj.size === 'number' ? readableSize(fileObj.size) : 'Unknown',
+        url: fileObj.url || '',
+        thumbnailUrl: fileObj.thumbnailUrl ?? undefined,
+        createdAt: fileObj.lastModified || new Date().toISOString(),
+        author: 'Unknown',
+        folderId: folderId,
+        commentCount: 0,
+        iconUrl: fileObj.iconUrl ?? undefined,
+        isBookmarked: fileObj.isBookmarked || false,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   return { folders, files };
 };
 
